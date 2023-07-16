@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net47</TargetFramework>
+	  <UseWPF>true</UseWPF>
+	  <UseWindowsForms>true</UseWindowsForms>
+	  <LangVersion>preview</LangVersion>
+	  <PlatformTarget>x64</PlatformTarget>
+	  <StartAction>Program</StartAction>
+	  <StartProgram>D:\AUTOCAD2020\AutoCAD 2020\acad.exe</StartProgram>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AutoCAD.NET" Version="23.1.0" />
+  </ItemGroup>
+
+</Project>
