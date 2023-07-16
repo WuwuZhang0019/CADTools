@@ -35,18 +35,24 @@ namespace Tuna.autoCAD
                 }) ;
                 if(pt2result.Status == PromptStatus.OK)
                 {
-                    using (Transaction transaction = database.TransactionManager.StartTransaction())
+                    //Transaction transaction = database.TransactionManager.StartTransaction();
+                    //using (OpenCloseTransaction transaction = database.TransactionManager.StartOpenCloseTransaction())
+                    var transaction = database.TransactionManager.StartOpenCloseTransaction();
                     using (Line line=new Line(pt1result.Value, pt2result.Value))
                     {
-                        BlockTable table = (BlockTable)database.BlockTableId.GetObject(OpenMode.ForRead);
+
+
+                        BlockTable table = (BlockTable)transaction.GetObject(database.BlockTableId, OpenMode.ForRead);
                         BlockTableRecord record =(BlockTableRecord)table[BlockTableRecord.ModelSpace].GetObject(OpenMode.ForWrite);
 
                         record.AppendEntity(line);
 
                         transaction.AddNewlyCreatedDBObject(line, true);
                         transaction.Commit();
-
+                        
                     }
+                    transaction.Dispose();
+
                 }
             }
         }
