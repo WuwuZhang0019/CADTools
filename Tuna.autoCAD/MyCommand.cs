@@ -1,6 +1,7 @@
 ﻿using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
+using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Runtime;
 using System;
 using System.Collections.Generic;
@@ -51,7 +52,7 @@ namespace Tuna.autoCAD
                         transaction.Commit();
                         
                     }
-                    transaction.Dispose();
+                    transaction.Dispose();//不用using就需要手动地调用对象的Dispose方法来释放对象中的非托管资源。
 
                 }
             }
@@ -209,5 +210,128 @@ namespace Tuna.autoCAD
             }
         }
 
+        [CommandMethod(nameof(PickObject), CommandFlags.Modal | CommandFlags.NoBlockEditor)]
+        //选择实体
+        public void PickObject()
+        {
+            Document document = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
+            Editor editor = document.Editor;
+
+            PromptEntityResult result = editor.GetEntity(new PromptEntityOptions("\n 选择实体")
+            {
+                AllowObjectOnLockedLayer = true,    //允许本方法选择到被锁定图层的对象
+            });
+            if (result.Status == PromptStatus.OK)
+            {
+                ObjectId SelectObjectId = result.ObjectId;
+                using(OpenCloseTransaction ts =document.TransactionManager.StartOpenCloseTransaction() )
+                {
+                    var dbObject = ts.GetObject(SelectObjectId, OpenMode.ForRead);
+                    editor.WriteMessage(ObjToString(dbObject));
+                    ts.Commit();
+
+                }
+            }         
+
+        }
+
+        [CommandMethod(nameof(PickNestedObject), CommandFlags.Modal | CommandFlags.NoBlockEditor)]
+        //选择嵌套实体
+        public void PickNestedObject()
+        {
+            Document document = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
+            Editor editor = document.Editor;
+
+            PromptNestedEntityResult result = editor.GetNestedEntity(new PromptNestedEntityOptions("\n 选择实体")
+            {
+                UseNonInteractivePickPoint = true,  //非交互式选择点
+                NonInteractivePickPoint=Point3d.Origin,
+            });
+            if(result.Status == PromptStatus.Error)
+            {
+                editor.WriteMessage("Error");
+            }
+            if (result.Status == PromptStatus.OK)
+            {
+                ObjectId SelectObjectId = result.ObjectId;
+                using (OpenCloseTransaction ts = document.TransactionManager.StartOpenCloseTransaction())
+                {
+                    DBObject dbObject = ts.GetObject(SelectObjectId, OpenMode.ForRead);
+                    editor.WriteMessage(ObjToString(dbObject));
+                    ts.Commit();
+
+                }
+            }
+
+        }
+
+        [CommandMethod(nameof(PickObjects), CommandFlags.Modal | CommandFlags.NoBlockEditor)]
+        //多选
+        public void PickObjects()
+        {
+            Document document = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
+            Editor editor = document.Editor;
+
+            PromptSelectionResult result = editor.GetSelection(new PromptSelectionOptions()
+            {
+                
+                //SingleOnly = true,
+                //SinglePickInSpace = true,//单次选择，选择后无需用户多按回车
+
+                //AllowDuplicates = true,//允许重复选择，数量叠加
+
+                AllowSubSelections = true,//允许选择到子图元
+                ForceSubSelections = true,
+                //MessageForAdding 设置提示词
+                RejectObjectsOnLockedLayers = true,//允许选择锁定图层的图元
+                
+
+            });
+            if (result.Status == PromptStatus.OK)
+            {
+                SelectionSet selectedObjects = result.Value;
+
+                //对选择集进行递归,允许选择到子图元
+                foreach (SelectedObject item in selectedObjects)
+                {
+                    if (item.SelectionMethod == SelectionMethod.SubEntity) 
+                    {
+                        editor.WriteMessage(item.GetSubentities().Length.ToString());
+                    }
+                    using (OpenCloseTransaction ts = document.TransactionManager.StartOpenCloseTransaction())
+                    {
+                        DBObject dbObject = ts.GetObject(item.ObjectId, OpenMode.ForRead);
+                        editor.WriteMessage(ObjToString(dbObject));
+                        ts.Commit();
+
+                    }
+                }
+                editor.WriteMessage(selectedObjects.Count.ToString());
+            }
+
+        }
+
+        public string ObjToString(DBObject dbObject)
+        {
+            StringBuilder builder = new StringBuilder();
+            var type = dbObject.GetType();
+            builder.AppendLine($"Start--------------------{DateTime.Now}-----------------------");
+            builder.AppendLine($"Type: {type}");
+            foreach (var item in type.GetProperties(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public))
+            {
+                try
+                {
+                    var result = item.GetValue(dbObject);
+                    builder.AppendLine($" {item.Name}:{result}");
+                }
+                catch (System.Exception e)
+                {
+                    builder.AppendLine($"error:{item.Name}{e.Message}");
+                }
+                
+            }
+            builder.AppendLine($"End-------------------{DateTime.Now}-----------------------");
+            return builder.ToString();
+        }
     }
 }
