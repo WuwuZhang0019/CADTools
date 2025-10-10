@@ -32,7 +32,7 @@ public class MyCommand
         Document document = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
 
         string lispPath = "C:/ProgramData/Autodesk/ApplicationPlugins/ZYF.bundle/Contents/Tools/01 CAD急速瘦身神器.lsp";
-        
+
         string loadStr = String.Format("(load \"{0}\")\n", lispPath);
 
         document.SendStringToExecute(loadStr, false, false, false);
@@ -71,7 +71,7 @@ public class MyCommand
         Document document = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
 
         string lispPath = "C:/ProgramData/Autodesk/ApplicationPlugins/ZYF.bundle/Contents/Tools/04 图号文字递增V2.0(thdz).lsp";
-        
+
         string loadStr = String.Format("(load \"{0}\") thdz\n", lispPath);
 
         document.SendStringToExecute(loadStr, false, false, false);
@@ -97,47 +97,10 @@ public class MyCommand
         Document document = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
 
         string lispPath = "C:/ProgramData/Autodesk/ApplicationPlugins/ZYF.bundle/Contents/Tools/06 文字复制(maa).lsp";
-        
+
         string loadStr = String.Format("(load \"{0}\")\n", lispPath);
-        
+
         document.SendStringToExecute(loadStr, false, false, false);
-    }
-    
-    // 添加支持文件搜索路径
-    [CommandMethod("AddZYFSupportPath", CommandFlags.Modal)]
-    public void AddZYFSupportPath()
-    {
-        Document document = Application.DocumentManager.MdiActiveDocument;
-        Editor ed = document.Editor;
-        
-        try
-        {
-            // 要添加的支持文件路径
-            string supportPath = "C:\\ProgramData\\Autodesk\\ApplicationPlugins\\ZYF.bundle";
-            
-            // 获取当前的支持文件搜索路径
-            string currentPaths = Application.GetSystemVariable("ACAD").ToString();
-            
-            // 检查路径是否已经存在
-            if (currentPaths.Contains(supportPath))
-            {
-                ed.WriteMessage($"\n路径 {supportPath} 已经在支持文件搜索路径中。");
-                return;
-            }
-            
-            // 添加新路径（使用分号分隔）
-            string newPaths = currentPaths + ";" + supportPath;
-            
-            // 设置新的支持文件搜索路径
-            Application.SetSystemVariable("ACAD", newPaths);
-            
-            ed.WriteMessage($"\n成功将路径 {supportPath} 添加到支持文件搜索路径中。");
-            ed.WriteMessage("\n请重启AutoCAD以确保设置生效。");
-        }
-        catch (System.Exception ex)
-        {
-            ed.WriteMessage($"\n添加支持文件路径时出错: {ex.Message}");
-        }
     }
 
     //07图框自动编号
@@ -158,7 +121,7 @@ public class MyCommand
     {
         Document document = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
 
-        string lispPath = "C:/Users/Administrator/Desktop/CADTOOL/ZyfTools/Zyf.autoCAD/Tools/08 0层置为当前图层(p0).lsp";
+        string lispPath = "C:/ProgramData/Autodesk/ApplicationPlugins/ZYF.bundle/Contents/Tools/08 0层置为当前图层(P0).lsp";
 
         string loadStr = String.Format("(load \"{0}\")\n", lispPath);
 
@@ -168,131 +131,43 @@ public class MyCommand
     [CommandMethod(nameof(StartFontApp), CommandFlags.Modal)]
     public void StartFontApp()
     {
-        // 获取DLL所在目录，这对于AutoCAD插件更为可靠
-        string dllPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
-        string dllDirectory = System.IO.Path.GetDirectoryName(dllPath);
-        string exePath = System.IO.Path.Combine(dllDirectory, "Tools", "09 CAD开图自动选字体.exe");
-        
-        // 简化进程名（去掉版本号等信息，只保留关键部分）
-        string processName = "CAD开图自动选字体";
-        
-        Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
-        
-        // 检查程序是否已经在运行
-        if (IsProcessRunning(processName))
-        {
-            ed.WriteMessage("\n字体自动选择程序已经在运行中。");
-            return;
-        }
-        
-        // 启动程序
+        Document document = Application.DocumentManager.MdiActiveDocument;
+        Editor ed = document.Editor;
+
         try
         {
-            // 验证文件是否存在
-            if (!System.IO.File.Exists(exePath))
-            {
-                ed.WriteMessage($"\n找不到程序文件: {exePath}");
-                return;
-            }
-            
-            // 检查文件是否为有效的Windows PE文件
-            if (!IsValidWindowsPEFile(exePath))
-            {
-                ed.WriteMessage("\n错误：字体自动选择程序文件格式无效或已损坏。");
-                ed.WriteMessage("\n请检查程序文件是否完整，或重新获取有效的可执行文件。");
-                return;
-            }
-            
+            // 使用与其他命令类似的固定路径方式
+            string exePath = "C:/ProgramData/Autodesk/ApplicationPlugins/ZYF.bundle/Contents/Tools/09 CAD开图自动选字体.exe";
+
+            // 直接启动程序，不进行额外检查
             Process.Start(exePath);
             ed.WriteMessage("\n字体自动选择程序已启动。");
         }
         catch (System.Exception ex)
         {
             ed.WriteMessage($"\n启动字体自动选择程序失败: {ex.Message}");
-            ed.WriteMessage($"\n程序路径: {exePath}");
-            
-            // 针对平台兼容性错误提供更详细的建议
-            if (ex.Message.Contains("不是此操作系统平台的有效应用程序"))
-            {
-                ed.WriteMessage("\n提示：此程序可能与您当前的Windows版本不兼容。");
-                ed.WriteMessage("\n建议：请尝试以兼容模式运行程序，或联系开发者获取兼容版本。");
-            }
         }
-    }
-      
-    // 检查进程是否在运行（优化后的检测逻辑，更适合后台运行的进程）
-    private bool IsProcessRunning(string processName)
-    {
-        try
-        {
-            // 首先尝试获取精确的进程名进行匹配（去掉.exe扩展名）
-            string exactProcessName = "09 CAD开图自动选字体";
-            Process[] exactProcesses = Process.GetProcessesByName(exactProcessName);
-            if (exactProcesses.Length > 0)
-            {
-                return true;
-            }
-            
-            // 如果精确匹配失败，使用更宽松的匹配方式遍历所有进程
-            foreach (Process process in Process.GetProcesses())
-            {
-                try
-                {
-                    // 检查进程名称（不依赖MainModule）
-                    if (!string.IsNullOrEmpty(process.ProcessName) && 
-                        process.ProcessName.Contains(processName))
-                    {
-                        return true;
-                    }
-                    
-                    // 如果可以访问MainModule，则进行更精确的检查
-                    if (process.MainModule != null && 
-                        process.MainModule.FileName != null)
-                    {
-                        string fileName = process.MainModule.FileName;
-                        // 检查文件名是否包含目标进程名或完整文件名
-                        if (fileName.Contains(processName) || 
-                            fileName.Contains("09 CAD开图自动选字体.exe"))
-                        {
-                            return true;
-                        }
-                    }
-                }
-                catch (System.Exception)
-                {
-                    // 访问某些进程可能会抛出异常（尤其是系统进程或权限受限的进程）
-                    // 忽略这些异常，继续检查下一个进程
-                    continue;
-                }
-            }
-        }
-        catch (System.Exception)
-        {
-            // 如果获取进程列表失败，记录错误但不影响程序运行
-            // 这里返回false表示没有检测到进程运行
-        }
-        return false;
     }
     
-    // 检查文件是否为有效的Windows PE文件
-    private bool IsValidWindowsPEFile(string filePath)
+    // 字体替换命令
+    [CommandMethod("ReplaceFonts", CommandFlags.Modal)]
+    public void ReplaceFonts()
     {
+        Document document = Application.DocumentManager.MdiActiveDocument;
+        Editor ed = document.Editor;
+
         try
         {
-            // 读取文件的前4个字节作为魔术数字
-            using (System.IO.FileStream fs = new System.IO.FileStream(filePath, System.IO.FileMode.Open, System.IO.FileAccess.Read))
-            {
-                byte[] header = new byte[4];
-                int bytesRead = fs.Read(header, 0, 4);
-                
-                // 有效的Windows PE文件魔术数字应该是 MZ.. (4D-5A-90-00)
-                return bytesRead == 4 && header[0] == 0x4D && header[1] == 0x5A && header[2] == 0x90 && header[3] == 0x00;
-            }
+            // 使用与其他命令类似的固定路径方式
+            string exePath = "C:/ProgramData/Autodesk/ApplicationPlugins/ZYF.bundle/Contents/Tools/09 CAD开图自动选字体.exe";
+
+            // 直接启动字体自动选择程序，用于字体替换
+            Process.Start(exePath);
+            ed.WriteMessage("\n字体替换程序已启动。");
         }
-        catch
+        catch (System.Exception ex)
         {
-            // 如果读取文件失败，也视为无效文件
-            return false;
+            ed.WriteMessage($"\n启动字体替换程序失败: {ex.Message}");
         }
     }
 }

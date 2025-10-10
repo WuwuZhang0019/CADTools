@@ -14,14 +14,14 @@ using System.Threading.Tasks;
 using ZYF.autoCAD;
 using System.Drawing.Text;
 
-[assembly:ExtensionApplication(typeof(App))]
+[assembly: ExtensionApplication(typeof(App))]
 namespace ZYF.autoCAD
 {
     public class App : IExtensionApplication
     {
         private string _menuGroup = "ZYFTools";
         private string _path;
-        private string _root; 
+        private string _root;
         private CustomizationSection _main;
 
         public App()
@@ -30,8 +30,8 @@ namespace ZYF.autoCAD
             var mainPath = $"{Autodesk.AutoCAD.ApplicationServices.Core.Application.GetSystemVariable("Menuname")}.cuix";   //通过CAD系统变量拿到当前自定义主文件的路径
             _main = new CustomizationSection(mainPath);     //初始化自定义节点，即根节点
 
-            string location=this.GetType().Assembly.Location;       //拿到当前安装路径
-            _root=Directory.GetParent(location).FullName;           //拿到上一级路径
+            string location = this.GetType().Assembly.Location;       //拿到当前安装路径
+            _root = Directory.GetParent(location).FullName;           //拿到上一级路径
 
             _path = $"{_root}\\{_menuGroup}.cuix";      //拼装路径
 
@@ -45,7 +45,7 @@ namespace ZYF.autoCAD
                 return;
             }
             //如果包含就移除
-            if (!_main.RemovePartialMenu(_path,_menuGroup))
+            if (!_main.RemovePartialMenu(_path, _menuGroup))
             {
                 return;
             }
@@ -55,7 +55,7 @@ namespace ZYF.autoCAD
                 return;
             }
             //删除当前文件
-            if(!File.Exists(_path))
+            if (!File.Exists(_path))
             {
                 return;
             }
@@ -64,7 +64,7 @@ namespace ZYF.autoCAD
 
         void CrateMenu(CustomizationSection tunaSection)
         {
-            StringCollection strings = new StringCollection 
+            StringCollection strings = new StringCollection
             {
                 "ZYFTools"
             };      //传入自定义节点，创建父节点
@@ -76,22 +76,16 @@ namespace ZYF.autoCAD
             new PopMenuItem(QHK, "05 图片去黑框(QHK)", menu, 4);
             new PopMenuItem(MAA, "06 文字复制(MAA)", menu, 5);
             new PopMenuItem(FSN, "07 图框自动编号(FSN)", menu, 6);
-            new PopMenuItem(P0, "08 0层置为当前层(P0)", menu, 7);
+            new PopMenuItem(P0, "08 0层置为当前图层(P0)", menu, 7);
             new PopMenuItem(StartFontApp, "09 启动字体自动选择", menu, 8);
         }
-
-        // void CrateRibbon(CustomizationSection tunaSection)      
-        // {
-        //     // Ribbon菜单栏已禁用
-        //     // 所有Ribbon相关功能都被移除，仅保留函数接口
-        // }
 
         private MenuMacro _JSSS;
         public MenuMacro JSSS
         {
             get
             {
-                if(_JSSS == null)
+                if (_JSSS == null)
                 {
                     _JSSS = new MenuMacro(Parent, "01 CAD急速瘦身(jsss)", "JSSS", "zyf_tag");   //实例化宏菜单对象，传入父集，宏名称，绑定的方法命令，标记
                     _JSSS.macro.SmallImage = $@"{_root}\resource\icon\home.ico";    //添加小图标
@@ -183,7 +177,7 @@ namespace ZYF.autoCAD
                 return _FSN;
             }
         }
-        //080层置为当前层
+
         private MenuMacro _P0;
         public MenuMacro P0
         {
@@ -197,18 +191,34 @@ namespace ZYF.autoCAD
                 return _P0;
             }
         }
-       
-        public MacroGroup Parent{ get; set; }
+
+
+        // 添加MenuMacro属性
+
+        private MenuMacro _StartFontApp;
+        public MenuMacro StartFontApp
+        {
+            get
+            {
+                if (_StartFontApp == null)
+                {
+                    _StartFontApp = new MenuMacro(Parent, "09 启动字体自动选择", "StartFontApp", "zyf_tag");   //实例化宏菜单对象，传入父集，宏名称，绑定的方法命令，标记
+                    _StartFontApp.macro.SmallImage = $@"{_root}\resource\icon\home.ico";    //添加小图标
+                }
+                return _StartFontApp;
+            }
+        }
+        public MacroGroup Parent { get; set; }
 
         public void Initialize()
         {
             Autodesk.AutoCAD.ApplicationServices.Core.Application.BeginQuit += Application_BeginQuit;//订阅当前应用程序在关闭时的事件
-            Reset();        
+            Reset();
 
             // 订阅文档创建和激活事件，确保在打开图纸时字体自动选择程序也能运行
             Application.DocumentManager.DocumentCreated += DocumentManager_DocumentCreated;
             Application.DocumentManager.DocumentActivated += DocumentManager_DocumentActivated;
-            
+
             // 在CAD打开之前自动启动字体选择程序（如果尚未运行）
             StartFontAppIfNotRunning();
 
@@ -223,7 +233,7 @@ namespace ZYF.autoCAD
             // CrateRibbon(tunaSection);       //初始化ribbon界面 - 已注释掉禁用Ribbon菜单栏
             CrateMenu(tunaSection);         //设置菜单界面
 
-            if(tunaSection.SaveAs(_path))   //另存文件
+            if (tunaSection.SaveAs(_path))   //另存文件
             {
                 _main.AddPartialMenu(tunaSection.CUIFileName);      //将局部文件加载到当前主文件下
                 _main.Save();       //保存
@@ -232,21 +242,20 @@ namespace ZYF.autoCAD
 
         }
 
-// 添加MenuMacro属性
-private MenuMacro _StartFontApp;
-
-public MenuMacro StartFontApp
-{
-    get
-    {
-        if(_StartFontApp == null)
+        // 文档创建事件处理程序
+        private void DocumentManager_DocumentCreated(object sender, DocumentCollectionEventArgs e)
         {
-            _StartFontApp = new MenuMacro(Parent, "09 启动字体自动选择", "StartFontApp", "zyf_tag");
-            _StartFontApp.macro.SmallImage = $@"{_root}\resource\icon\home.ico";
+            // 当新文档创建时，检查并启动字体自动选择程序
+            StartFontAppIfNotRunning();
         }
-        return _StartFontApp;
-    }
-}
+
+        // 文档激活事件处理程序
+        private void DocumentManager_DocumentActivated(object sender, DocumentCollectionEventArgs e)
+        {
+            // 当文档被激活时，检查并启动字体自动选择程序
+            StartFontAppIfNotRunning();
+        }
+
 
         //订阅应用程序关闭前的动作
         private void Application_BeginQuit(object sender, BeginQuitEventArgs e)
@@ -259,55 +268,35 @@ public MenuMacro StartFontApp
         }
 
         //自动终结应用程序
-        
+
         public void Terminate()
         {
             throw new NotImplementedException();
         }
 
-        // 检查并启动字体自动选择程序
-// 文档创建事件处理程序
-private void DocumentManager_DocumentCreated(object sender, DocumentCollectionEventArgs e)
-{
-    // 当新文档创建时，检查并启动字体自动选择程序
-    StartFontAppIfNotRunning();
-}
-
-// 文档激活事件处理程序
-private void DocumentManager_DocumentActivated(object sender, DocumentCollectionEventArgs e)
-{
-    // 当文档被激活时，检查并启动字体自动选择程序
-    StartFontAppIfNotRunning();
-}
-
-private void StartFontAppIfNotRunning()
-{
-    string processName = "09 CAD开图自动选字体";
-    
-    // 检查程序是否已经在运行
-    foreach (Process process in Process.GetProcesses())
-    {
-        if (process.ProcessName.Contains(processName))
+        private void StartFontAppIfNotRunning()
         {
-            return; // 程序已经在运行，不需要重复启动
+            string processName = "09 CAD开图自动选字体";
+
+            // 检查程序是否已经在运行
+            foreach (Process process in Process.GetProcesses())
+            {
+                if (process.ProcessName.Contains(processName))
+                {
+                    return; // 程序已经在运行，不需要重复启动
+                }
+            }
+
+            // 程序未运行，启动它
+            try
+            {
+                string exePath = $"{_root}\\Tools\\{processName}.exe";
+                if (File.Exists(exePath))
+                {
+                    Process.Start(exePath);
+                }
+            }
+            catch { }
         }
     }
-    
-    // 程序未运行，启动它
-    try
-    {
-        string exePath = $"{_root}\\Tools\\{processName}.exe";
-        if (File.Exists(exePath))
-        {
-            Process.Start(exePath);
-        }
-    }
-    catch { }
 }
-
-    }
-
-}
-
-
-//dotnet build Zyf.autoCAD/ZYF.autoCAD.csproj

@@ -4,4 +4,3 @@
 (command "_purge" "all" "" "n")
 (setvar "cmdecho" 1)
 (princ)
-

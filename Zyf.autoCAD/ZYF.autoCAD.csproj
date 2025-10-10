@@ -8,7 +8,8 @@
 	  <PlatformTarget>x64</PlatformTarget>
 	  <StartAction>Program</StartAction>
 	  <!-- 开发环境中使用的CAD路径，实际部署时不影响 -->
-	  <StartProgram>C:\Software\Autodesk\AutoCAD 2020\acad.exe</StartProgram>
+	  <!--StartProgram>C:\Software\Autodesk\AutoCAD 2020\acad.exe</StartProgram-->
+    <StartProgram>D:\AUTOCAD2020\AutoCAD 2020\acad.exe</StartProgram>
 	  <AutoCADApplication>ZYF</AutoCADApplication>
 	  <!-- 支持的AutoCAD版本 -->
 	  <SupportedCADVersions>2020;2021;2022</SupportedCADVersions>
@@ -33,31 +34,34 @@
     <None Update="Resource\Icon\home.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Tools\01 CAD急速瘦身神器.lsp">
+    <None Update="Tools\01 CAD急速瘦身(jsss).lsp">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Tools\02 布置地面疏散指示%28mee%29.lsp">
+    <None Update="Tools\02 布置地面疏散指示(mee).lsp">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Tools\03 底图处理V2.4.0.lsp">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Tools\04 图号文字递增V2.0%28thdz%29.lsp">
+    <None Update="Tools\04 图号文字递增V2.0(thdz).lsp">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Tools\05 图片去黑框.lsp">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Tools\06 文字复制%28maa%29.lsp">
+    <None Update="Tools\06 文字复制(maa).lsp">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Tools\07 图框自动编号V2.0%28fsn%29.lsp">
+    <None Update="Tools\07 图框自动编号V2.0(fsn).lsp">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Tools\08 0层置为当前图层.lsp">
+    <None Update="Tools\08 0层置为当前图层(P0).lsp">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Tools\09 CAD开图自动选字体.exe">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Tools\FrameDialog.dcl">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
