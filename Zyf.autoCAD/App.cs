@@ -76,7 +76,7 @@ namespace ZYF.autoCAD
             new PopMenuItem(QHK, "图片去黑框", menu, 4);
             new PopMenuItem(MAA, "文字复制", menu, 5);
             new PopMenuItem(FSN, "图框自动编号", menu, 6);
-
+            new PopMenuItem(FSN, "0层置为当前层", menu, 7);
         }
 
         void CrateRibbon(CustomizationSection tunaSection)      //传入子节点
@@ -113,7 +113,7 @@ namespace ZYF.autoCAD
             ribbonRow.Items.Add(new RibbonCommandButton(ribbonRow)
             {
                 ButtonStyle = RibbonButtonStyle.LargeWithText,      //按钮样式
-                Text = "CAD急速瘦身",                                      //按钮名称
+                Text = "CAD急速瘦身(jsss)",                                      //按钮名称
                 MacroID = JSSS.ElementID,                           //宏ID绑定到homeID
             });
             //创建分割线
@@ -123,7 +123,7 @@ namespace ZYF.autoCAD
             ribbonRow.Items.Add(new RibbonCommandButton(ribbonRow)
             {
                 ButtonStyle = RibbonButtonStyle.LargeWithText,      //按钮样式
-                Text = "布置地面疏散指示",                                      //按钮名称
+                Text = "布置地面疏散指示(mee)",                                      //按钮名称
                 MacroID = MEE.ElementID,                           //宏ID绑定到homeID
             });
             //创建分割线
@@ -133,7 +133,7 @@ namespace ZYF.autoCAD
             ribbonRow.Items.Add(new RibbonCommandButton(ribbonRow)
             {
                 ButtonStyle = RibbonButtonStyle.LargeWithText,      //按钮样式
-                Text = "底图处理",                                      //按钮名称
+                Text = "底图处理(DTCL)",                                      //按钮名称
                 MacroID = DTCL.ElementID,                           //宏ID绑定到homeID
             });
             //创建分割线
@@ -142,7 +142,7 @@ namespace ZYF.autoCAD
             ribbonRow.Items.Add(new RibbonCommandButton(ribbonRow)
             {
                 ButtonStyle = RibbonButtonStyle.LargeWithText,      //按钮样式
-                Text = "图号文字递增",                                      //按钮名称
+                Text = "图号文字递增(THDZ)",                                      //按钮名称
                 MacroID = THDZ.ElementID,                           //宏ID绑定到homeID
             });
             //创建分割线
@@ -151,7 +151,7 @@ namespace ZYF.autoCAD
             ribbonRow.Items.Add(new RibbonCommandButton(ribbonRow)
             {
                 ButtonStyle = RibbonButtonStyle.LargeWithText,      //按钮样式
-                Text = "图片去黑框",                                      //按钮名称
+                Text = "图片去黑框(QHK)",                                      //按钮名称
                 MacroID = QHK.ElementID,                           //宏ID绑定到homeID
             });
             //创建分割线
@@ -160,7 +160,7 @@ namespace ZYF.autoCAD
             ribbonRow.Items.Add(new RibbonCommandButton(ribbonRow)
             {
                 ButtonStyle = RibbonButtonStyle.LargeWithText,      //按钮样式
-                Text = "文字复制",                                      //按钮名称
+                Text = "文字复制(MAA)",                                      //按钮名称
                 MacroID = MAA.ElementID,                           //宏ID绑定到homeID
             });
             //创建分割线
@@ -169,10 +169,18 @@ namespace ZYF.autoCAD
             ribbonRow.Items.Add(new RibbonCommandButton(ribbonRow)
             {
                 ButtonStyle = RibbonButtonStyle.LargeWithText,      //按钮样式
-                Text = "图框自动编号\n(汤润泽)",                                      //按钮名称
+                Text = "图框自动编号(FSN)",                                      //按钮名称
                 MacroID = FSN.ElementID,                           //宏ID绑定到homeID
             });
-
+            //创建分割线
+            ribbonRow.Items.Add(new RibbonSeparator(ribbonRow));
+            //创建命令按钮
+            ribbonRow.Items.Add(new RibbonCommandButton(ribbonRow)
+            {
+                ButtonStyle = RibbonButtonStyle.LargeWithText,      //按钮样式
+                Text = "0层置为当前层",                                      //按钮名称
+                MacroID = P01.ElementID,                           //宏ID绑定到homeID
+            });
         }
 
         private MenuMacro _JSSS;
@@ -270,6 +278,20 @@ namespace ZYF.autoCAD
                     _FSN.macro.LargeImage = $@"{_root}\resource\icon\home.png";    //添加大图标
                 }
                 return _FSN;
+            }
+        }
+        //080层置为当前层
+        private MenuMacro _P01;
+        public MenuMacro P01
+        {
+            get
+            {
+                if (_P01 == null)
+                {
+                    _P01 = new MenuMacro(Parent, "0层置为当前层", "P0", "zyf_tag");   //实例化宏菜单对象，传入父集，宏名称，绑定的方法命令，标记
+                    _P01.macro.LargeImage = $@"{_root}\resource\icon\home.png";    //添加大图标
+                }
+                return _P01;
             }
         }
 
