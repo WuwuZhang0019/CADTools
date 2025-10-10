@@ -83,125 +83,8 @@ namespace ZYF.autoCAD
 
         void CrateRibbon(CustomizationSection tunaSection)      //传入子节点
         {
-            RibbonRoot ribbonRoot = tunaSection.MenuGroup.RibbonRoot;   //拿到功能区根节点
-
-            //创建自定义选项卡
-            RibbonTabSource source = new RibbonTabSource(ribbonRoot)
-            {
-                Name = "ZYFTools",
-                Text = "张裕锋工具集"
-            };
-            ribbonRoot.RibbonTabSources.Add(source);    //拿到选项卡资源集，创建选项卡
-
-            //创建面板 Panel
-            RibbonPanelSource ribbonPanelSource = new RibbonPanelSource(ribbonRoot) 
-            { 
-                Name = "ZYFTools", 
-                Text = "张裕锋工具集"
-            };
-            ribbonRoot.RibbonPanelSources.Add(ribbonPanelSource);   //根节点加入面板资源PanelSources
-
-            RibbonRow ribbonRow = new RibbonRow(ribbonPanelSource); //加一行菜单行
-            ribbonPanelSource.Items.Add(ribbonRow);                 //把行加载到Source里去
-
-            //实例化面板资源引用，传入父节点source
-            RibbonPanelSourceReference ribbonPanelSourceReference = new RibbonPanelSourceReference(source)
-            {
-                PanelId = ribbonPanelSource.ElementID
-            };
-            source.Items.Add(ribbonPanelSourceReference);   //将引用加载到选项卡里
-
-            //创建命令按钮
-            ribbonRow.Items.Add(new RibbonCommandButton(ribbonRow)
-            {
-                ButtonStyle = RibbonButtonStyle.LargeWithText,      //按钮样式
-                Text = "CAD急速瘦身(jsss)",                                      //按钮名称
-                MacroID = JSSS.ElementID,                           //宏ID绑定到homeID
-            });
-            //创建分割线
-            ribbonRow.Items.Add(new RibbonSeparator(ribbonRow));
-
-            //创建命令按钮
-            ribbonRow.Items.Add(new RibbonCommandButton(ribbonRow)
-            {
-                ButtonStyle = RibbonButtonStyle.LargeWithText,      //按钮样式
-                Text = "布置地面疏散指示(mee)",                                      //按钮名称
-                MacroID = MEE.ElementID,                           //宏ID绑定到homeID
-            });
-            //创建分割线
-            ribbonRow.Items.Add(new RibbonSeparator(ribbonRow));
-
-            //创建命令按钮
-            ribbonRow.Items.Add(new RibbonCommandButton(ribbonRow)
-            {
-                ButtonStyle = RibbonButtonStyle.LargeWithText,      //按钮样式
-                Text = "底图处理(DTCL)",                                      //按钮名称
-                MacroID = DTCL.ElementID,                           //宏ID绑定到homeID
-            });
-            //创建分割线
-            ribbonRow.Items.Add(new RibbonSeparator(ribbonRow));
-            //创建命令按钮
-            ribbonRow.Items.Add(new RibbonCommandButton(ribbonRow)
-            {
-                ButtonStyle = RibbonButtonStyle.LargeWithText,      //按钮样式
-                Text = "图号文字递增(THDZ)",                                      //按钮名称
-                MacroID = THDZ.ElementID,                           //宏ID绑定到homeID
-            });
-            //创建分割线
-            ribbonRow.Items.Add(new RibbonSeparator(ribbonRow));
-            //创建命令按钮
-            ribbonRow.Items.Add(new RibbonCommandButton(ribbonRow)
-            {
-                ButtonStyle = RibbonButtonStyle.LargeWithText,      //按钮样式
-                Text = "图片去黑框(QHK)",                                      //按钮名称
-                MacroID = QHK.ElementID,                           //宏ID绑定到homeID
-            });
-            //创建分割线
-            ribbonRow.Items.Add(new RibbonSeparator(ribbonRow));
-            //创建命令按钮
-            ribbonRow.Items.Add(new RibbonCommandButton(ribbonRow)
-            {
-                ButtonStyle = RibbonButtonStyle.LargeWithText,      //按钮样式
-                Text = "文字复制(MAA)",                                      //按钮名称
-                MacroID = MAA.ElementID,                           //宏ID绑定到homeID
-            });
-            //创建分割线
-            ribbonRow.Items.Add(new RibbonSeparator(ribbonRow));
-            //创建命令按钮
-            ribbonRow.Items.Add(new RibbonCommandButton(ribbonRow)
-            {
-                ButtonStyle = RibbonButtonStyle.LargeWithText,      //按钮样式
-                Text = "图框自动编号(FSN)",                                      //按钮名称
-                MacroID = FSN.ElementID,                           //宏ID绑定到homeID
-            });
-            //创建分割线
-            ribbonRow.Items.Add(new RibbonSeparator(ribbonRow));
-            //创建命令按钮
-            ribbonRow.Items.Add(new RibbonCommandButton(ribbonRow)
-            {
-                ButtonStyle = RibbonButtonStyle.LargeWithText,      //按钮样式
-                Text = "0层置为当前层",                                      //按钮名称
-                MacroID = P01.ElementID,                           //宏ID绑定到homeID
-            });
-        
-            // 添加字体自动选择程序的启动按钮
-ribbonRow.Items.Add(new RibbonSeparator(ribbonRow));
-ribbonRow.Items.Add(new RibbonCommandButton(ribbonRow)
-{
-    ButtonStyle = RibbonButtonStyle.LargeWithText,
-    Text = "启动字体自动选择",
-    MacroID = StartFontApp.ElementID,
-});
-
-// 添加字体自动选择程序的关闭按钮
-ribbonRow.Items.Add(new RibbonSeparator(ribbonRow));
-ribbonRow.Items.Add(new RibbonCommandButton(ribbonRow)
-{
-    ButtonStyle = RibbonButtonStyle.LargeWithText,
-    Text = "关闭字体自动选择",
-    MacroID = StopFontApp.ElementID,
-});
-        
+            // Ribbon菜单栏已禁用
+            // 所有Ribbon相关功能都被移除，仅保留函数接口
         }
 
         private MenuMacro _JSSS;
@@ -334,7 +217,7 @@ ribbonRow.Items.Add(new RibbonCommandButton(ribbonRow)
 
             Parent = new MacroGroup("ZYF", tunaSection.MenuGroup);     //创建宏组，存储对应命令
 
-            CrateRibbon(tunaSection);       //初始化ribbon界面
+            // CrateRibbon(tunaSection);       //初始化ribbon界面 - 已注释掉禁用Ribbon菜单栏
             CrateMenu(tunaSection);         //设置菜单界面
 
             if(tunaSection.SaveAs(_path))   //另存文件

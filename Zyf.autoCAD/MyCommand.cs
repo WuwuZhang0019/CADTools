@@ -148,7 +148,7 @@ public class MyCommand
             Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
             ed.WriteMessage("\n字体自动选择程序已启动。");
         }
-        catch (Exception ex)
+        catch (System.Exception ex)
         {
             Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
             ed.WriteMessage($"\n启动字体自动选择程序失败: {ex.Message}");
@@ -175,7 +175,7 @@ public class MyCommand
             Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
             ed.WriteMessage("\n字体自动选择程序已关闭。");
         }
-        catch (Exception ex)
+        catch (System.Exception ex)
         {
             Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
             ed.WriteMessage($"\n关闭字体自动选择程序失败: {ex.Message}");

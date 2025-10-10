@@ -7,8 +7,11 @@
 	  <LangVersion>preview</LangVersion>
 	  <PlatformTarget>x64</PlatformTarget>
 	  <StartAction>Program</StartAction>
-	  <StartProgram>D:\AUTOCAD2020\AutoCAD 2020\acad.exe</StartProgram>
+	  <!-- 开发环境中使用的CAD路径，实际部署时不影响 -->
+	  <StartProgram>C:\Software\Autodesk\AutoCAD 2020\acad.exe</StartProgram>
 	  <AutoCADApplication>ZYF</AutoCADApplication>
+	  <!-- 支持的AutoCAD版本 -->
+	  <SupportedCADVersions>2020;2021;2022</SupportedCADVersions>
   </PropertyGroup>
 
   <ItemGroup>
@@ -46,6 +49,12 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Tools\07 图框自动编号V2.0%28fsn%29.lsp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Tools\08 0层置为当前图层.lsp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Tools\09 CAD开图自动选字体-V1.1-20250221.exe">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
