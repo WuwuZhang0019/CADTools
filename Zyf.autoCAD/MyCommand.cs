@@ -129,8 +129,8 @@ public class MyCommand
         document.SendStringToExecute(loadStr, false, false, false);
     }
     //09 启动字体自动选择程序
-    [CommandMethod(nameof(SFA), CommandFlags.Modal)]
-    public void SFA()
+    [CommandMethod(nameof(StartFontApp), CommandFlags.Modal)]
+    public void StartFontApp()
 {
     try
     {
@@ -144,6 +144,49 @@ public class MyCommand
             FileName = exePath,
             WorkingDirectory = exeDir
         });
+    }
+    catch(System.Exception ex)
+    {
+        Application.DocumentManager.MdiActiveDocument.Editor.WriteMessage(
+            $"\n错误: {ex.Message}");
+    }
+}
+    
+    //重新设置字体
+    [CommandMethod(nameof(ResetFontApp), CommandFlags.Modal)]
+    public void ResetFontApp()
+{
+    try
+    {
+        string exeDir = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
+            @"Autodesk\ApplicationPlugins\ZYF.bundle\Contents\Tools");
+            
+        string exePath = Path.Combine(exeDir, "09 CAD开图自动选字体.exe");
+        string txtPath = Path.Combine(exeDir, "cad开图自动选字体.txt");
+        
+        // 1. 删除txt文件
+        if (File.Exists(txtPath))
+        {
+            File.Delete(txtPath);
+        }
+        
+        // 2. 退出exe程序
+        string processName = Path.GetFileNameWithoutExtension("09 CAD开图自动选字体.exe");
+        Process[] processes = Process.GetProcessesByName(processName);
+        foreach (Process process in processes)
+        {
+            process.Kill();
+            process.WaitForExit(1000); // 等待进程退出，最多1秒
+        }
+        
+        // 3. 重启exe程序
+        Process.Start(new ProcessStartInfo {
+            FileName = exePath,
+            WorkingDirectory = exeDir
+        });
+        
+        Application.DocumentManager.MdiActiveDocument.Editor.WriteMessage("\n字体设置已重置并重启程序。");
     }
     catch(System.Exception ex)
     {

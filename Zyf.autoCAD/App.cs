@@ -77,7 +77,9 @@ namespace ZYF.autoCAD
             new PopMenuItem(MAA, "06 文字复制(MAA)", menu, 5);
             new PopMenuItem(FSN, "07 图框自动编号(FSN)", menu, 6);
             new PopMenuItem(P0, "08 0层置为当前图层(P0)", menu, 7);
-            new PopMenuItem(SFA, "09 启动字体自动选择(SFA)", menu, 8);
+            // 暂时改为两个独立的菜单项
+            new PopMenuItem(StartFontApp, "09-1 启动字体自动选择程序", menu, 8);
+            new PopMenuItem(ResetFontApp, "09-2 重新设置字体", menu, 9);
         }
 
         private MenuMacro _JSSS;
@@ -195,17 +197,31 @@ namespace ZYF.autoCAD
 
         // 添加MenuMacro属性
 
-        private MenuMacro _SFA;
-        public MenuMacro SFA
+        private MenuMacro _StartFontApp;
+        public MenuMacro StartFontApp
         {
             get
             {
-                if (_SFA == null)
+                if (_StartFontApp == null)
                 {
-                    _SFA = new MenuMacro(Parent, "09 启动字体自动选择", "SFA", "zyf_tag");   //实例化宏菜单对象，传入父集，宏名称，绑定的方法命令，标记
-                    _SFA.macro.SmallImage = $@"{_root}\resource\icon\home.ico";    //添加小图标
+                    _StartFontApp = new MenuMacro(Parent, "启动字体自动选择程序", "StartFontApp", "zyf_tag");   //实例化宏菜单对象，传入父集，宏名称，绑定的方法命令，标记
+                    _StartFontApp.macro.SmallImage = $@"{_root}\resource\icon\home.ico";    //添加小图标
                 }
-                return _SFA;
+                return _StartFontApp;
+            }
+        }
+
+        private MenuMacro _ResetFontApp;
+        public MenuMacro ResetFontApp
+        {
+            get
+            {
+                if (_ResetFontApp == null)
+                {
+                    _ResetFontApp = new MenuMacro(Parent, "重新设置字体", "ResetFontApp", "zyf_tag");   //实例化宏菜单对象，传入父集，宏名称，绑定的方法命令，标记
+                    _ResetFontApp.macro.SmallImage = $@"{_root}\resource\icon\home.ico";    //添加小图标
+                }
+                return _ResetFontApp;
             }
         }
         public MacroGroup Parent { get; set; }
