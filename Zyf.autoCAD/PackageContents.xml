@@ -6,7 +6,9 @@
 				NameChs="张裕锋工具集"
 				Author="WuwuZhang"
 				SupportedProducts="AutoCAD:24.0;AutoCAD:25.0;AutoCAD:26.0" 
-				CompatibilityLevel="19.2" >
+				CompatibilityLevel="19.2" 
+				GIT="https://github.com/WuwuZhang/CADTools.git"
+				>
 	
 	<Components>
 		<ComponentEntry AppName="ZYFtool"

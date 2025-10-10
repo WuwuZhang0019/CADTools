@@ -40,13 +40,13 @@
     <None Update="Tools\02 布置地面疏散指示(mee).lsp">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Tools\03 底图处理V2.4.0.lsp">
+    <None Update="Tools\03 底图处理(DTCL).lsp">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Tools\04 图号文字递增V2.0(thdz).lsp">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Tools\05 图片去黑框.lsp">
+    <None Update="Tools\05 图片去黑框(QHK).lsp">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Tools\06 文字复制(maa).lsp">
