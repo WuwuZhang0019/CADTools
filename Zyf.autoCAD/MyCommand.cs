@@ -131,10 +131,16 @@ public class MyCommand
     [CommandMethod(nameof(StartFontApp), CommandFlags.Modal)]
     public void StartFontApp()
     {
-        string exePath = $"{AppDomain.CurrentDomain.BaseDirectory}Tools\\09 CAD开图自动选字体-V1.1-20250221.exe";
+        // 获取DLL所在目录，这对于AutoCAD插件更为可靠
+        string dllPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
+        string dllDirectory = System.IO.Path.GetDirectoryName(dllPath);
+        string exePath = System.IO.Path.Combine(dllDirectory, "Tools", "09 CAD开图自动选字体.exe");
+        
+        // 简化进程名（去掉版本号等信息，只保留关键部分）
+        string processName = "CAD开图自动选字体";
         
         // 检查程序是否已经在运行
-        if (IsProcessRunning("09 CAD开图自动选字体-V1.1-20250221"))
+        if (IsProcessRunning(processName))
         {
             Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
             ed.WriteMessage("\n字体自动选择程序已经在运行中。");
@@ -144,6 +150,14 @@ public class MyCommand
         // 启动程序
         try
         {
+            // 验证文件是否存在
+            if (!System.IO.File.Exists(exePath))
+            {
+                Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
+                ed.WriteMessage($"\n找不到程序文件: {exePath}");
+                return;
+            }
+            
             Process.Start(exePath);
             Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
             ed.WriteMessage("\n字体自动选择程序已启动。");
@@ -152,39 +166,61 @@ public class MyCommand
         {
             Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
             ed.WriteMessage($"\n启动字体自动选择程序失败: {ex.Message}");
+            ed.WriteMessage($"\n程序路径: {exePath}"); // 添加路径信息以便调试
         }
     }
-    
-    //10 关闭字体自动选择程序
-    [CommandMethod(nameof(StopFontApp), CommandFlags.Modal)]
-    public void StopFontApp()
+      
+    // 检查进程是否在运行（优化后的检测逻辑，更适合后台运行的进程）
+    private bool IsProcessRunning(string processName)
     {
         try
         {
-            // 查找并关闭程序
-            foreach (Process process in Process.GetProcessesByName("09 CAD开图自动选字体-V1.1-20250221"))
+            // 首先尝试获取精确的进程名进行匹配（去掉.exe扩展名）
+            string exactProcessName = "09 CAD开图自动选字体";
+            Process[] exactProcesses = Process.GetProcessesByName(exactProcessName);
+            if (exactProcesses.Length > 0)
             {
-                process.CloseMainWindow();
-                process.WaitForExit(1000); // 等待1秒让程序关闭
-                if (!process.HasExited)
-                {
-                    process.Kill();
-                }
+                return true;
             }
             
-            Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
-            ed.WriteMessage("\n字体自动选择程序已关闭。");
+            // 如果精确匹配失败，使用更宽松的匹配方式遍历所有进程
+            foreach (Process process in Process.GetProcesses())
+            {
+                try
+                {
+                    // 检查进程名称（不依赖MainModule）
+                    if (!string.IsNullOrEmpty(process.ProcessName) && 
+                        process.ProcessName.Contains(processName))
+                    {
+                        return true;
+                    }
+                    
+                    // 如果可以访问MainModule，则进行更精确的检查
+                    if (process.MainModule != null && 
+                        process.MainModule.FileName != null)
+                    {
+                        string fileName = process.MainModule.FileName;
+                        // 检查文件名是否包含目标进程名或完整文件名
+                        if (fileName.Contains(processName) || 
+                            fileName.Contains("09 CAD开图自动选字体.exe"))
+                        {
+                            return true;
+                        }
+                    }
+                }
+                catch (System.Exception)
+                {
+                    // 访问某些进程可能会抛出异常（尤其是系统进程或权限受限的进程）
+                    // 忽略这些异常，继续检查下一个进程
+                    continue;
+                }
+            }
         }
-        catch (System.Exception ex)
+        catch (System.Exception)
         {
-            Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
-            ed.WriteMessage($"\n关闭字体自动选择程序失败: {ex.Message}");
+            // 如果获取进程列表失败，记录错误但不影响程序运行
+            // 这里返回false表示没有检测到进程运行
         }
-    }
-    
-    // 检查进程是否在运行
-    private bool IsProcessRunning(string processName)
-    {
-        return Process.GetProcessesByName(processName).Length > 0;
+        return false;
     }
 }
