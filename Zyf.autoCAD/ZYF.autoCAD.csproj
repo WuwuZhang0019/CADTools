@@ -30,6 +30,9 @@
     <None Update="Resource\Icon\home.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Resource\Icon\home.ico">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Tools\01 CAD急速瘦身神器.lsp">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

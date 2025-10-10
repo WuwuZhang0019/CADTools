@@ -69,16 +69,15 @@ namespace ZYF.autoCAD
                 "ZYFTools"
             };      //传入自定义节点，创建父节点
             PopMenu menu = new PopMenu("张裕锋工具集", strings, "ZYFTools", tunaSection.MenuGroup);  //根节点菜单
-            new PopMenuItem(JSSS, "CAD急速瘦身", menu, 0);
-            new PopMenuItem(MEE, "布置地面疏散指示", menu, 1);
-            new PopMenuItem(DTCL, "底图处理", menu, 2);
-            new PopMenuItem(THDZ, "图号文字递增", menu, 3);
-            new PopMenuItem(QHK, "图片去黑框", menu, 4);
-            new PopMenuItem(MAA, "文字复制", menu, 5);
-            new PopMenuItem(FSN, "图框自动编号", menu, 6);
-            new PopMenuItem(P01, "0层置为当前层", menu, 7);
-            new PopMenuItem(StartFontApp, "启动字体自动选择", menu, 8);
-            new PopMenuItem(StopFontApp, "关闭字体自动选择", menu, 9);
+            new PopMenuItem(JSSS, "01 CAD急速瘦身(jsss)", menu, 0);
+            new PopMenuItem(MEE, "02 布置地面疏散指示(mee)", menu, 1);
+            new PopMenuItem(DTCL, "03 底图处理(DTCL)", menu, 2);
+            new PopMenuItem(THDZ, "04 图号文字递增(THDZ)", menu, 3);
+            new PopMenuItem(QHK, "05 图片去黑框(QHK)", menu, 4);
+            new PopMenuItem(MAA, "06 文字复制(MAA)", menu, 5);
+            new PopMenuItem(FSN, "07 图框自动编号(FSN)", menu, 6);
+            new PopMenuItem(P0, "08 0层置为当前层(P0)", menu, 7);
+            new PopMenuItem(StartFontApp, "09 启动字体自动选择", menu, 8);
         }
 
         // void CrateRibbon(CustomizationSection tunaSection)      
@@ -94,8 +93,8 @@ namespace ZYF.autoCAD
             {
                 if(_JSSS == null)
                 {
-                    _JSSS = new MenuMacro(Parent, "01 CAD急速瘦身", "JSSS", "zyf_tag");   //实例化宏菜单对象，传入父集，宏名称，绑定的方法命令，标记
-                    _JSSS.macro.LargeImage = $@"{_root}\resource\icon\home.png";    //添加大图标
+                    _JSSS = new MenuMacro(Parent, "01 CAD急速瘦身(jsss)", "JSSS", "zyf_tag");   //实例化宏菜单对象，传入父集，宏名称，绑定的方法命令，标记
+                    _JSSS.macro.SmallImage = $@"{_root}\resource\icon\home.ico";    //添加小图标
                 }
                 return _JSSS;
             }
@@ -108,8 +107,8 @@ namespace ZYF.autoCAD
             {
                 if (_MEE == null)
                 {
-                    _MEE = new MenuMacro(Parent, "02 布置地面疏散指示", "MEE", "zyf_tag");   //实例化宏菜单对象，传入父集，宏名称，绑定的方法命令，标记
-                    _MEE.macro.LargeImage = $@"{_root}\resource\icon\home.png";    //添加大图标
+                    _MEE = new MenuMacro(Parent, "02 布置地面疏散指示(mee)", "MEE", "zyf_tag");   //实例化宏菜单对象，传入父集，宏名称，绑定的方法命令，标记
+                    _MEE.macro.SmallImage = $@"{_root}\resource\icon\home.ico";    //添加小图标
                 }
                 return _MEE;
             }
@@ -122,8 +121,8 @@ namespace ZYF.autoCAD
             {
                 if (_DTCL == null)
                 {
-                    _DTCL = new MenuMacro(Parent, "03 底图处理", "DTCL", "zyf_tag");   //实例化宏菜单对象，传入父集，宏名称，绑定的方法命令，标记
-                    _DTCL.macro.LargeImage = $@"{_root}\resource\icon\home.png";    //添加大图标
+                    _DTCL = new MenuMacro(Parent, "03 底图处理(DTCL)", "DTCL", "zyf_tag");   //实例化宏菜单对象，传入父集，宏名称，绑定的方法命令，标记
+                    _DTCL.macro.SmallImage = $@"{_root}\resource\icon\home.ico";    //添加小图标
                 }
                 return _DTCL;
             }
@@ -136,8 +135,8 @@ namespace ZYF.autoCAD
             {
                 if (_THDZ == null)
                 {
-                    _THDZ = new MenuMacro(Parent, "04 图号文字递增", "THDZ", "zyf_tag");   //实例化宏菜单对象，传入父集，宏名称，绑定的方法命令，标记
-                    _THDZ.macro.LargeImage = $@"{_root}\resource\icon\home.png";    //添加大图标
+                    _THDZ = new MenuMacro(Parent, "04 图号文字递增(THDZ)", "THDZ", "zyf_tag");   //实例化宏菜单对象，传入父集，宏名称，绑定的方法命令，标记
+                    _THDZ.macro.SmallImage = $@"{_root}\resource\icon\home.ico";    //添加小图标
                 }
                 return _THDZ;
             }
@@ -150,8 +149,8 @@ namespace ZYF.autoCAD
             {
                 if (_QHK == null)
                 {
-                    _QHK = new MenuMacro(Parent, "05 图片去黑框", "QHK", "zyf_tag");   //实例化宏菜单对象，传入父集，宏名称，绑定的方法命令，标记
-                    _QHK.macro.LargeImage = $@"{_root}\resource\icon\home.png";    //添加大图标
+                    _QHK = new MenuMacro(Parent, "05 图片去黑框(QHK)", "QHK", "zyf_tag");   //实例化宏菜单对象，传入父集，宏名称，绑定的方法命令，标记
+                    _QHK.macro.SmallImage = $@"{_root}\resource\icon\home.ico";    //添加小图标
                 }
                 return _QHK;
             }
@@ -164,8 +163,8 @@ namespace ZYF.autoCAD
             {
                 if (_MAA == null)
                 {
-                    _MAA = new MenuMacro(Parent, "06 文字复制", "MAA", "zyf_tag");   //实例化宏菜单对象，传入父集，宏名称，绑定的方法命令，标记
-                    _MAA.macro.LargeImage = $@"{_root}\resource\icon\home.png";    //添加大图标
+                    _MAA = new MenuMacro(Parent, "06 文字复制(MAA)", "MAA", "zyf_tag");   //实例化宏菜单对象，传入父集，宏名称，绑定的方法命令，标记
+                    _MAA.macro.SmallImage = $@"{_root}\resource\icon\home.ico";    //添加小图标
                 }
                 return _MAA;
             }
@@ -178,24 +177,24 @@ namespace ZYF.autoCAD
             {
                 if (_FSN == null)
                 {
-                    _FSN = new MenuMacro(Parent, "07 图框自动编号", "FSN", "zyf_tag");   //实例化宏菜单对象，传入父集，宏名称，绑定的方法命令，标记
-                    _FSN.macro.LargeImage = $@"{_root}\resource\icon\home.png";    //添加大图标
+                    _FSN = new MenuMacro(Parent, "07 图框自动编号(FSN)", "FSN", "zyf_tag");   //实例化宏菜单对象，传入父集，宏名称，绑定的方法命令，标记
+                    _FSN.macro.SmallImage = $@"{_root}\resource\icon\home.ico";    //添加小图标
                 }
                 return _FSN;
             }
         }
         //080层置为当前层
-        private MenuMacro _P01;
-        public MenuMacro P01
+        private MenuMacro _P0;
+        public MenuMacro P0
         {
             get
             {
-                if (_P01 == null)
+                if (_P0 == null)
                 {
-                    _P01 = new MenuMacro(Parent, "08 0层置为当前层", "P0", "zyf_tag");   //实例化宏菜单对象，传入父集，宏名称，绑定的方法命令，标记
-                    _P01.macro.LargeImage = $@"{_root}\resource\icon\home.png";    //添加大图标
+                    _P0 = new MenuMacro(Parent, "08 0层置为当前图层(P0)", "P0", "zyf_tag");   //实例化宏菜单对象，传入父集，宏名称，绑定的方法命令，标记
+                    _P0.macro.SmallImage = $@"{_root}\resource\icon\home.ico";    //添加小图标
                 }
-                return _P01;
+                return _P0;
             }
         }
        
@@ -206,6 +205,10 @@ namespace ZYF.autoCAD
             Autodesk.AutoCAD.ApplicationServices.Core.Application.BeginQuit += Application_BeginQuit;//订阅当前应用程序在关闭时的事件
             Reset();        
 
+            // 订阅文档创建和激活事件，确保在打开图纸时字体自动选择程序也能运行
+            Application.DocumentManager.DocumentCreated += DocumentManager_DocumentCreated;
+            Application.DocumentManager.DocumentActivated += DocumentManager_DocumentActivated;
+            
             // 在CAD打开之前自动启动字体选择程序（如果尚未运行）
             StartFontAppIfNotRunning();
 
@@ -231,7 +234,6 @@ namespace ZYF.autoCAD
 
 // 添加MenuMacro属性
 private MenuMacro _StartFontApp;
-private MenuMacro _StopFontApp;
 
 public MenuMacro StartFontApp
 {
@@ -240,7 +242,7 @@ public MenuMacro StartFontApp
         if(_StartFontApp == null)
         {
             _StartFontApp = new MenuMacro(Parent, "09 启动字体自动选择", "StartFontApp", "zyf_tag");
-            _StartFontApp.macro.LargeImage = $@"{_root}\resource\icon\home.png";
+            _StartFontApp.macro.SmallImage = $@"{_root}\resource\icon\home.ico";
         }
         return _StartFontApp;
     }
@@ -251,7 +253,9 @@ public MenuMacro StartFontApp
         {
             Reset();    //重置文件夹文件，卸载界面菜单
             Autodesk.AutoCAD.ApplicationServices.Core.Application.BeginQuit -= Application_BeginQuit;   //取消订阅
-
+            // 取消订阅文档相关事件
+            Application.DocumentManager.DocumentCreated -= DocumentManager_DocumentCreated;
+            Application.DocumentManager.DocumentActivated -= DocumentManager_DocumentActivated;
         }
 
         //自动终结应用程序
@@ -262,6 +266,20 @@ public MenuMacro StartFontApp
         }
 
         // 检查并启动字体自动选择程序
+// 文档创建事件处理程序
+private void DocumentManager_DocumentCreated(object sender, DocumentCollectionEventArgs e)
+{
+    // 当新文档创建时，检查并启动字体自动选择程序
+    StartFontAppIfNotRunning();
+}
+
+// 文档激活事件处理程序
+private void DocumentManager_DocumentActivated(object sender, DocumentCollectionEventArgs e)
+{
+    // 当文档被激活时，检查并启动字体自动选择程序
+    StartFontAppIfNotRunning();
+}
+
 private void StartFontAppIfNotRunning()
 {
     string processName = "09 CAD开图自动选字体";
@@ -290,3 +308,6 @@ private void StartFontAppIfNotRunning()
     }
 
 }
+
+
+//dotnet build Zyf.autoCAD/ZYF.autoCAD.csproj
