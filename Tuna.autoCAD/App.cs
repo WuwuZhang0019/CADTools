@@ -11,15 +11,15 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Tuna.autoCAD;
+using ZYF.autoCAD;
 using System.Drawing.Text;
 
 [assembly:ExtensionApplication(typeof(App))]
-namespace Tuna.autoCAD
+namespace ZYF.autoCAD
 {
     public class App : IExtensionApplication
     {
-        private string _menuGroup = "tuna";
+        private string _menuGroup = "ZYFTools";
         private string _path;
         private string _root; 
         private CustomizationSection _main;
@@ -66,18 +66,17 @@ namespace Tuna.autoCAD
         {
             StringCollection strings = new StringCollection 
             {
-                "Tuna"
+                "ZYFTools"
             };      //传入自定义节点，创建父节点
-            PopMenu menu = new PopMenu("张裕锋1", strings, "Tuna", tunaSection.MenuGroup);  //根节点菜单
-            new PopMenuItem(Home, "建筑", menu, 0);
-            new PopMenuItem(Home, "结构", menu, 1);
-            new PopMenuItem(Home, "机电", menu, 2);
+            PopMenu menu = new PopMenu("张裕锋工具集", strings, "ZYFTools", tunaSection.MenuGroup);  //根节点菜单
+            new PopMenuItem(JSSS, "CAD急速瘦身", menu, 0);
+            new PopMenuItem(MEE, "布置地面疏散指示", menu, 1);
+            new PopMenuItem(DTCL, "底图处理", menu, 2);
+            new PopMenuItem(THDZ, "图号文字递增", menu, 3);
+            new PopMenuItem(QHK, "图片去黑框", menu, 4);
+            new PopMenuItem(MAA, "文字复制", menu, 5);
+            new PopMenuItem(FSN, "图框自动编号", menu, 6);
 
-            PopMenu subMenu = new PopMenu("其他", new StringCollection(), "Other", tunaSection.MenuGroup);    //创建子节点菜单
-            new PopMenuRef(subMenu, menu, 3);       //创建子菜单索引占位
-            new PopMenuItem(Home, "景观", subMenu, 0);
-            new PopMenuItem(Home, "亮化", subMenu, 1);
-            new PopMenuItem(Home, "规划", subMenu, 2);
         }
 
         void CrateRibbon(CustomizationSection tunaSection)      //传入子节点
@@ -87,16 +86,16 @@ namespace Tuna.autoCAD
             //创建自定义选项卡
             RibbonTabSource source = new RibbonTabSource(ribbonRoot)
             {
-                Name = "Tuna",
-                Text = "张裕锋"
+                Name = "ZYFTools",
+                Text = "张裕锋工具集"
             };
             ribbonRoot.RibbonTabSources.Add(source);    //拿到选项卡资源集，创建选项卡
 
             //创建面板 Panel
             RibbonPanelSource ribbonPanelSource = new RibbonPanelSource(ribbonRoot) 
             { 
-                Name = "userpanel", 
-                Text = "用户" 
+                Name = "ZYFTools", 
+                Text = "张裕锋工具集"
             };
             ribbonRoot.RibbonPanelSources.Add(ribbonPanelSource);   //根节点加入面板资源PanelSources
 
@@ -114,74 +113,167 @@ namespace Tuna.autoCAD
             ribbonRow.Items.Add(new RibbonCommandButton(ribbonRow)
             {
                 ButtonStyle = RibbonButtonStyle.LargeWithText,      //按钮样式
-                Text = "首页",                                      //按钮名称
-                MacroID = Home.ElementID,                           //宏ID绑定到homeID
+                Text = "CAD急速瘦身",                                      //按钮名称
+                MacroID = JSSS.ElementID,                           //宏ID绑定到homeID
             });
-
             //创建分割线
             ribbonRow.Items.Add(new RibbonSeparator(ribbonRow));
 
-            //创建堆叠式按钮
-            RibbonRowPanel ribbonRowPanel = new RibbonRowPanel(ribbonRow);      //初始化子面板
-            ribbonRow.Items.Add(ribbonRowPanel);        //将子面板加载到行里去
-
-            RibbonRow firstRibbonRow = new RibbonRow(ribbonRowPanel);     //创建第一行  
-            ribbonRowPanel.Items.Add(firstRibbonRow);       //添加到子面板中
-            firstRibbonRow.Items.Add(new RibbonCommandButton(firstRibbonRow)     //创建第一行按钮
+            //创建命令按钮
+            ribbonRow.Items.Add(new RibbonCommandButton(ribbonRow)
             {
-                ButtonStyle = RibbonButtonStyle.SmallWithText,     //按钮样式
-                Text = "剪切",                                     //按钮名称
-                MacroID = Home.ElementID,                          //宏ID绑定到homeID
+                ButtonStyle = RibbonButtonStyle.LargeWithText,      //按钮样式
+                Text = "布置地面疏散指示",                                      //按钮名称
+                MacroID = MEE.ElementID,                           //宏ID绑定到homeID
+            });
+            //创建分割线
+            ribbonRow.Items.Add(new RibbonSeparator(ribbonRow));
+
+            //创建命令按钮
+            ribbonRow.Items.Add(new RibbonCommandButton(ribbonRow)
+            {
+                ButtonStyle = RibbonButtonStyle.LargeWithText,      //按钮样式
+                Text = "底图处理",                                      //按钮名称
+                MacroID = DTCL.ElementID,                           //宏ID绑定到homeID
+            });
+            //创建分割线
+            ribbonRow.Items.Add(new RibbonSeparator(ribbonRow));
+            //创建命令按钮
+            ribbonRow.Items.Add(new RibbonCommandButton(ribbonRow)
+            {
+                ButtonStyle = RibbonButtonStyle.LargeWithText,      //按钮样式
+                Text = "图号文字递增",                                      //按钮名称
+                MacroID = THDZ.ElementID,                           //宏ID绑定到homeID
+            });
+            //创建分割线
+            ribbonRow.Items.Add(new RibbonSeparator(ribbonRow));
+            //创建命令按钮
+            ribbonRow.Items.Add(new RibbonCommandButton(ribbonRow)
+            {
+                ButtonStyle = RibbonButtonStyle.LargeWithText,      //按钮样式
+                Text = "图片去黑框",                                      //按钮名称
+                MacroID = QHK.ElementID,                           //宏ID绑定到homeID
+            });
+            //创建分割线
+            ribbonRow.Items.Add(new RibbonSeparator(ribbonRow));
+            //创建命令按钮
+            ribbonRow.Items.Add(new RibbonCommandButton(ribbonRow)
+            {
+                ButtonStyle = RibbonButtonStyle.LargeWithText,      //按钮样式
+                Text = "文字复制",                                      //按钮名称
+                MacroID = MAA.ElementID,                           //宏ID绑定到homeID
+            });
+            //创建分割线
+            ribbonRow.Items.Add(new RibbonSeparator(ribbonRow));
+            //创建命令按钮
+            ribbonRow.Items.Add(new RibbonCommandButton(ribbonRow)
+            {
+                ButtonStyle = RibbonButtonStyle.LargeWithText,      //按钮样式
+                Text = "图框自动编号\n(汤润泽)",                                      //按钮名称
+                MacroID = FSN.ElementID,                           //宏ID绑定到homeID
             });
 
-            RibbonRow secondRibbonRow = new RibbonRow(ribbonRowPanel);      //创建第二行
-            ribbonRowPanel.Items.Add(secondRibbonRow);       //添加到子面板中
-            secondRibbonRow.Items.Add(new RibbonCommandButton(secondRibbonRow)
-            {
-                ButtonStyle = RibbonButtonStyle.SmallWithText,
-                Text = "连接",
-                MacroID = Home.ElementID,
-            });
-
-            //创建下拉式按钮
-            RibbonSplitButton ribbonSplitButton = new RibbonSplitButton(ribbonRow)
-            {
-                Text = "建筑",
-                ButtonStyle = RibbonButtonStyle.LargeWithText
-            };
-            ribbonRow.Items.Add(ribbonSplitButton);
-
-            ribbonSplitButton.Items.Add(new RibbonCommandButton(ribbonSplitButton)
-            {
-                ButtonStyle = RibbonButtonStyle.LargeWithText,
-                Text = "柱子",
-                MacroID = Home.ElementID,
-
-            });
-
-            ribbonSplitButton.Items.Add(new RibbonCommandButton(ribbonSplitButton)
-            {
-                ButtonStyle = RibbonButtonStyle.LargeWithText,
-                Text = "墙",
-                MacroID = Home.ElementID,
-
-            });
         }
 
-        private MenuMacro _home;
-        public MenuMacro Home
+        private MenuMacro _JSSS;
+        public MenuMacro JSSS
         {
             get
             {
-                if(_home == null)
+                if(_JSSS == null)
                 {
-                    _home = new MenuMacro(Parent, "home", "Command", "tuna_tag");   //实例化宏菜单对象，传入父集，宏名称，绑定的方法命令，标记
-                    _home.macro.LargeImage = $@"{_root}\resource\icon\home.png";    //添加大图标
-                    _home.macro.SmallImage = $@"{_root}\resource\icon\home.png";    //添加小图标
+                    _JSSS = new MenuMacro(Parent, "CAD急速瘦身", "JSSS", "zyf_tag");   //实例化宏菜单对象，传入父集，宏名称，绑定的方法命令，标记
+                    _JSSS.macro.LargeImage = $@"{_root}\resource\icon\home.png";    //添加大图标
                 }
-                return _home;
+                return _JSSS;
             }
         }
+
+        private MenuMacro _MEE;
+        public MenuMacro MEE
+        {
+            get
+            {
+                if (_MEE == null)
+                {
+                    _MEE = new MenuMacro(Parent, "布置地面疏散指示", "MEE", "zyf_tag");   //实例化宏菜单对象，传入父集，宏名称，绑定的方法命令，标记
+                    _MEE.macro.LargeImage = $@"{_root}\resource\icon\home.png";    //添加大图标
+                }
+                return _MEE;
+            }
+        }
+
+        private MenuMacro _DTCL;
+        public MenuMacro DTCL
+        {
+            get
+            {
+                if (_DTCL == null)
+                {
+                    _DTCL = new MenuMacro(Parent, "底图处理", "DTCL", "zyf_tag");   //实例化宏菜单对象，传入父集，宏名称，绑定的方法命令，标记
+                    _DTCL.macro.LargeImage = $@"{_root}\resource\icon\home.png";    //添加大图标
+                }
+                return _DTCL;
+            }
+        }
+
+        private MenuMacro _THDZ;
+        public MenuMacro THDZ
+        {
+            get
+            {
+                if (_THDZ == null)
+                {
+                    _THDZ = new MenuMacro(Parent, "图号文字递增", "THDZ", "zyf_tag");   //实例化宏菜单对象，传入父集，宏名称，绑定的方法命令，标记
+                    _THDZ.macro.LargeImage = $@"{_root}\resource\icon\home.png";    //添加大图标
+                }
+                return _THDZ;
+            }
+        }
+
+        private MenuMacro _QHK;
+        public MenuMacro QHK
+        {
+            get
+            {
+                if (_QHK == null)
+                {
+                    _QHK = new MenuMacro(Parent, "图片去黑框", "QHK", "zyf_tag");   //实例化宏菜单对象，传入父集，宏名称，绑定的方法命令，标记
+                    _QHK.macro.LargeImage = $@"{_root}\resource\icon\home.png";    //添加大图标
+                }
+                return _QHK;
+            }
+        }
+
+        private MenuMacro _MAA;
+        public MenuMacro MAA
+        {
+            get
+            {
+                if (_MAA == null)
+                {
+                    _MAA = new MenuMacro(Parent, "文字复制", "MAA", "zyf_tag");   //实例化宏菜单对象，传入父集，宏名称，绑定的方法命令，标记
+                    _MAA.macro.LargeImage = $@"{_root}\resource\icon\home.png";    //添加大图标
+                }
+                return _MAA;
+            }
+        }
+
+        private MenuMacro _FSN;
+        public MenuMacro FSN
+        {
+            get
+            {
+                if (_FSN == null)
+                {
+                    _FSN = new MenuMacro(Parent, "图框自动编号", "FSN", "zyf_tag");   //实例化宏菜单对象，传入父集，宏名称，绑定的方法命令，标记
+                    _FSN.macro.LargeImage = $@"{_root}\resource\icon\home.png";    //添加大图标
+                }
+                return _FSN;
+            }
+        }
+
+
 
         public MacroGroup Parent{ get; set; }
 
@@ -196,7 +288,7 @@ namespace Tuna.autoCAD
                 MenuGroupName = _menuGroup      //属性赋值
             };
 
-            Parent = new MacroGroup("Tuna", tunaSection.MenuGroup);     //创建宏组，存储对应命令
+            Parent = new MacroGroup("ZYF", tunaSection.MenuGroup);     //创建宏组，存储对应命令
 
             CrateRibbon(tunaSection);       //初始化ribbon界面
             CrateMenu(tunaSection);         //设置菜单界面

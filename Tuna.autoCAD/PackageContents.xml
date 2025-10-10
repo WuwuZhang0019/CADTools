@@ -1,27 +1,21 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <ApplicationPackage SchemaVersion="1.0" 
 					AppVersion="1.0.0.0"
-					ProductCode="94D0D34E-15C1-4583-A200-10DEECA3831D"					 
-					Name="Tuna"
-					NameChs="金枪鱼"
+					ProductCode="D33FF8C5-66B0-4F5C-A4C0-1094E75BE7A5"					 
+					Name="ZYFtool"
+					NameChs="张裕锋工具集"
 					Author="WuwuZhang">
-	<CompanyDetails Name="金枪鱼开发组" 
-					Url="www.ituna.top" 
-					Email="123456789@qq.com" 
-					Phone="123456789">		
-	</CompanyDetails>
 	
 	<Components>
-		<ComponentEntry AppName="Tuna"
+		<ComponentEntry AppName="ZYFtool"
 						Version="1.0"
-						ModuleName=".\Contents\Tuna.AutoCAD.dll"
-						AppDescription="这是我第一个CAD应用"
+						ModuleName=".\Contents\ZYF.AutoCAD.dll"
+						AppDescription="张裕锋工具集"
 						LoadOnAutoCADStartup="true">
 			<Commands>
-				<Command Local="Command" 
-						 Global="Command" 
-						 StartupCommand="true">
-					
+				<Command Local="ReplaceFonts" 
+						 Global="ReplaceFonts" 
+						 StartupCommand="true">					
 				</Command>
 			</Commands>			
 		</ComponentEntry>

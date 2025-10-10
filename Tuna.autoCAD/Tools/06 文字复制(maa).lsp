@@ -1,0 +1,11 @@
+;文字复制，命令maa
+(defun c:maa()
+(setq #text_data1 (entget (car (nentsel))))
+(setq #old_txt1 (assoc 1 #text_data1));(1 . "地下一层接地平面图")
+(setq #text_data2 (entget (car (nentsel))))
+(setq #old_txt2 (assoc 1 #text_data2));(1 . "000")
+(setq #new_text (subst #old_txt1 #old_txt2 #text_data2))
+(entmod #new_text)
+)
+(c:maa)
+(prin1)

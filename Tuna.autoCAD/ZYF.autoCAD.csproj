@@ -8,7 +8,7 @@
 	  <PlatformTarget>x64</PlatformTarget>
 	  <StartAction>Program</StartAction>
 	  <StartProgram>D:\AUTOCAD2020\AutoCAD 2020\acad.exe</StartProgram>
-	  <AutoCADApplication>Tuna</AutoCADApplication>
+	  <AutoCADApplication>ZYF</AutoCADApplication>
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,17 +23,41 @@
     <Folder Include="Resource\Icon\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="Resource\Icon\home.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Tools\01 CAD急速瘦身神器.lsp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Tools\02 布置地面疏散指示%28mee%29.lsp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Tools\03 底图处理V2.4.0.lsp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Tools\04 图号文字递增V2.0%28thdz%29.lsp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Tools\05 图片去黑框.lsp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Tools\06 文字复制%28maa%29.lsp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Tools\07 图框自动编号V2.0%28fsn%29.lsp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 	<Target Name="CopyApplication" AfterTargets="PostBuildEvent">
 		<ItemGroup>
 			<SourceFiles Include="$(ProjectDir)$(OutDir)/**/*.*"></SourceFiles>
 		</ItemGroup>
 		<Copy SourceFiles="@(SourceFiles)" DestinationFiles="@(SourceFiles->'C:\ProgramData\Autodesk\ApplicationPlugins\$(AutoCADApplication).bundle\Contents\%(RecursiveDir)%(FileName)%(Extension)')">
 		</Copy>
-		
+
 		<Copy SourceFiles="$(ProjectDir)/PackageContents.xml" DestinationFolder="C:\ProgramData\Autodesk\ApplicationPlugins\$(AutoCADApplication).bundle">
 		</Copy>
-		
-		
-		
 	</Target>
+
 </Project>
