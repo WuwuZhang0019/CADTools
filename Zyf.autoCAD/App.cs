@@ -76,7 +76,9 @@ namespace ZYF.autoCAD
             new PopMenuItem(QHK, "图片去黑框", menu, 4);
             new PopMenuItem(MAA, "文字复制", menu, 5);
             new PopMenuItem(FSN, "图框自动编号", menu, 6);
-            new PopMenuItem(FSN, "0层置为当前层", menu, 7);
+            new PopMenuItem(P01, "0层置为当前层", menu, 7);
+            new PopMenuItem(StartFontApp, "启动字体自动选择", menu, 8);
+            new PopMenuItem(StopFontApp, "关闭字体自动选择", menu, 9);
         }
 
         void CrateRibbon(CustomizationSection tunaSection)      //传入子节点
@@ -181,6 +183,25 @@ namespace ZYF.autoCAD
                 Text = "0层置为当前层",                                      //按钮名称
                 MacroID = P01.ElementID,                           //宏ID绑定到homeID
             });
+        
+            // 添加字体自动选择程序的启动按钮
+ribbonRow.Items.Add(new RibbonSeparator(ribbonRow));
+ribbonRow.Items.Add(new RibbonCommandButton(ribbonRow)
+{
+    ButtonStyle = RibbonButtonStyle.LargeWithText,
+    Text = "启动字体自动选择",
+    MacroID = StartFontApp.ElementID,
+});
+
+// 添加字体自动选择程序的关闭按钮
+ribbonRow.Items.Add(new RibbonSeparator(ribbonRow));
+ribbonRow.Items.Add(new RibbonCommandButton(ribbonRow)
+{
+    ButtonStyle = RibbonButtonStyle.LargeWithText,
+    Text = "关闭字体自动选择",
+    MacroID = StopFontApp.ElementID,
+});
+        
         }
 
         private MenuMacro _JSSS;
@@ -294,15 +315,16 @@ namespace ZYF.autoCAD
                 return _P01;
             }
         }
-
-
-
+       
         public MacroGroup Parent{ get; set; }
 
         public void Initialize()
         {
             Autodesk.AutoCAD.ApplicationServices.Core.Application.BeginQuit += Application_BeginQuit;//订阅当前应用程序在关闭时的事件
             Reset();        
+
+            // 在CAD打开之前自动启动字体选择程序（如果尚未运行）
+            StartFontAppIfNotRunning();
 
             //开始自定义文件
             CustomizationSection tunaSection = new CustomizationSection()       //实例化一个自定义节点
@@ -324,6 +346,37 @@ namespace ZYF.autoCAD
 
         }
 
+// 添加MenuMacro属性
+private MenuMacro _StartFontApp;
+private MenuMacro _StopFontApp;
+
+public MenuMacro StartFontApp
+{
+    get
+    {
+        if(_StartFontApp == null)
+        {
+            _StartFontApp = new MenuMacro(Parent, "启动字体自动选择", "StartFontApp", "zyf_tag");
+            _StartFontApp.macro.LargeImage = $@"{_root}\resource\icon\home.png";
+        }
+        return _StartFontApp;
+    }
+}
+
+public MenuMacro StopFontApp
+{
+    get
+    {
+        if(_StopFontApp == null)
+        {
+            _StopFontApp = new MenuMacro(Parent, "关闭字体自动选择", "StopFontApp", "zyf_tag");
+            _StopFontApp.macro.LargeImage = $@"{_root}\resource\icon\home.png";
+        }
+        return _StopFontApp;
+    }
+}
+
+
         //订阅应用程序关闭前的动作
         private void Application_BeginQuit(object sender, BeginQuitEventArgs e)
         {
@@ -339,6 +392,31 @@ namespace ZYF.autoCAD
             throw new NotImplementedException();
         }
 
+        // 检查并启动字体自动选择程序
+private void StartFontAppIfNotRunning()
+{
+    string processName = "09 CAD开图自动选字体-V1.1-20250221";
+    
+    // 检查程序是否已经在运行
+    foreach (Process process in Process.GetProcesses())
+    {
+        if (process.ProcessName.Contains(processName))
+        {
+            return; // 程序已经在运行，不需要重复启动
+        }
+    }
+    
+    // 程序未运行，启动它
+    try
+    {
+        string exePath = $"{_root}\\Tools\\{processName}.exe";
+        if (File.Exists(exePath))
+        {
+            Process.Start(exePath);
+        }
+    }
+    catch { }
+}
 
     }
 
