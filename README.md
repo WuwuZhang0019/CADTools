@@ -3,3 +3,4 @@
 git add .
 git commit -m "update"
 git push origin main
+dotnet build Zyf.autoCAD/ZYF.autoCAD.csproj 
