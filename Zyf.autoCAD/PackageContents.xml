@@ -15,6 +15,10 @@
 						AppDescription="张裕锋工具集"
 						LoadOnAutoCADStartup="true">
 			<Commands>
+				<Command Local="StartFontApp" 
+				Global="StartFontApp"
+				StartupCommand="false">
+    			</Command>
 				<Command Local="ReplaceFonts" 
 						 Global="ReplaceFonts" 
 						 StartupCommand="true">					

@@ -5,6 +5,7 @@ using Autodesk.AutoCAD.Runtime;
 using System;
 using System.Diagnostics;
 using System.Text;
+using System.IO;
 using ZYF.autoCAD;
 using ZYF.autoCAD.Commands;
 
@@ -31,7 +32,7 @@ public class MyCommand
     {
         Document document = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
 
-        string lispPath = "C:/ProgramData/Autodesk/ApplicationPlugins/ZYF.bundle/Contents/Tools/01 CAD急速瘦身神器.lsp";
+        string lispPath = "C:/ProgramData/Autodesk/ApplicationPlugins/ZYF.bundle/Contents/Tools/01 CAD急速瘦身神器(jsss).lsp";
 
         string loadStr = String.Format("(load \"{0}\")\n", lispPath);
 
@@ -57,7 +58,7 @@ public class MyCommand
     {
         Document document = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
 
-        string lispPath = "C:/ProgramData/Autodesk/ApplicationPlugins/ZYF.bundle/Contents/Tools/03 底图处理V2.4.0.lsp";
+        string lispPath = "C:/ProgramData/Autodesk/ApplicationPlugins/ZYF.bundle/Contents/Tools/03 底图处理(DTCL).lsp";
 
         string loadStr = String.Format("(load \"{0}\")\n", lispPath);
 
@@ -83,7 +84,7 @@ public class MyCommand
     {
         Document document = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
 
-        string lispPath = "C:/ProgramData/Autodesk/ApplicationPlugins/ZYF.bundle/Contents/Tools/05 图片去黑框.lsp";
+        string lispPath = "C:/ProgramData/Autodesk/ApplicationPlugins/ZYF.bundle/Contents/Tools/05 图片去黑框(QHK).lsp";
 
         string loadStr = String.Format("(load \"{0}\")\n", lispPath);
 
@@ -128,26 +129,28 @@ public class MyCommand
         document.SendStringToExecute(loadStr, false, false, false);
     }
     //09 启动字体自动选择程序
-    [CommandMethod(nameof(StartFontApp), CommandFlags.Modal)]
-    public void StartFontApp()
+    [CommandMethod(nameof(SFA), CommandFlags.Modal)]
+    public void SFA()
+{
+    try
     {
-        Document document = Application.DocumentManager.MdiActiveDocument;
-        Editor ed = document.Editor;
-
-        try
-        {
-            // 使用与其他命令类似的固定路径方式
-            string exePath = "C:/ProgramData/Autodesk/ApplicationPlugins/ZYF.bundle/Contents/Tools/09 CAD开图自动选字体.exe";
-
-            // 直接启动程序，不进行额外检查
-            Process.Start(exePath);
-            ed.WriteMessage("\n字体自动选择程序已启动。");
-        }
-        catch (System.Exception ex)
-        {
-            ed.WriteMessage($"\n启动字体自动选择程序失败: {ex.Message}");
-        }
+        string exeDir = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
+            @"Autodesk\ApplicationPlugins\ZYF.bundle\Contents\Tools");
+            
+        string exePath = Path.Combine(exeDir, "09 CAD开图自动选字体.exe");
+        
+        Process.Start(new ProcessStartInfo {
+            FileName = exePath,
+            WorkingDirectory = exeDir
+        });
     }
+    catch(System.Exception ex)
+    {
+        Application.DocumentManager.MdiActiveDocument.Editor.WriteMessage(
+            $"\n错误: {ex.Message}");
+    }
+}
     
     // 字体替换命令
     [CommandMethod("ReplaceFonts", CommandFlags.Modal)]

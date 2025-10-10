@@ -69,15 +69,15 @@ namespace ZYF.autoCAD
                 "ZYFTools"
             };      //传入自定义节点，创建父节点
             PopMenu menu = new PopMenu("张裕锋工具集", strings, "ZYFTools", tunaSection.MenuGroup);  //根节点菜单
-            new PopMenuItem(JSSS, "01 CAD急速瘦身(jsss)", menu, 0);
-            new PopMenuItem(MEE, "02 布置地面疏散指示(mee)", menu, 1);
+            new PopMenuItem(JSSS, "01 CAD急速瘦身(JSSS)", menu, 0);
+            new PopMenuItem(MEE, "02 布置地面疏散指示(MEE)", menu, 1);
             new PopMenuItem(DTCL, "03 底图处理(DTCL)", menu, 2);
             new PopMenuItem(THDZ, "04 图号文字递增(THDZ)", menu, 3);
             new PopMenuItem(QHK, "05 图片去黑框(QHK)", menu, 4);
             new PopMenuItem(MAA, "06 文字复制(MAA)", menu, 5);
             new PopMenuItem(FSN, "07 图框自动编号(FSN)", menu, 6);
             new PopMenuItem(P0, "08 0层置为当前图层(P0)", menu, 7);
-            new PopMenuItem(StartFontApp, "09 启动字体自动选择", menu, 8);
+            new PopMenuItem(SFA, "09 启动字体自动选择(SFA)", menu, 8);
         }
 
         private MenuMacro _JSSS;
@@ -87,7 +87,7 @@ namespace ZYF.autoCAD
             {
                 if (_JSSS == null)
                 {
-                    _JSSS = new MenuMacro(Parent, "01 CAD急速瘦身(jsss)", "JSSS", "zyf_tag");   //实例化宏菜单对象，传入父集，宏名称，绑定的方法命令，标记
+                    _JSSS = new MenuMacro(Parent, "01 CAD急速瘦身(JSSS)", "JSSS", "zyf_tag");   //实例化宏菜单对象，传入父集，宏名称，绑定的方法命令，标记
                     _JSSS.macro.SmallImage = $@"{_root}\resource\icon\home.ico";    //添加小图标
                 }
                 return _JSSS;
@@ -195,17 +195,17 @@ namespace ZYF.autoCAD
 
         // 添加MenuMacro属性
 
-        private MenuMacro _StartFontApp;
-        public MenuMacro StartFontApp
+        private MenuMacro _SFA;
+        public MenuMacro SFA
         {
             get
             {
-                if (_StartFontApp == null)
+                if (_SFA == null)
                 {
-                    _StartFontApp = new MenuMacro(Parent, "09 启动字体自动选择", "StartFontApp", "zyf_tag");   //实例化宏菜单对象，传入父集，宏名称，绑定的方法命令，标记
-                    _StartFontApp.macro.SmallImage = $@"{_root}\resource\icon\home.ico";    //添加小图标
+                    _SFA = new MenuMacro(Parent, "09 启动字体自动选择", "SFA", "zyf_tag");   //实例化宏菜单对象，传入父集，宏名称，绑定的方法命令，标记
+                    _SFA.macro.SmallImage = $@"{_root}\resource\icon\home.ico";    //添加小图标
                 }
-                return _StartFontApp;
+                return _SFA;
             }
         }
         public MacroGroup Parent { get; set; }
@@ -239,7 +239,13 @@ namespace ZYF.autoCAD
                 _main.Save();       //保存
                 Application.LoadPartialMenu(tunaSection.CUIFileName);   //加载局部菜单
             }
-
+            Application.Idle += OnApplicationIdle;
+        }
+        private void OnApplicationIdle(object sender, EventArgs e)
+        {
+            // 仅执行一次
+            Application.Idle -= OnApplicationIdle;
+            StartFontAppIfNotRunning();
         }
 
         // 文档创建事件处理程序
@@ -274,29 +280,24 @@ namespace ZYF.autoCAD
             throw new NotImplementedException();
         }
 
+
         private void StartFontAppIfNotRunning()
         {
-            string processName = "09 CAD开图自动选字体";
-
-            // 检查程序是否已经在运行
-            foreach (Process process in Process.GetProcesses())
-            {
-                if (process.ProcessName.Contains(processName))
-                {
-                    return; // 程序已经在运行，不需要重复启动
-                }
-            }
-
-            // 程序未运行，启动它
             try
             {
-                string exePath = $"{_root}\\Tools\\{processName}.exe";
-                if (File.Exists(exePath))
+                string processName = Path.GetFileNameWithoutExtension("09 CAD开图自动选字体.exe");
+                string exePath = Path.Combine(_root, "Tools", "09 CAD开图自动选字体.exe");
+
+                if (Process.GetProcessesByName(processName).Length == 0 && File.Exists(exePath))
                 {
-                    Process.Start(exePath);
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = exePath,
+                        WorkingDirectory = Path.GetDirectoryName(exePath)
+                    });
                 }
             }
-            catch { }
+            catch { /* 静默处理 */ }
         }
     }
 }
