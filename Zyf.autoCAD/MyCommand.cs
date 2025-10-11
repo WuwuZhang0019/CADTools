@@ -32,7 +32,7 @@ public class MyCommand
     {
         Document document = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
 
-        string lispPath = "C:/ProgramData/Autodesk/ApplicationPlugins/ZYF.bundle/Contents/Tools/01 CAD急速瘦身神器(jsss).lsp";
+        string lispPath = "C:/ProgramData/Autodesk/ApplicationPlugins/ZYF.bundle/Contents/Tools/01 CAD急速瘦身(jsss).lsp";
 
         string loadStr = String.Format("(load \"{0}\")\n", lispPath);
 
