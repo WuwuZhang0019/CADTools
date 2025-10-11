@@ -69,7 +69,7 @@ namespace ZYF.autoCAD
                 "ZYFTools"
             };      //传入自定义节点，创建父节点
             PopMenu menu = new PopMenu("张裕锋工具集", strings, "ZYFTools", tunaSection.MenuGroup);  //根节点菜单
-            new PopMenuItem(JSSS, "01 CAD急速瘦身(JSSS)", menu, 0);
+            new PopMenuItem(JSSS, "01 CAD急速瘦身(jsss)", menu, 0);
             new PopMenuItem(MEE, "02 布置地面疏散指示(MEE)", menu, 1);
             new PopMenuItem(DTCL, "03 底图处理(DTCL)", menu, 2);
             new PopMenuItem(THDZ, "04 图号文字递增(THDZ)", menu, 3);
@@ -89,7 +89,7 @@ namespace ZYF.autoCAD
             {
                 if (_JSSS == null)
                 {
-                    _JSSS = new MenuMacro(Parent, "01 CAD急速瘦身(JSSS)", "JSSS", "zyf_tag");   //实例化宏菜单对象，传入父集，宏名称，绑定的方法命令，标记
+                    _JSSS = new MenuMacro(Parent, "01 CAD急速瘦身(jsss)", "JSSS", "zyf_tag");   //实例化宏菜单对象，传入父集，宏名称，绑定的方法命令，标记
                     _JSSS.macro.SmallImage = $@"{_root}\resource\icon\home.ico";    //添加小图标
                 }
                 return _JSSS;
