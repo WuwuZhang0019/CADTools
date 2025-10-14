@@ -1,6 +1,12 @@
 ;【读取数据库文件】
-(defun Read_DataBase(/ DataBaseContect Now_line_Strings Temp_List)
-  (setq ff (open "C:\\FSNDataBase" "r"))
+(defun Read_DataBase(/ DataBaseContect Now_line_Strings Temp_List DatabasePath)
+  ;; 优先使用项目目录下的数据库文件
+  (setq DatabasePath (strcat (getvar "DWGPREFIX") "FSNDataBase"))
+  ;; 如果项目目录下没有，则使用默认路径
+  (if (not (findfile DatabasePath))
+    (setq DatabasePath "C:/ProgramData/Autodesk/ApplicationPlugins/ZYF.bundle/Contents/Tools/FSNDataBase")
+  )
+  (setq ff (open DatabasePath "r"))
   (setq Frame_Unit_List nil)
   (setq DataBaseContect "")
   (while (setq Now_line_Strings (read-line ff))
@@ -16,8 +22,14 @@
 )
 
 ;【写入数据库文件】
-(defun Write_DataBase(/ Temp_Frame_list Temp_Info_list)
-  (setq ff (open "C:\\FSNDataBase" "w"))
+(defun Write_DataBase(/ Temp_Frame_list Temp_Info_list DatabasePath)
+  ;; 优先使用项目目录下的数据库文件
+  (setq DatabasePath (strcat (getvar "DWGPREFIX") "FSNDataBase"))
+  ;; 如果项目目录下没有，则使用默认路径
+  (if (not (findfile DatabasePath))
+    (setq DatabasePath "C:/ProgramData/Autodesk/ApplicationPlugins/ZYF.bundle/Contents/Tools/FSNDataBase")
+  )
+  (setq ff (open DatabasePath "w"))
   (setq Temp_Frame_list Frame_Unit_List)
   (while Temp_Frame_list
     (setq Temp_Info_list (car Temp_Frame_list))
@@ -34,10 +46,19 @@
 )
 
 ;【读取数据库】
-(if (open "C:\\FSNDataBase" "r")
-  (Read_DataBase)
-  (alert "数据库为空，请先添加图框")
+(defun CheckAndReadDataBase()
+  ;; 优先使用项目目录下的数据库文件
+  (setq DatabasePath (strcat (getvar "DWGPREFIX") "FSNDataBase"))
+  ;; 如果项目目录下没有，则使用默认路径
+  (if (not (findfile DatabasePath))
+    (setq DatabasePath "C:/ProgramData/Autodesk/ApplicationPlugins/ZYF.bundle/Contents/Tools/FSNDataBase")
+  )
+  (if (open DatabasePath "r")
+    (Read_DataBase)
+    (alert "数据库为空，请先添加图框")
+  )
 )
+(CheckAndReadDataBase)
 
 
 ;【初始化】
@@ -98,7 +119,7 @@
 
 ;初始设定
 (princ "已载入图块划线，快捷命令【FSN】,有问题请联系汤润泽,QQ495697659")
-(setq Pick_mode nil
+(setq Pick_mode T
       Sub_Number_mode "0"
       Input_String "电施-01"
       Frame_Ename_List nil
@@ -349,6 +370,91 @@
   )
   (acet-ui-progress)
   (setvar "selectionoffscreen" Current_Selectmode)
+  
+  ; 【图名一致性检查与红色标记】
+  (defun Check_Frame_Name_Consistency()
+    (if All_Frame_Data_List
+      (progn
+        ; 收集所有图名
+        (setq All_Names nil
+              Temp_List All_Frame_Data_List)
+        (while Temp_List
+          (if (nth 4 (car Temp_List))  ; 图名在第5个位置（索引4）
+            (setq All_Names (cons (nth 4 (car Temp_List)) All_Names))
+          )
+          (setq Temp_List (cdr Temp_List))
+        )
+        
+        ; 如果有多个图名，进行一致性检查
+        (if (> (length All_Names) 1)
+          (progn
+            ; 统计每个图名出现的次数
+            (setq Name_Counts nil)
+            (foreach name (vl-remove-if 'null All_Names)
+              (setq existing (assoc name Name_Counts))
+              (if existing
+                (setq Name_Counts (subst (cons name (1+ (cdr existing))) existing Name_Counts))
+                (setq Name_Counts (cons (cons name 1) Name_Counts))
+              )
+            )
+            
+            ; 找出最常见的图名（众数）
+            (setq Most_Common_Name nil
+                  Max_Count 0)
+            (foreach item Name_Counts
+              (if (> (cdr item) Max_Count)
+                (progn
+                  (setq Most_Common_Name (car item))
+                  (setq Max_Count (cdr item))
+                )
+              )
+            )
+            
+            ; 将不一致的图名标记为红色
+            (setq CurrentColor (getvar "cecolor"))
+            (setvar "cecolor" "1")  ; 设置为红色
+            
+            (foreach frame_data All_Frame_Data_List
+              (setq frame_name (nth 4 frame_data)  ; 获取当前图框的图名
+                    frame_ename (car frame_data)) ; 获取图框实体名
+              
+              ; 如果图名存在且与最常见图名不一致
+              (if (and frame_name (/= frame_name Most_Common_Name))
+                (progn
+                  ; 找到并标记该图名对应的文字实体
+                  (setq Now_Frame_Scale (cdr (assoc 41 (entget frame_ename))))
+                  (setq Now_Frame_Name (cdr (assoc 2 (entget frame_ename))))
+                  (setq Now_Frame_Unit_Zone_list (cdr (assoc Now_Frame_Name Frame_Unit_List)))
+                  
+                  ; 获取图名区域
+                  (setq Data_Zone_Abs_Point_List (Create_Zone_Plist 
+                                                  frame_ename 
+                                                  (cdr (assoc "图名" Now_Frame_Unit_Zone_list))
+                                                ))
+                  
+                  ; 选择并将该区域内的文字设置为红色
+                  (if (setq text_ss (ssget "CP" Data_Zone_Abs_Point_List '((-4 . "<or")
+                                                                           (0 . "TEXT")
+                                                                           (0 . "MTEXT")
+                                                                           (-4 . "or>")
+                                                                         )))
+                    (vl-cmdf "_.chprop" text_ss "" "c" "1" "")
+                  )
+                )
+              )
+            )
+            
+            ; 恢复原始颜色设置
+            (setvar "cecolor" CurrentColor)
+          )
+        )
+      )
+    )
+  )
+  
+  ; 执行图名一致性检查
+  (Check_Frame_Name_Consistency)
+  
   (setq Stage 1)
 )
 
@@ -743,7 +849,7 @@
 |;
 (defun Del_Frame()
   (setq Frame_Unit_List (vl-remove (nth List_value Frame_Unit_List) Frame_Unit_List))
-  (setq ff (open "C:\\FSNDataBase" "w"))
+  (setq ff (open "C:/ProgramData/Autodesk/ApplicationPlugins/ZYF.bundle/Contents/Tools/FSNDataBase" "w"))
 )
 
 
