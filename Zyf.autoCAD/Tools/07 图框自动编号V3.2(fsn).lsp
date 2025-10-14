@@ -128,7 +128,7 @@
 ;【Stage1】主界面
 (defun Confirm_Stage()
   (setq Page_index 0)
-  (setq Dlg_id (load_dialog "FrameDialog"))
+  (setq Dlg_id (load_dialog "FrameDialog.dcl"))
   (if (< Dlg_id 0) (progn (alert "未找到DCL文件") (exit)))
   (if (not (new_dialog "dlg_Main" Dlg_id)) (progn (alert "初始化DCL对话框失败") (exit)))
   (Set_MainDia_Data)
