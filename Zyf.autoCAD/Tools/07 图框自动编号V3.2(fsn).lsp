@@ -371,65 +371,65 @@
   (acet-ui-progress)
   (setvar "selectionoffscreen" Current_Selectmode)
   
-  ; 【图名一致性检查与红色标记】
-  (defun Check_Frame_Name_Consistency()
+  ; 【项目名称一致性检查与红色标记】
+  (defun Check_Project_Name_Consistency()
     (if All_Frame_Data_List
       (progn
-        ; 收集所有图名
-        (setq All_Names nil
+        ; 收集所有项目名称
+        (setq All_Project_Names nil
               Temp_List All_Frame_Data_List)
         (while Temp_List
-          (if (nth 4 (car Temp_List))  ; 图名在第5个位置（索引4）
-            (setq All_Names (cons (nth 4 (car Temp_List)) All_Names))
+          (if (nth 5 (car Temp_List))  ; 项目名称在第6个位置（索引5）
+            (setq All_Project_Names (cons (nth 5 (car Temp_List)) All_Project_Names))
           )
           (setq Temp_List (cdr Temp_List))
         )
         
-        ; 如果有多个图名，进行一致性检查
-        (if (> (length All_Names) 1)
+        ; 如果有多个项目名称，进行一致性检查
+        (if (> (length All_Project_Names) 1)
           (progn
-            ; 统计每个图名出现的次数
-            (setq Name_Counts nil)
-            (foreach name (vl-remove-if 'null All_Names)
-              (setq existing (assoc name Name_Counts))
+            ; 统计每个项目名称出现的次数
+            (setq Project_Name_Counts nil)
+            (foreach name (vl-remove-if 'null All_Project_Names)
+              (setq existing (assoc name Project_Name_Counts))
               (if existing
-                (setq Name_Counts (subst (cons name (1+ (cdr existing))) existing Name_Counts))
-                (setq Name_Counts (cons (cons name 1) Name_Counts))
+                (setq Project_Name_Counts (subst (cons name (1+ (cdr existing))) existing Project_Name_Counts))
+                (setq Project_Name_Counts (cons (cons name 1) Project_Name_Counts))
               )
             )
             
-            ; 找出最常见的图名（众数）
-            (setq Most_Common_Name nil
+            ; 找出最常见的项目名称（众数）
+            (setq Most_Common_Project_Name nil
                   Max_Count 0)
-            (foreach item Name_Counts
+            (foreach item Project_Name_Counts
               (if (> (cdr item) Max_Count)
                 (progn
-                  (setq Most_Common_Name (car item))
+                  (setq Most_Common_Project_Name (car item))
                   (setq Max_Count (cdr item))
                 )
               )
             )
             
-            ; 将不一致的图名标记为红色
+            ; 将不一致的项目名称标记为红色
             (setq CurrentColor (getvar "cecolor"))
             (setvar "cecolor" "1")  ; 设置为红色
             
             (foreach frame_data All_Frame_Data_List
-              (setq frame_name (nth 4 frame_data)  ; 获取当前图框的图名
+              (setq project_name (nth 5 frame_data)  ; 获取当前图框的项目名称
                     frame_ename (car frame_data)) ; 获取图框实体名
               
-              ; 如果图名存在且与最常见图名不一致
-              (if (and frame_name (/= frame_name Most_Common_Name))
+              ; 如果项目名称存在且与最常见项目名称不一致
+              (if (and project_name (/= project_name Most_Common_Project_Name))
                 (progn
-                  ; 找到并标记该图名对应的文字实体
+                  ; 找到并标记该项目名称对应的文字实体
                   (setq Now_Frame_Scale (cdr (assoc 41 (entget frame_ename))))
                   (setq Now_Frame_Name (cdr (assoc 2 (entget frame_ename))))
                   (setq Now_Frame_Unit_Zone_list (cdr (assoc Now_Frame_Name Frame_Unit_List)))
                   
-                  ; 获取图名区域
+                  ; 获取项目名称区域
                   (setq Data_Zone_Abs_Point_List (Create_Zone_Plist 
                                                   frame_ename 
-                                                  (cdr (assoc "图名" Now_Frame_Unit_Zone_list))
+                                                  (cdr (assoc "项目名称" Now_Frame_Unit_Zone_list))
                                                 ))
                   
                   ; 选择并将该区域内的文字设置为红色
@@ -452,8 +452,8 @@
     )
   )
   
-  ; 执行图名一致性检查
-  (Check_Frame_Name_Consistency)
+  ; 执行项目名称一致性检查
+  (Check_Project_Name_Consistency)
   
   (setq Stage 1)
 )
