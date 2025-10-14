@@ -110,7 +110,7 @@ public class MyCommand
     {
         Document document = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
 
-        string lispPath = "C:/ProgramData/Autodesk/ApplicationPlugins/ZYF.bundle/Contents/Tools/07 图框自动编号V2.0(fsn).lsp";
+        string lispPath = "C:/ProgramData/Autodesk/ApplicationPlugins/ZYF.bundle/Contents/Tools/07 图框自动编号V3.2(fsn).lsp";
 
         string loadStr = String.Format("(load \"{0}\") fsn\n", lispPath);
 
