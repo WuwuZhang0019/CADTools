@@ -112,7 +112,10 @@ public class MyCommand
 
         string lispPath = "C:/ProgramData/Autodesk/ApplicationPlugins/ZYF.bundle/Contents/Tools/07 图框自动编号(fsn).VLX";
 
+        // 对于VLX文件，尝试不同的加载方式
+        // APPLOAD是加载VLX文件的标准命令
         string loadStr = String.Format("(load \"{0}\")\n", lispPath);
+        
 
         document.SendStringToExecute(loadStr, false, false, false);
     }
