@@ -110,7 +110,7 @@ public class MyCommand
     {
         Document document = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
 
-        string lispPath = "C:/ProgramData/Autodesk/ApplicationPlugins/ZYF.bundle/Contents/Tools/07 图框自动编号V3.2(fsn).lsp";
+        string lispPath = "C:/ProgramData/Autodesk/ApplicationPlugins/ZYF.bundle/Contents/Tools/07 图框自动编号(fsn).VLX";
 
         string loadStr = String.Format("(load \"{0}\")\n", lispPath);
 
@@ -202,6 +202,40 @@ public class MyCommand
             $"\n错误: {ex.Message}");
     }
 }
+    // 软件卸载功能
+    [CommandMethod(nameof(UninstallSoftware), CommandFlags.Modal)]
+    public void UninstallSoftware()
+    {
+        try
+        {
+            // 1. 关闭后台运行的字体程序
+            string processName = Path.GetFileNameWithoutExtension("09 CAD开图自动选字体.exe");
+            Process[] processes = Process.GetProcessesByName(processName);
+            foreach (Process process in processes)
+            {
+                process.Kill();
+                process.WaitForExit(1000); // 等待进程退出，最多1秒
+            }
+            
+            // 2. 启动卸载程序
+            string uninstallPath = "C:\\ProgramData\\Autodesk\\ApplicationPlugins\\ZYF.bundle1\\unins000.exe";
+            
+            if (File.Exists(uninstallPath))
+            {
+                Process.Start(uninstallPath);
+                Application.DocumentManager.MdiActiveDocument.Editor.WriteMessage("\n软件卸载程序已启动，请按照提示完成卸载。");
+            }
+            else
+            {
+                Application.DocumentManager.MdiActiveDocument.Editor.WriteMessage("\n错误: 找不到卸载程序。");
+            }
+        }
+        catch(System.Exception ex)
+        {
+            Application.DocumentManager.MdiActiveDocument.Editor.WriteMessage(
+                $"\n错误: {ex.Message}");
+        }
+    }
     
     // 字体替换命令
     [CommandMethod("ReplaceFonts", CommandFlags.Modal)]

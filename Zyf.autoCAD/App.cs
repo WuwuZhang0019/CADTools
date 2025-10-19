@@ -80,6 +80,7 @@ namespace ZYF.autoCAD
             // 暂时改为两个独立的菜单项
             new PopMenuItem(StartFontApp, "09-1 启动字体自动选择程序", menu, 8);
             new PopMenuItem(ResetFontApp, "09-2 重新设置字体", menu, 9);
+            new PopMenuItem(UninstallSoftware, "10 软件卸载", menu, 10);
         }
 
         private MenuMacro _JSSS;
@@ -224,6 +225,21 @@ namespace ZYF.autoCAD
                 return _ResetFontApp;
             }
         }
+        
+        private MenuMacro _UninstallSoftware;
+        public MenuMacro UninstallSoftware
+        {
+            get
+            {
+                if (_UninstallSoftware == null)
+                {
+                    _UninstallSoftware = new MenuMacro(Parent, "软件卸载", "UninstallSoftware", "zyf_tag");   //实例化宏菜单对象，传入父集，宏名称，绑定的方法命令，标记
+                    _UninstallSoftware.macro.SmallImage = $@"{_root}\resource\icon\home.ico";    //添加小图标
+                }
+                return _UninstallSoftware;
+            }
+        }
+        
         public MacroGroup Parent { get; set; }
 
         public void Initialize()

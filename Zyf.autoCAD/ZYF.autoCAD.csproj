@@ -50,16 +50,13 @@
     <None Update="Tools\06 文字复制(maa).lsp">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Tools\07 图框自动编号V3.2(fsn).lsp">
+    <None Update="Tools\07 图框自动编号(fsn).VLX">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Tools\08 0层置为当前图层(P0).lsp">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Tools\09 CAD开图自动选字体.exe">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Tools\FrameDialog.dcl">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Tools\FSNDataBase">
