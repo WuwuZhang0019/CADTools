@@ -78,9 +78,9 @@ namespace ZYF.autoCAD
             new PopMenuItem(FSN, "07 图框自动编号(FSN)", menu, 6);
             new PopMenuItem(P0, "08 0层置为当前图层(P0)", menu, 7);
             // 暂时改为两个独立的菜单项
-            new PopMenuItem(StartFontApp, "09-1 启动字体自动选择程序", menu, 8);
-            new PopMenuItem(ResetFontApp, "09-2 重新设置字体", menu, 9);
-            new PopMenuItem(UninstallSoftware, "10 软件卸载", menu, 10);
+            // 移除"09-1 启动字体自动选择程序"菜单项，但保留实际功能
+            new PopMenuItem(ResetFontApp, "09 重新设置字体", menu, 8);
+            new PopMenuItem(UninstallSoftware, "10 软件卸载", menu, 9);
         }
 
         private MenuMacro _JSSS;
