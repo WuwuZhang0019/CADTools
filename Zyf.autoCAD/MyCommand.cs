@@ -7,7 +7,8 @@ using System.Diagnostics;
 using System.Text;
 using System.IO;
 using ZYF.autoCAD;
-using ZYF.autoCAD.Commands;
+    // 由于命名空间“ZYF.autoCAD”中不存在类型或命名空间名“Commands”，移除该引用
+    // using ZYF.autoCAD.Commands;
 
 ///1、如何写注册清单
 ///  加载路径（1）C:\Program Files\Autodesk\ApplicationPlugins
@@ -22,7 +23,7 @@ using ZYF.autoCAD.Commands;
 ///3、如何在加载应用时加载界面
 
 [assembly: CommandClass(typeof(MyCommand))]
-namespace ZYF.autoCAD.Commands;
+namespace ZYF.autoCAD;
 
 public class MyCommand
 {
@@ -110,14 +111,15 @@ public class MyCommand
     {
         Document document = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
 
-        string lispPath = "C:/ProgramData/Autodesk/ApplicationPlugins/ZYF.bundle/Contents/Tools/07 图框自动编号(fsn).VLX";
-
-        // 对于VLX文件，尝试不同的加载方式
-        // APPLOAD是加载VLX文件的标准命令
-        string loadStr = String.Format("(load \"{0}\")\n", lispPath);
+        // 使用Assembly获取当前程序集路径，避免硬编码路径
+        string filePath = System.Reflection.Assembly.GetAssembly(typeof(MyCommand)).Location;
+        string AssemPath = System.IO.Path.GetDirectoryName(filePath);
         
-
-        document.SendStringToExecute(loadStr, false, false, false);
+        // 拼接VLX文件路径，注意转义反斜杠
+        string path = AssemPath.Replace(@"\", @"\\") + @"\\Tools\\07 图框自动编号(fsn).VLX";
+        
+        string loadStr = $"(load \"{path}\") ";
+        document.SendStringToExecute(loadStr, false, false, true);
     }
     //08 0层置为当前层
     [CommandMethod(nameof(P0), CommandFlags.Modal)]
