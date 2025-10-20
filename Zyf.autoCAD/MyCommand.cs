@@ -106,8 +106,8 @@ public class MyCommand
     }
 
     //07图框自动编号
-    [CommandMethod(nameof(FSN), CommandFlags.Modal)]
-    public void FSN()
+    [CommandMethod(nameof(FSN_LOAD), CommandFlags.Modal)]
+    public void FSN_LOAD()
     {
         Document document = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
 
@@ -118,6 +118,7 @@ public class MyCommand
         // 拼接VLX文件路径，注意转义反斜杠
         string path = AssemPath.Replace(@"\", @"\\") + @"\\Tools\\07 图框自动编号(fsn).VLX";
         
+        // 加载VLX文件后，显式调用FSN命令来启动图形界面
         string loadStr = $"(load \"{path}\") ";
         document.SendStringToExecute(loadStr, false, false, true);
     }

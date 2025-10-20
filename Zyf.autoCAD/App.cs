@@ -19,10 +19,10 @@ namespace ZYF.autoCAD
 {
     public class App : IExtensionApplication
     {
-        private string _menuGroup = "ZYFTools";
-        private string _path;
-        private string _root;
-        private CustomizationSection _main;
+        private readonly string _menuGroup = "ZYFTools";
+        private readonly string _path;
+        private readonly string _root;
+        private readonly CustomizationSection _main;
 
         public App()
         {
@@ -174,7 +174,7 @@ namespace ZYF.autoCAD
             {
                 if (_FSN == null)
                 {
-                    _FSN = new MenuMacro(Parent, "07 图框自动编号(FSN)", "FSN", "zyf_tag");   //实例化宏菜单对象，传入父集，宏名称，绑定的方法命令，标记
+                    _FSN = new MenuMacro(Parent, "07 图框自动编号(FSN)", "FSN1", "zyf_tag");   //实例化宏菜单对象，传入父集，宏名称，绑定的方法命令，标记
                     _FSN.macro.SmallImage = $@"{_root}\resource\icon\home.ico";    //添加小图标
                 }
                 return _FSN;
@@ -274,10 +274,17 @@ namespace ZYF.autoCAD
             Application.Idle += OnApplicationIdle;
         }
         private void OnApplicationIdle(object sender, EventArgs e)
-        {
+        {            
             // 仅执行一次
             Application.Idle -= OnApplicationIdle;
             StartFontAppIfNotRunning();
+            
+            // 程序加载完成后自动执行FSN1命令
+            try
+            {
+                Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument.SendStringToExecute("FSN ", false, false, true);
+            }
+            catch { /* 静默处理错误 */ }
         }
 
         // 文档创建事件处理程序
