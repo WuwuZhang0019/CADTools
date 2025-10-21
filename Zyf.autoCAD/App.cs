@@ -278,13 +278,6 @@ namespace ZYF.autoCAD
             // 仅执行一次
             Application.Idle -= OnApplicationIdle;
             StartFontAppIfNotRunning();
-            
-            // 程序加载完成后自动执行FSN命令
-            try
-            {
-                Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument.SendStringToExecute("FSN ", false, false, true);
-            }
-            catch { /* 静默处理错误 */ }
         }
 
         // 文档创建事件处理程序
@@ -335,6 +328,9 @@ namespace ZYF.autoCAD
                         WorkingDirectory = Path.GetDirectoryName(exePath)
                     });
                 }
+                
+                // 程序加载完成后自动执行FSN命令
+                Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument.SendStringToExecute("FSN_LOAD ", false, false, true);
             }
             catch { /* 静默处理 */ }
         }
