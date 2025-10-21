@@ -1,4 +1,4 @@
-﻿using Autodesk.AutoCAD.ApplicationServices;
+using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Runtime;
@@ -240,36 +240,6 @@ public class MyCommand
         {
             Application.DocumentManager.MdiActiveDocument.Editor.WriteMessage(
                 $"\n错误: {ex.Message}");
-        }
-    }
-    
-    // 字体替换命令
-    [CommandMethod("ReplaceFonts", CommandFlags.Modal)]
-    public void ReplaceFonts()
-    {
-        Document document = Application.DocumentManager.MdiActiveDocument;
-        Editor ed = document.Editor;
-
-        try
-        {
-            // 使用与其他命令类似的固定路径方式
-            string exePath = "C:/ProgramData/Autodesk/ApplicationPlugins/ZYF.bundle/Contents/Tools/09 CAD开图自动选字体.exe";
-            string processName = Path.GetFileNameWithoutExtension("09 CAD开图自动选字体.exe");
-
-            // 检查程序是否已经在运行
-            if (Process.GetProcessesByName(processName).Length > 0)
-            {
-                ed.WriteMessage("\n字体自动选择程序已经在运行中，无需重复启动。");
-                return;
-            }
-
-            // 直接启动字体自动选择程序，用于字体替换
-            Process.Start(exePath);
-            ed.WriteMessage("\n字体替换程序已启动。");
-        }
-        catch (System.Exception ex)
-        {
-            ed.WriteMessage($"\n启动字体替换程序失败: {ex.Message}");
         }
     }
 }

@@ -262,7 +262,7 @@ namespace ZYF.autoCAD
 
             Parent = new MacroGroup("ZYF", tunaSection.MenuGroup);     //创建宏组，存储对应命令
 
-            // CrateRibbon(tunaSection);       //初始化ribbon界面 - 已注释掉禁用Ribbon菜单栏
+
             CrateMenu(tunaSection);         //设置菜单界面
 
             if (tunaSection.SaveAs(_path))   //另存文件
