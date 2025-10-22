@@ -62,10 +62,6 @@ defun tt()
        ((= (substr a (- (strlen a) 5) 6) "P-PFIX") (vla-put-Color x 252))
        ((= (substr a (- (strlen a) 5) 6) "×°ÊÎÃæ") (vla-put-Color x 252))
        ((= (substr a (- (strlen a) 5) 6) "EL-DIM") (vla-put-Color x 252))
-
-
-
-
 ))
 (if (> (strlen a) 6)
   (cond  
