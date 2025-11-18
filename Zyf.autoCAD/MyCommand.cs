@@ -242,4 +242,17 @@ public class MyCommand
                 $"\n错误: {ex.Message}");
         }
     }
+
+    //10 消防回路统计
+    [CommandMethod(nameof(FAS), CommandFlags.Modal)]
+    public void FAS()
+    {
+        Document document = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
+
+        string lispPath = "C:/ProgramData/Autodesk/ApplicationPlugins/ZYF.bundle/Contents/Tools/10 消防回路统计(FAS).lsp";
+
+        string loadStr = String.Format("(load \"{0}\") FAS\n", lispPath);
+
+        document.SendStringToExecute(loadStr, false, false, false);
+    }
 }

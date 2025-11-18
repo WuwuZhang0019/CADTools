@@ -59,6 +59,9 @@
     <None Update="Tools\09 CAD开图自动选字体.exe">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Tools\10 消防回路统计(FAS).lsp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Tools\FSNDataBase">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

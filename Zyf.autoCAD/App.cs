@@ -80,7 +80,8 @@ namespace ZYF.autoCAD
             // 暂时改为两个独立的菜单项
             // 移除"09-1 启动字体自动选择程序"菜单项，但保留实际功能
             new PopMenuItem(ResetFontApp, "09 重新设置字体", menu, 8);
-            new PopMenuItem(UninstallSoftware, "10 软件卸载", menu, 9);
+            new PopMenuItem(FAS, "10 消防回路统计(FAS)", menu, 9);
+            new PopMenuItem(UninstallSoftware, "11 软件卸载", menu, 10);
         }
 
         private MenuMacro _JSSS;
@@ -237,6 +238,20 @@ namespace ZYF.autoCAD
                     _UninstallSoftware.macro.SmallImage = $@"{_root}\resource\icon\home.ico";    //添加小图标
                 }
                 return _UninstallSoftware;
+            }
+        }
+        
+        private MenuMacro _FAS;
+        public MenuMacro FAS
+        {
+            get
+            {
+                if (_FAS == null)
+                {
+                    _FAS = new MenuMacro(Parent, "10 消防回路统计(FAS)", "FAS", "zyf_tag");   //实例化宏菜单对象，传入父集，宏名称，绑定的方法命令，标记
+                    _FAS.macro.SmallImage = $@"{_root}\resource\icon\home.ico";    //添加小图标
+                }
+                return _FAS;
             }
         }
         
