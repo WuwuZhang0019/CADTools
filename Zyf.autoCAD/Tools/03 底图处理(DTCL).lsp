@@ -1,399 +1,274 @@
-;��������ͼֽ
+;;;=============================================================================
+;;; 底图处理 (DTCL) - AutoCAD图层批量处理工具
+;;; 功能：清理DGN残留、清理未使用对象、批量设置图层颜色/冻结/打印状态
+;;; 版本：V4.0.0 - 增加冻结排除前缀机制
+;;; 原作者：张裕锋  |  优化日期：2026.03.25
+;;;=============================================================================
+
+;;; ---------- 第一部分：清理超大图纸 ----------
 (setvar "cmdecho" 0)
 (dictremove (namedobjdict) "ACAD_DGNLINESTYLECOMP")
 (command "_purge" "all" "" "n")
-(command "layer" "s" 0 "") ;��0����Ϊ��ǰ��
+(command "layer" "s" 0 "")  ; 将0层设为当前层
 (setvar "cmdecho" 1)
-;�˰汾������������������
-defun tt()
-(vl-load-com)
-(setq acmCol (vla-getinterfaceobject 
-           (vlax-get-acad-object)  (strcat "AutoCAD.AcCmColor." (substr (getvar "ACADVER") 1 2))))
-(vlax-for x (vla-get-layers (vla-get-activedocument (vlax-get-acad-object)))
-(setq a (vla-get-name x))
-;�һ�
-(if (> (strlen a) 2)
-  (cond  
-       ((= (substr a (- (strlen a) 2) 3) "JSK") (vla-put-Color x 252))
-))
 
-(if (> (strlen a) 3)
-  (cond  
-       ((= (substr a (- (strlen a) 3) 4) "����") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 3) 4) "�Ҿ�") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 3) 4) "��λ") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 3) 4) "�յ�") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 3) 4) "��Ļ") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 3) 4) "���") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 3) 4) "��Ļ") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 3) 4) "����") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 3) 4) "COLU") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 3) 4) "��ǽ") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 3) 4) "���") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 3) 4) "����") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 3) 4) "����") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 3) 4) "����") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 3) 4) "�") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 3) 4) "��ɢ") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 3) 4) "Cols") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 3) 4) "Patt") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 3) 4) "JSK2") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 3) 4) "�ع�") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 3) 4) "�߽�") (vla-put-Color x 252))
-))
-(if (> (strlen a) 4)
-  (cond  
-       ((= (substr a (- (strlen a) 4) 5) "HATCH") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 4) 5) "SCEEN") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 4) 5) "STAIR") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 4) 5) "LVTRY") (vla-put-Color x 252))
-))
-(if (> (strlen a) 5)
-  (cond
-       ((= (substr a (- (strlen a) 5) 6) "COLUMN") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 5) 6) "CHEWEI") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 5) 6) "21-CAR") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 5) 6) "21���") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 5) 6) "P-FURN") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 5) 6) "΢�ͳ�") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 5) 6) "���۹�") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 5) 6) "������") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 5) 6) "�����") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 5) 6) "P-PFIX") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 5) 6) "װ����") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 5) 6) "EL-DIM") (vla-put-Color x 252))
-))
-(if (> (strlen a) 6)
-  (cond  
-       ((= (substr a (- (strlen a) 6) 7) "00-���") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 6) 7) "LATRINE") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 6) 7) "P_HATCH") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 6) 7) "FF-FURN") (vla-put-Color x 252))     
-       ((= (substr a (- (strlen a) 6) 7) "02ƽ-��") (vla-put-Color x 252)) 
-       ((= (substr a (- (strlen a) 6) 7) "02ƽ-��") (vla-put-Color x 252)) 
-       ((= (substr a (- (strlen a) 6) 7) "EL-NORM") (vla-put-Color x 252)) 
+;;; ---------- 第二部分：工具函数 ----------
 
-))
-(if (> (strlen a) 7)
-  (cond  
-       ((= (substr a (- (strlen a) 7) 8) "1_���_S") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 7) 8) "Y-�˶���") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 7) 8) "�����־") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 7) 8) "�������") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 7) 8) "��ɢָʾ") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 7) 8) "��Ļ��λ") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 7) 8) "P-�����") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 7) 8) "1_���_S") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 7) 8) "����ʵ��") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 7) 8) "��������") (vla-put-Color x 252))
-      ((= (substr a (- (strlen a) 7) 8) "FF-FURNA")(vla-put-Color x 252))
-      ((= (substr a (- (strlen a) 7) 8) "IDS-FIXT")(vla-put-Color x 252))
-      ((= (substr a (- (strlen a) 7) 8) "D-detail")(vla-put-Color x 252))
-
-))
-(if (> (strlen a) 8)
-  (cond  
-       ((= (substr a (- (strlen a) 8) 9) "0$0��ǰ��") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 8) 9) "colu_���") (vla-put-Color x 252))  
-       ((= (substr a (- (strlen a) 8) 9) "F�������") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 8) 9) "F-�Ҿ�-E3") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 8) 9) "Plan-���") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 8) 9) "����-JSK2") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 8) 9) "PUB_HATCH") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 8) 9) "PROJ-LINE") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 8) 9) "-սʱ���") (vla-put-Color x 252))
-
-))
-(if (> (strlen a) 9)
-  (cond  
-       ((= (substr a (- (strlen a) 9) 10) "Audi seats") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 9) 10) "AUDI_SEATS") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 9) 10) "COLU_HATCH") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 9) 10) "D-���ݱ��") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 9) 10) "��ɢ������") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 9) 10) "�Զ�����-2") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 9) 10) "P-��Ҿ�") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 9) 10) "P-ƽ�洰��") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 9) 10) "P-ƽ����") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 9) 10) "W-��������") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 9) 10) "Plan-new��") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 9) 10) "����������") (vla-put-Color x 252))
-
-
-))
-(if (> (strlen a) 10)
-  (cond  
-       ((= (substr a (- (strlen a) 10) 11) "A-��λ��-��") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 10) 11) "COLU_��ǽ_A") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 10) 11) "MTRL_����_A") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 10) 11) "MTRL_ʯ��_A") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 10) 11) "P5-��Ҿ�") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 10) 11) "PUB_HATCH_A") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 10) 11) "SYMB_��ˮ_A") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 10) 11) "WS_�����豸") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 10) 11) "װ��-�����") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 10) 11) "I-ELEV-OTL2") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 10) 11) "I-ELEV-MBND") (vla-put-Color x 252))
-
-))
-(if (> (strlen a) 11)
-  (cond  
-       ((= (substr a (- (strlen a) 11) 12) "1_ƽ�涴��_S") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 11) 12) "EQU_�յ���_A") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 11) 12) "P-ƽ��¥����") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 11) 12) "�̶�(������)") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 11) 12) "̫���ܼ��Ȱ�") (vla-put-Color x 252))
-
-))
-(if (> (strlen a) 12)
-  (cond  
-       ((= (substr a (- (strlen a) 12) 13) "0$KTsϵͳ�豸") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 12) 13) "A-ͨ��-ͶӰ��") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 12) 13) "BEAM_��ʵ��_S") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 12) 13) "BEAM_������_S") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 12) 13) "BRIK_������_S") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 12) 13) "COLU_�����_A") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 12) 13) "COMP_������_A") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 12) 13) "COMP_�ṹ��_A") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 12) 13) "LINE_ͶӰ��_A") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 12) 13) "HS-A-�������") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 12) 13) "HS-A-���ͼ��") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 12) 13) "Plan-�����ǽ") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 12) 13) "Plan-�̶�����") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 12) 13) "LINE_�д���_A") (vla-put-Color x 252))
-))
-(if (> (strlen a) 13)
-  (cond  
-       ((= (substr a (- (strlen a) 13) 14) "J-ƽ��̶��Ҿ�") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 13) 14) "J-ƽ���Ҿ�") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 13) 14) "STAIR_¥����_A") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 13) 14) "EQU_�����豸_A") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 13) 14) "EQU_�̶��Ҿ�_A") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 13) 14) "EQU_��Ҿ�_A") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 13) 14) "P-ƽ���Ҿ�") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 13) 14) "ůͨ���ļ�TEXT") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 13) 14) "EQU_�����豸_A") (vla-put-Color x 252))
-))
-(if (> (strlen a) 14)
-  (cond  
-       ((= (substr a (- (strlen a) 14) 15) "A-ͨ��-ͼ�����") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 14) 15) "HOLE_ƽ�涴��_A") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 14) 15) "Plan-toilet���") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 14) 15) "S_STAIR_¥����_") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 14) 15) "TRI-B2$0$A-DRAN") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 14) 15) "WALL_��ǽ���_S") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 14) 15) "Plan-toilet���") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 14) 15) "DS-HIGH CABINET") (vla-put-Color x 252))
-))
-(if (> (strlen a) 15)
-  (cond  
-       ((= (substr a (- (strlen a) 15) 16) "HATCH_ͨ�����_A") (vla-put-Color x 252))
-
-))
-(if (> (strlen a) 16)
-  (cond  
-       ((= (substr a (- (strlen a) 16) 17) "F-FLR3 (PLATFORM)") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 16) 17) "HATCH_�������1_A") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 16) 17) "HATCH_�������2_A") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 16) 17) "COLU_�ϲ�������_S") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 16) 17) "COLU_�²�������_S") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 16) 17) "ICDA����_��Ҿ�") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 16) 17) "P9-ƽ��Ҿ߻ҶȲ�") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 16) 17) "WALL_�ϲ�ǽ����_S") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 16) 17) "WALL_�²�ǽ����_S") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 16) 17) "����-��ȫ����ָʾ") (vla-put-Color x 252))
-))
-(if (> (strlen a) 17)
-  (cond  
-       ((= (substr a (- (strlen a) 17) 18) "P-�̶��Ҿߣ����գ�") (vla-put-Color x 252))
-))
-(if (> (strlen a) 18)
-  (cond  
-       ((= (substr a (- (strlen a) 18) 19) "HS-A-ͣ��λ����׼��") (vla-put-Color x 252))
-))
-;(if (> (strlen a) 19)
-;  (cond  
-;))
-(if (> (strlen a) 20)
-  (cond  
-       ((= (substr a (- (strlen a) 20) 21) "FF--FURN_SF(�̶��Ҿ�)") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 20) 21) "WALL_��������ǽ���_S") (vla-put-Color x 252))
-))
-(if (> (strlen a) 21)
-  (cond  
-       ((= (substr a (- (strlen a) 21) 22) "FF--FIXT����ߡ����ߣ�") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 21) 22) "P-ƽ���ߣ��ظ���ʾ��") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 21) 22) "HS-A-ͣ��λ����׼��5.1") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 21) 22) "HS-A-ͣ��λ����׼��5.3") (vla-put-Color x 252))
-))
-(if (> (strlen a) 23)
-  (cond  
-       ((= (substr a (- (strlen a) 23) 24) "P-�̶��Ҿߣ���ء�������") (vla-put-Color x 252))
-))
-(if (> (strlen a) 25)
-  (cond  
-       ((= (substr a (- (strlen a) 25) 26) "P-��߼��������ƺͼ��ʾ��") (vla-put-Color x 252))
-       ((= (substr a (- (strlen a) 25) 26) "P-�̶��Ҿߣ���ء���������") (vla-put-Color x 252))
-))
-(if (> (strlen a) 27)
-  (cond 
-       ((= (substr a (- (strlen a) 27) 28) "P-��߼��������ƺͼ����ʾ��") (vla-put-Color x 252))
- ))
-
-
-;����
-
-(if (> (strlen a) 3)
-  (cond 
-       ((= (substr a (- (strlen a) 3) 4) "DOTE") (vla-put-Freeze x :vlax-true))  
-       ((= (substr a (- (strlen a) 3) 4) "AXIS") (vla-put-Freeze x :vlax-true))  
-       ((= (substr a (- (strlen a) 3) 4) "����") (vla-put-Freeze x :vlax-true))  
-       ((= (substr a (- (strlen a) 3) 4) "����") (vla-put-Freeze x :vlax-false))  
-
- ))
-(if (> (strlen a) 4)
-  (cond 
-       ((= (substr a (- (strlen a) 4) 5) "p��ˮ") (vla-put-Freeze x :vlax-true))
- ))
-(if (> (strlen a) 5)
-  (cond 
-       ((= (substr a (- (strlen a) 5) 6) "������") (vla-put-Freeze x :vlax-true))  
-       ((= (substr a (- (strlen a) 5) 6) "������") (vla-put-Freeze x :vlax-true))  
-       ((= (substr a (- (strlen a) 5) 6) "��ˮ��") (vla-put-Freeze x :vlax-true))  
-       ((= (substr a (- (strlen a) 5) 6) "������") (vla-put-Freeze x :vlax-true))  
- ))
-(if (> (strlen a) 6)
-  (cond 
-       ((= (substr a (- (strlen a) 6) 7) "PUB_DIM") (vla-put-Freeze x :vlax-true)) 
-       ((= (substr a (- (strlen a) 6) 7) "S������") (vla-put-Freeze x :vlax-true))  
-       ((= (substr a (- (strlen a) 6) 7) "Pa-turn") (vla-put-Freeze x :vlax-true))  
- ))
-(if (> (strlen a) 7)
-  (cond 
-       ((= (substr a (- (strlen a) 7) 8) "DIM_LEAD") (vla-put-Freeze x :vlax-true))  
-       ((= (substr a (- (strlen a) 7) 8) "��������") (vla-put-Freeze x :vlax-true))   
-       ((= (substr a (- (strlen a) 7) 8) "��ɢ����") (vla-put-Freeze x :vlax-true))  
-       ((= (substr a (- (strlen a) 7) 8) "��������") (vla-put-Freeze x :vlax-true))  
-       ((= (substr a (- (strlen a) 7) 8) "���巶Χ") (vla-put-Freeze x :vlax-true))   
-       ((= (substr a (- (strlen a) 7) 8) "��ɢָʾ") (vla-put-Freeze x :vlax-true))   
-       ((= (substr a (- (strlen a) 7) 8) "սʱ����") (vla-put-Freeze x :vlax-true))   
-       ((= (substr a (- (strlen a) 7) 8) "��·����") (vla-put-Freeze x :vlax-true))  
-       ((= (substr a (- (strlen a) 7) 8) "�ڲ����") (vla-put-Freeze x :vlax-true))  
-       ((= (substr a (- (strlen a) 7) 8) "�������") (vla-put-Freeze x :vlax-true))  
- ))
-(if (> (strlen a) 8)
-  (cond 
-       ((= (substr a (- (strlen a) 8) 9) "F��ɢ����") (vla-put-Freeze x :vlax-true)) 
-       ((= (substr a (- (strlen a) 8) 9) "WS_��©_W") (vla-put-Freeze x :vlax-true))  
- 
- ))
-(if (> (strlen a) 9)
-  (cond 
-       ((= (substr a (- (strlen a) 9) 10) "s-�豸����") (vla-put-Freeze x :vlax-true))   
-       ((= (substr a (- (strlen a) 9) 10) "DIM_��ע_A") (vla-put-Freeze x :vlax-true)) 
-       ((= (substr a (- (strlen a) 9) 10) "¥���ݱ��") (vla-put-Freeze x :vlax-true))  
-       ((= (substr a (- (strlen a) 9) 10) "�˷��ű��") (vla-put-Freeze x :vlax-true))  
-       ((= (substr a (- (strlen a) 9) 10) "��·������") (vla-put-Freeze x :vlax-true))  
-
- ))
-(if (> (strlen a) 10)
-  (cond 
-       ((= (substr a (- (strlen a) 10) 11) "DOTE_����_A") (vla-put-Freeze x :vlax-true))  ;false
-       ((= (substr a (- (strlen a) 10) 11) "WINDOW_TEXT") (vla-put-Freeze x :vlax-true))  
-       ((= (substr a (- (strlen a) 10) 11) "SYMB_��ˮ_A") (vla-put-Freeze x :vlax-true))  
-       ((= (substr a (- (strlen a) 10) 11) "SYMB_����_A") (vla-put-Freeze x :vlax-true))  
-       ((= (substr a (- (strlen a) 10) 11) "SYMB_��ע_A") (vla-put-Freeze x :vlax-true))  
-       ((= (substr a (- (strlen a) 10) 11) "B¥���ݱ��") (vla-put-Freeze x :vlax-true)) 
-       ((= (substr a (- (strlen a) 10) 11) "ƽ�涴��_A") (vla-put-Freeze x :vlax-true))
-       ;((= (substr a (- (strlen a) 10) 11) "LINE_ϸ��_A") (vla-put-Freeze x :vlax-true))  
-       ((= (substr a (- (strlen a) 10) 11) "A-Road-Cntr") (vla-put-Freeze x :vlax-true))
-
- ))
-(if (> (strlen a) 11)
-  (cond 
-       ((= (substr a (- (strlen a) 11) 12) "0$FZ��������") (vla-put-Freeze x :vlax-true))  
-       ((= (substr a (- (strlen a) 11) 12) "�����ҷ�Χ��") (vla-put-Freeze x :vlax-true))  
-       ((= (substr a (- (strlen a) 11) 12) "�����յ�����") (vla-put-Freeze x :vlax-true))  
-       ((= (substr a (- (strlen a) 11) 12) "DIM_������ע") (vla-put-Freeze x :vlax-true))  
-       ((= (substr a (- (strlen a) 11) 12) "����¥�ݱ��") (vla-put-Freeze x :vlax-true))  
-       ((= (substr a (- (strlen a) 11) 12) "L-¥���ݱ��") (vla-put-Freeze x :vlax-true))  
-       ((= (substr a (- (strlen a) 11) 12) "�˷��Ŵ����") (vla-put-Freeze x :vlax-true)) 
-
- ))
-(if (> (strlen a) 12)
-  (cond 
-       ((= (substr a (- (strlen a) 12) 13) "DOTE_������_A") (vla-put-Freeze x :vlax-true))  
-       ((= (substr a (- (strlen a) 12) 13) "PS_��ˮ����_W") (vla-put-Freeze x :vlax-true))  
-       ((= (substr a (- (strlen a) 12) 13) "HS-A-�Ŵ����") (vla-put-Freeze x :vlax-true)) 
-       ((= (substr a (- (strlen a) 12) 13) "DOOR_FIRE_TEXT") (vla-put-Freeze x :vlax-true)) 
-
- ))
-(if (> (strlen a) 13)
-  (cond 
-       ((= (substr a (- (strlen a) 13) 14) "DOOR_FIRE_TEXT") (vla-put-Freeze x :vlax-true))  
-       ((= (substr a (- (strlen a) 13) 14) "DIM_��ˮ����ע") (vla-put-Freeze x :vlax-true))  
-       ((= (substr a (- (strlen a) 13) 14) "AXIS_���_��Ȧ") (vla-put-Freeze x :vlax-true))  
-       ((= (substr a (- (strlen a) 13) 14) "$0$DOTE_����_A") (vla-put-Freeze x :vlax-true))  
-       ((= (substr a (- (strlen a) 13) 14) "�˷��ſ�����Χ") (vla-put-Freeze x :vlax-true))  
-       ((= (substr a (- (strlen a) 13) 14) "�ڲ�ר������_A") (vla-put-Freeze x :vlax-true))   
- 
- ))
-(if (> (strlen a) 14)
-  (cond 
-       ((= (substr a (- (strlen a) 14) 15) "TEXT_�Ŵ����_A") (vla-put-Freeze x :vlax-true))  
-       ((= (substr a (- (strlen a) 14) 15) "Pyle-kit-����ˮ") (vla-put-Freeze x :vlax-true))  
-       ((= (substr a (- (strlen a) 14) 15) "HS-���שǽ����") (vla-put-Freeze x :vlax-true))  
-       
- ))
-(if (> (strlen a) 16)
-  (cond 
-       ((= (substr a (- (strlen a) 16) 17) "LINE_����������_A") (vla-put-Freeze x :vlax-true))  
-       ((= (substr a (- (strlen a) 16) 17) "STRUC-CONCRETE-cc") (vla-put-Freeze x :vlax-true))  
-       ((= (substr a (- (strlen a) 16) 17) "LINE_����������_A") (vla-put-Freeze x :vlax-true)) 
- ))
-(if (> (strlen a) 17)
-  (cond 
-       ((= (substr a (- (strlen a) 17) 18) "Dim_������Ŷ�����") (vla-put-Freeze x :vlax-true))  
- ))
-(if (> (strlen a) 18)
-  (cond 
-       ((= (substr a (- (strlen a) 18) 19) "HOLE_�����յ�����_A") (vla-put-Freeze x :vlax-true))  
-      ; ((= (substr a (- (strlen a) 18) 19) "HOLE_�����յ�����_A") (vla-put-Freeze x :vlax-true))  
-       ((= (substr a (- (strlen a) 18) 19) "PS_��ˮ���߼���ע_W") (vla-put-Freeze x :vlax-true))  
- ))
-(if (> (strlen a) 19)
-  (cond 
-       ((= (substr a (- (strlen a) 19) 20) "AXIS_���_A_�ڲ�����") (vla-put-Freeze x :vlax-true)) 
- ))
-
-;��ӡ״̬
-
-(if (> (strlen a) 5)
-  (cond 
-       ((= (substr a (- (strlen a) 5) 6) "������") (vla-put-Plottable x :vlax-false))  
-      
- ))
-
-(if (> (strlen a) 7)
-  (cond 
-       ((= (substr a (- (strlen a) 7) 8) "�������") (vla-put-Plottable x :vlax-false))   
-       ((= (substr a (- (strlen a) 7) 8) "��Ҿ�") (vla-put-Plottable x :vlax-true)) 
-       ((= (substr a (- (strlen a) 7) 8) "DIM_MODI") (vla-put-Plottable x :vlax-true)) 
- ))
-(if (> (strlen a) 9)
-  (cond 
-       ((= (substr a (- (strlen a) 9) 10) "���������") (vla-put-Plottable x :vlax-false))   
-       ((= (substr a (- (strlen a) 9) 10) "��Ҿ�_A") (vla-put-Plottable x :vlax-true))
- ))
-(if (> (strlen a) 13)
-  (cond 
-       ((= (substr a (- (strlen a) 13) 14) "�ڲ�ר������_A") (vla-put-Plottable x :vlax-false))   
-       
- ))
-
-
+;; 判断字符串 str 是否以 suffix 结尾（支持中文）
+(defun DTCL:ends-with (str suffix / slen xlen) 
+  (setq slen (strlen str)
+        xlen (strlen suffix)
+  )
+  (and (>= slen xlen) 
+       (= (substr str (1+ (- slen xlen)) xlen) suffix)
+  )
 )
-(command "regen" )
 
-(princ)  " 2020.08.31 ����������ϵ��ԣ��-V2.4.0/�˰汾���������ô�ӡ״̬�Ĵ���"
+;; 判断字符串 str 是否以 prefix 开头
+(defun DTCL:starts-with (str prefix / slen plen) 
+  (setq slen (strlen str)
+        plen (strlen prefix)
+  )
+  (and (>= slen plen) 
+       (= (substr str 1 plen) prefix)
+  )
+)
 
+;; 遍历列表，若图层名以列表中任一后缀结尾，则执行 action-fn
+;; action-fn 接受两个参数：图层对象 和 匹配到的后缀（用于调试）
+(defun DTCL:apply-by-suffix (layer-obj layer-name suffix-list action-fn / sfx) 
+  (foreach sfx suffix-list 
+    (if (DTCL:ends-with layer-name sfx) 
+      (progn 
+        (apply action-fn (list layer-obj sfx))
+      )
+    )
+  )
+)
+
+;; 带前缀排除的后缀匹配：若图层名以排除前缀开头，则跳过
+;; 用于防止 CABLETRAY_*_DOTE 等图层被误冻结
+(defun DTCL:apply-by-suffix-ex (layer-obj layer-name suffix-list exclude-prefixes 
+                                action-fn / sfx pfx excluded
+                               ) 
+  (setq excluded nil)
+  ;; 先检查是否命中排除前缀
+  (foreach pfx exclude-prefixes 
+    (if (DTCL:starts-with layer-name pfx) 
+      (setq excluded T)
+    )
+  )
+  ;; 未被排除才执行后缀匹配
+  (if (not excluded) 
+    (foreach sfx suffix-list 
+      (if (DTCL:ends-with layer-name sfx) 
+        (progn 
+          (apply action-fn (list layer-obj sfx))
+        )
+      )
+    )
+  )
+)
+
+;;; ---------- 第三部分：规则数据定义 ----------
+;;; 只需在此处增删后缀即可，无需修改逻辑代码
+
+;; ---- 灰化规则：将匹配图层颜色设为 252（浅灰） ----
+(setq *DTCL-GRAY-SUFFIXES* (list 
+                                 ;; 3字符
+                                 "JSK" 
+                                 ;; 4字符
+                                 "货车" "家具" "坑位" "空调" "屏幕" "填充" "银幕" "座椅" "COLU" "砼墙" "洁具" 
+                                 "器材" "厨卫" "窗帘" "活动" "疏散" "Cols" "Patt" "JSK2" "地沟" "线脚" 
+                                 ;; 5字符
+                                 "HATCH" "SCEEN" "STAIR" "LVTRY" 
+                                 ;; 6字符
+                                 "COLUMN" "CHEWEI" "21-CAR" "21洁具" "P-FURN" "微型车" "排污管" 
+                                 "构造柱" "面积线" "P-PFIX" "装饰面" "EL-DIM" 
+                                 ;; 7字符
+                                 "00-洁具" "LATRINE" "P_HATCH" "FF-FURN" "02平-地" "02平-顶" 
+                                 "EL-NORM" 
+                                 ;; 8字符
+                                 "1_填充_S" "Y-运动场" "地面标志" "防火卷帘" "疏散指示" "屏幕座位" "P-完成面" 
+                                 "洞口实线" "洞口虚线" "FF-FURNA" "IDS-FIXT" "D-detail" 
+                                 ;; 9字符
+                                 "0$0当前层" "colu_填充" "F防火卷帘" "F-家具-E3" "Plan-洁具" "名称-JSK2" 
+                                 "PUB_HATCH" "PROJ-LINE" "-战时拆除" 
+                                 ;; 10字符
+                                 "Audi seats" "AUDI_SEATS" "COLU_HATCH" "D-电梯编号" "疏散梯类型" 
+                                 "自动扶梯-2" "P-活动家具" "P-平面窗帘" "P-平面洁具" "W-区域文字" "Plan-new门" 
+                                 "顶面造型线" 
+                                 ;; 11字符
+                                 "A-车位线-电" "COLU_柱墙_A" "MTRL_铝板_A" "MTRL_石材_A" "P5-活动家具" 
+                                 "PUB_HATCH_A" "SYMB_排水_A" "WS_厨房设备" "装饰-完成面" "I-ELEV-OTL2" 
+                                 "I-ELEV-MBND" 
+                                 ;; 12字符
+                                 "1_平面洞口_S" "EQU_空调机_A" "P-平面楼梯线" "固定(不到顶)" "太阳能集热板" 
+                                 ;; 13字符
+                                 "0$KTs系统设备" "A-通用-投影线" "BEAM_梁实线_S" "BEAM_梁虚线_S" 
+                                 "BRIK_构造柱_S" "COLU_柱填充_A" "COMP_建筑沟_A" "COMP_结构沟_A" 
+                                 "LINE_投影线_A" "HS-A-防火卷帘" "HS-A-填充图案" "Plan-完成面墙" 
+                                 "Plan-固定道具" "LINE_中粗线_A" 
+                                 ;; 14字符
+                                 "J-平面固定家具" "J-平面活动家具" "STAIR_楼电梯_A" "EQU_厨卫设备_A" 
+                                 "EQU_固定家具_A" "EQU_活动家具_A" "P-平面活动家具" "暖通井文件TEXT" 
+                                 ;; 15字符
+                                 "A-通用-图案填充" "HOLE_平面洞口_A" "Plan-toilet洁具" "S_STAIR_楼电梯_" 
+                                 "TRI-B2$0$A-DRAN" "WALL_柱墙填充_S" "DS-HIGH CABINET" 
+                                 ;; 16字符
+                                 "HATCH_通用填充_A" 
+                                 ;; 17字符
+                                 "F-FLR3 (PLATFORM)" "HATCH_立面填充1_A" "HATCH_立面填充2_A" 
+                                 "COLU_上层柱轮廓_S" "COLU_下层柱轮廓_S" "ICDA方案_活动家具" "P9-平面家具灰度层" 
+                                 "WALL_上层墙轮廓_S" "WALL_下层墙轮廓_S" "辅助-安全出口指示" 
+                                 ;; 18字符
+                                 "P-固定家具（悬空）" 
+                                 ;; 19字符
+                                 "HS-A-停车位（标准）" 
+                                 ;; 21字符
+                                 "FF--FURN_SF(固定家俱)" "WALL_地下室外墙填充_S" 
+                                 ;; 22字符
+                                 "FF--FIXT（洁具、厨具）" "P-平面洁具（地格显示）" "HS-A-停车位（标准）5.1" 
+                                 "HS-A-停车位（标准）5.3" 
+                                 ;; 24字符
+                                 "P-固定家具（落地、到顶）" 
+                                 ;; 26字符
+                                 "P-洁具及配件（地坪图显示）" "P-固定家具（落地、不到顶）" 
+                                 ;; 28字符
+                                 "P-洁具及配件（地坪图不显示）"
+                           )
+)
+
+;; ---- 冻结规则：将匹配图层冻结 ----
+(setq *DTCL-FREEZE-SUFFIXES* (list 
+                                   ;; 4字符
+                                   "DOTE" "AXIS" "车道" 
+                                   ;; 5字符
+                                   "p排水" 
+                                   ;; 6字符
+                                   "辅助线" "车行线" "雨水管" "保温线" 
+                                   ;; 7字符
+                                   "PUB_DIM" "S索引框" "Pa-turn" 
+                                   ;; 8字符
+                                   "DIM_LEAD" "消防车道" "疏散距离" "车行流线" "降板范围" "疏散指示" "战时内容" 
+                                   "道路中线" "内部轴号" "降板填充" 
+                                   ;; 9字符
+                                   "F疏散距离" "WS_地漏_W" 
+                                   ;; 10字符
+                                   "s-设备基础" "DIM_标注_A" "楼电梯编号" "人防门编号" "道路中心线" 
+                                   ;; 11字符
+                                   "DOTE_轴线_A" "WINDOW_TEXT" "SYMB_排水_A" "SYMB_索引_A" 
+                                   "SYMB_引注_A" "B楼电梯编号" "平面洞口_A" "A-Road-Cntr" 
+                                   ;; 12字符
+                                   "0$FZ消防留洞" "地下室范围线" "厨卫空调洞口" "DIM_留洞标注" "电梯楼梯编号" 
+                                   "L-楼电梯编号" "人防门窗编号" 
+                                   ;; 13字符
+                                   "DOTE_次轴线_A" "PS_排水立管_W" "HS-A-门窗编号" "DOOR_FIRE_TEXT" 
+                                   ;; 14字符
+                                   "DIM_集水坑引注" "AXIS_轴号_内圈" "$0$DOTE_轴线_A" "人防门开启范围" 
+                                   "内部专用名称_A" 
+                                   ;; 15字符
+                                   "TEXT_门窗编号_A" "Pyle-kit-给排水" "HS-风管砖墙留洞" 
+                                   ;; 17字符
+                                   "LINE_辅助轮廓线_A" "STRUC-CONCRETE-cc" 
+                                   ;; 18字符
+                                   "Dim_变电所门洞更改" 
+                                   ;; 19字符
+                                   "HOLE_厨卫空调洞口_A" "PS_排水管线及标注_W" 
+                                   ;; 20字符
+                                   "AXIS_轴号_A_内部轴网"
+                             )
+)
+
+;; ---- 冻结排除前缀：以这些前缀开头的图层不参与冻结匹配 ----
+;; 例：CABLETRAY_DOTE、CABLETRAY_WEAK_DOTE 等电缆桥架图层
+;;     虽以 DOTE 结尾，但属于电气专业图层，不应冻结
+(setq *DTCL-FREEZE-EXCLUDE-PREFIXES* (list 
+                                       "CABLETRAY" ;; 电缆桥架系列图层
+                                     )
+)
+
+;; ---- 解冻规则：强制解冻的图层（特殊例外）----
+(setq *DTCL-THAW-SUFFIXES* (list 
+                             "距离" ;; 4字符 - 原代码中设为 :vlax-false（解冻）
+                           )
+)
+
+;; ---- 不可打印规则 ----
+(setq *DTCL-NOPLOT-SUFFIXES* (list 
+                               "防护区"
+                               "防火分区"
+                               "防火分区线"
+                               "内部专用名称_A"
+                             )
+)
+
+;; ---- 可打印规则（强制设为可打印）----
+(setq *DTCL-PLOT-SUFFIXES* (list 
+                             "活动家具"
+                             "DIM_MODI"
+                             "活动家具_A"
+                           )
+)
+
+;;; ---------- 第四部分：执行处理 ----------
+
+(defun C:DTCL (/ acDoc layers layer-name) 
+  (vl-load-com)
+  (setq acDoc (vla-get-activedocument (vlax-get-acad-object)))
+
+  ;; 遍历所有图层
+  (vlax-for x (vla-get-layers acDoc) 
+    (setq layer-name (vla-get-name x))
+
+    ;; 1) 灰化处理
+    (DTCL:apply-by-suffix 
+      x
+      layer-name
+      *DTCL-GRAY-SUFFIXES*
+      (function (lambda (obj sfx) (vla-put-Color obj 252)))
+    )
+
+    ;; 2) 冻结处理（跳过当前层，AutoCAD 不允许冻结当前层）
+    (if (/= (strcase layer-name) (strcase (getvar "CLAYER"))) 
+      (progn 
+        (DTCL:apply-by-suffix-ex 
+          x
+          layer-name
+          *DTCL-FREEZE-SUFFIXES*
+          *DTCL-FREEZE-EXCLUDE-PREFIXES*
+          (function (lambda (obj sfx) (vla-put-Freeze obj :vlax-true)))
+        )
+        (DTCL:apply-by-suffix 
+          x
+          layer-name
+          *DTCL-THAW-SUFFIXES*
+          (function (lambda (obj sfx) (vla-put-Freeze obj :vlax-false)))
+        )
+      )
+    )
+
+    ;; 3) 打印状态
+    (DTCL:apply-by-suffix 
+      x
+      layer-name
+      *DTCL-NOPLOT-SUFFIXES*
+      (function (lambda (obj sfx) (vla-put-Plottable obj :vlax-false)))
+    )
+    (DTCL:apply-by-suffix 
+      x
+      layer-name
+      *DTCL-PLOT-SUFFIXES*
+      (function (lambda (obj sfx) (vla-put-Plottable obj :vlax-true)))
+    )
+  )
+
+  ;; 刷新显示
+  (command "regen")
+
+  (princ "\n[DTCL] 底图处理完成 - V4.0.0")
+  (princ)
+)
+
+;; 自动执行
+(C:DTCL)
