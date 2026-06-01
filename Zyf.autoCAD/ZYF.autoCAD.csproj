@@ -62,6 +62,9 @@
     <None Update="Tools\10 消防回路统计(FAS).lsp">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Tools\11 PL线转桥架.lsp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Tools\FSNDataBase">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
