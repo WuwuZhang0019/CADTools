@@ -20,7 +20,7 @@ PrivilegesRequired=admin
 UninstallDisplayName={#AppName}
 
 [Languages]
-Name: "chinesesimp"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
+Name: "default"; MessagesFile: "compiler:Default.isl"
 
 [InstallDelete]
 Type: filesandordirs; Name: "{app}\Contents"
@@ -36,17 +36,10 @@ Type: files; Name: "{app}\PackageContents.xml"
 [Code]
 function IsProcessRunning(ProcessName: string): Boolean;
 var
-  WmiService: Variant;
-  Processes: Variant;
+  ResultCode: Integer;
 begin
-  Result := False;
-  try
-    WmiService := GetObject('winmgmts:\\.\root\cimv2');
-    Processes := WmiService.ExecQuery('SELECT * FROM Win32_Process WHERE Name="' + ProcessName + '"');
-    Result := Processes.Count > 0;
-  except
-    Result := False;
-  end;
+  Exec(ExpandConstant('{cmd}'), '/C tasklist /FI "IMAGENAME eq ' + ProcessName + '" | find /I "' + ProcessName + '" >nul', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  Result := ResultCode = 0;
 end;
 
 procedure KillProcess(ProcessName: string);
