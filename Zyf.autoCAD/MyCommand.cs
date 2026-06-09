@@ -8,6 +8,7 @@ using System.Text;
 using System.IO;
 using ZYF.autoCAD;
 using ZYF.autoCAD.Services;
+using ZYF.autoCAD.UI;
     // 由于命名空间“ZYF.autoCAD”中不存在类型或命名空间名“Commands”，移除该引用
     // using ZYF.autoCAD.Commands;
 
@@ -313,10 +314,9 @@ public class MyCommand
     [CommandMethod(nameof(AboutZYFTools), CommandFlags.Modal)]
     public void AboutZYFTools()
     {
-        System.Windows.Forms.MessageBox.Show(
-            $"张裕锋工具集\n当前版本：{UpdateService.GetLocalVersion()}\n官网：{UpdateService.HomepageUrl}",
-            "关于",
-            System.Windows.Forms.MessageBoxButtons.OK,
-            System.Windows.Forms.MessageBoxIcon.Information);
+        using (var form = new AboutForm())
+        {
+            form.ShowDialog();
+        }
     }
 }
