@@ -65,6 +65,9 @@
     <None Update="Tools\11 PL线转桥架.lsp">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Tools\12 自动标导线根数(dxgs).lsp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Tools\FSNDataBase">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

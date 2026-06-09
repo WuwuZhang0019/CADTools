@@ -82,7 +82,8 @@ namespace ZYF.autoCAD
             new PopMenuItem(ResetFontApp, "09 重新设置字体", menu, 8);
             new PopMenuItem(FAS, "10 消防回路统计(FAS)", menu, 9);
             new PopMenuItem(PTB, "11 PL线转桥架(PTB)", menu, 10);
-            new PopMenuItem(UninstallSoftware, "12 软件卸载", menu, 11);
+            new PopMenuItem(DXGS, "12 自动标导线根数", menu, 11);
+            new PopMenuItem(UninstallSoftware, "13 软件卸载", menu, 12);
         }
 
         private MenuMacro _JSSS;
@@ -267,6 +268,20 @@ namespace ZYF.autoCAD
                     _PTB.macro.SmallImage = $@"{_root}\resource\icon\home.ico";    //添加小图标
                 }
                 return _PTB;
+            }
+        }
+
+        private MenuMacro _DXGS;
+        public MenuMacro DXGS
+        {
+            get
+            {
+                if (_DXGS == null)
+                {
+                    _DXGS = new MenuMacro(Parent, "12 自动标导线根数", "DXGS", "zyf_tag");   //实例化宏菜单对象，传入父集，宏名称，绑定的方法命令，标记
+                    _DXGS.macro.SmallImage = $@"{_root}\resource\icon\home.ico";    //添加小图标
+                }
+                return _DXGS;
             }
         }
         

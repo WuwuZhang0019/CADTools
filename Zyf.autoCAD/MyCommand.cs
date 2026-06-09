@@ -27,6 +27,20 @@ namespace ZYF.autoCAD;
 
 public class MyCommand
 {
+    private const string DxgsFileName = "12 自动标导线根数(dxgs).lsp";
+
+    private static void RunDxgsLispCommand(string commandName)
+    {
+        Document document = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
+
+        string filePath = System.Reflection.Assembly.GetAssembly(typeof(MyCommand)).Location;
+        string assemblyPath = System.IO.Path.GetDirectoryName(filePath);
+        string lispPath = Path.Combine(assemblyPath, "Tools", DxgsFileName).Replace(@"\", "/");
+
+        string loadStr = $"(progn (load \"{lispPath}\") (C:{commandName}))\n";
+        document.SendStringToExecute(loadStr, false, false, false);
+    }
+
     //01CAD急速瘦身
     [CommandMethod(nameof(JSSS), CommandFlags.Modal)]
     public void JSSS()
@@ -267,5 +281,24 @@ public class MyCommand
         string loadStr = String.Format("(load \"{0}\") PTB\n", lispPath);
 
         document.SendStringToExecute(loadStr, false, false, false);
+    }
+
+    //12 自动标导线根数
+    [CommandMethod(nameof(DXGS), CommandFlags.Modal)]
+    public void DXGS()
+    {
+        RunDxgsLispCommand(nameof(DXGS));
+    }
+
+    [CommandMethod(nameof(DXGSSETUP), CommandFlags.Modal)]
+    public void DXGSSETUP()
+    {
+        RunDxgsLispCommand(nameof(DXGSSETUP));
+    }
+
+    [CommandMethod(nameof(DXGSCFG), CommandFlags.Modal)]
+    public void DXGSCFG()
+    {
+        RunDxgsLispCommand(nameof(DXGSCFG));
     }
 }
