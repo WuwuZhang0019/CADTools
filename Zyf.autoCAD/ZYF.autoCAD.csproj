@@ -12,6 +12,7 @@
 	  <StartAction>Program</StartAction>
     <StartProgram>D:\AUTOCAD2020\AutoCAD 2020\acad.exe</StartProgram>
 	  <AutoCADApplication>ZYF</AutoCADApplication>
+	  <DeployToAutoCAD>false</DeployToAutoCAD>
 	  <!-- 支持的AutoCAD版本 -->
 	  <SupportedCADVersions>2020;2021;2022</SupportedCADVersions>
   </PropertyGroup>
@@ -78,7 +79,7 @@
     </None>
 
   </ItemGroup>
-	<Target Name="CopyApplication" AfterTargets="PostBuildEvent">
+	<Target Name="CopyApplication" AfterTargets="PostBuildEvent" Condition="'$(DeployToAutoCAD)' == 'true'">
 		<ItemGroup>
 			<SourceFiles Include="$(ProjectDir)$(OutDir)/**/*.*"></SourceFiles>
 		</ItemGroup>
