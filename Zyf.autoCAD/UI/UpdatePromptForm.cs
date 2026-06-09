@@ -8,6 +8,7 @@ namespace ZYF.autoCAD.UI
     public enum UpdatePromptResult
     {
         Later,
+        DownloadAndInstall,
         OpenDownload,
         SkipVersion
     }
@@ -52,10 +53,22 @@ namespace ZYF.autoCAD.UI
                 Text = string.Join("\r\n", manifest.Changelog.Select(item => $"- {item}"))
             };
 
+            var installButton = new Button
+            {
+                Location = new Point(130, 260),
+                Size = new Size(98, 32),
+                Text = "下载并安装"
+            };
+            installButton.Click += (sender, args) =>
+            {
+                Result = UpdatePromptResult.DownloadAndInstall;
+                Close();
+            };
+
             var openButton = new Button
             {
-                Location = new Point(188, 260),
-                Size = new Size(90, 32),
+                Location = new Point(236, 260),
+                Size = new Size(74, 32),
                 Text = "立即查看"
             };
             openButton.Click += (sender, args) =>
@@ -66,7 +79,7 @@ namespace ZYF.autoCAD.UI
 
             var laterButton = new Button
             {
-                Location = new Point(348, 260),
+                Location = new Point(390, 260),
                 Size = new Size(90, 32),
                 Text = "稍后"
             };
@@ -79,6 +92,7 @@ namespace ZYF.autoCAD.UI
             Controls.Add(title);
             Controls.Add(version);
             Controls.Add(changelog);
+            Controls.Add(installButton);
             Controls.Add(openButton);
             Controls.Add(laterButton);
 
@@ -86,8 +100,8 @@ namespace ZYF.autoCAD.UI
             {
                 var skipButton = new Button
                 {
-                    Location = new Point(286, 260),
-                    Size = new Size(54, 32),
+                    Location = new Point(318, 260),
+                    Size = new Size(64, 32),
                     Text = "跳过"
                 };
                 skipButton.Click += (sender, args) =>

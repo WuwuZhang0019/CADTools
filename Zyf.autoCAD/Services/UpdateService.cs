@@ -1,9 +1,11 @@
 using System;
+using System.ComponentModel;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
 using System.Reflection;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 using System.Web.Script.Serialization;
 using System.Windows.Forms;
@@ -175,10 +177,162 @@ namespace ZYF.autoCAD.Services
                 {
                     OpenUrl(string.IsNullOrWhiteSpace(result.Manifest.DownloadUrl) ? result.Manifest.HomepageUrl : result.Manifest.DownloadUrl);
                 }
+                else if (form.Result == UpdatePromptResult.DownloadAndInstall)
+                {
+                    DownloadAndInstallAsync(result.Manifest).GetAwaiter().GetResult();
+                }
                 else if (form.Result == UpdatePromptResult.SkipVersion)
                 {
                     SkipVersion(result.Manifest.LatestVersion);
                 }
+            }
+        }
+
+        private static async Task DownloadAndInstallAsync(UpdateManifest manifest)
+        {
+            if (manifest == null || string.IsNullOrWhiteSpace(manifest.DownloadUrl))
+            {
+                MessageBox.Show("版本清单没有提供安装包下载地址。", "下载更新", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            try
+            {
+                string installerPath = await DownloadInstallerAsync(manifest).ConfigureAwait(false);
+                if (!ValidateInstallerHash(installerPath, manifest))
+                {
+                    TryDelete(installerPath);
+                    MessageBox.Show("安装包校验失败，已阻止安装。请从官网重新下载。", "下载更新", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                var settings = UpdateSettings.Load();
+                settings.LastDownloadPath = installerPath;
+                settings.Save();
+
+                DialogResult startInstall = MessageBox.Show(
+                    "安装包已下载完成。请保存图纸并关闭 AutoCAD，然后开始安装。\n\n是否现在启动安装器？",
+                    "下载更新",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Information);
+
+                if (startInstall == DialogResult.Yes)
+                {
+                    LaunchInstaller(installerPath);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log($"download success=false error={ex.GetType().Name}");
+                MessageBox.Show("安装包下载失败，请稍后重试，或打开官网下载。", "下载更新", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+        }
+
+        private static async Task<string> DownloadInstallerAsync(UpdateManifest manifest)
+        {
+            string downloadDirectory = Path.Combine(Path.GetTempPath(), "ZYFTools", "Downloads");
+            Directory.CreateDirectory(downloadDirectory);
+
+            string fileName = GetInstallerFileName(manifest);
+            string installerPath = Path.Combine(downloadDirectory, fileName);
+            string partialPath = installerPath + ".partial";
+
+            TryDelete(partialPath);
+
+            using (HttpResponseMessage response = await HttpClient.GetAsync(manifest.DownloadUrl).ConfigureAwait(false))
+            {
+                response.EnsureSuccessStatusCode();
+                using (Stream source = await response.Content.ReadAsStreamAsync().ConfigureAwait(false))
+                using (var target = new FileStream(partialPath, FileMode.Create, FileAccess.Write, FileShare.None, 81920, useAsync: true))
+                {
+                    await source.CopyToAsync(target).ConfigureAwait(false);
+                }
+            }
+
+            TryDelete(installerPath);
+            File.Move(partialPath, installerPath);
+            Log($"download path={installerPath} success=true");
+            return installerPath;
+        }
+
+        private static bool ValidateInstallerHash(string installerPath, UpdateManifest manifest)
+        {
+            if (string.IsNullOrWhiteSpace(manifest.Sha256))
+            {
+                DialogResult result = MessageBox.Show(
+                    "版本清单没有提供 SHA-256 校验值，无法确认安装包完整性。\n\n测试环境可继续，正式发布前必须补齐校验值。是否继续安装？",
+                    "下载更新",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Warning);
+
+                return result == DialogResult.Yes;
+            }
+
+            string actualHash = ComputeSha256(installerPath);
+            bool isMatch = string.Equals(actualHash, manifest.Sha256, StringComparison.OrdinalIgnoreCase);
+            Log($"verify success={isMatch}");
+            return isMatch;
+        }
+
+        private static void LaunchInstaller(string installerPath)
+        {
+            try
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = installerPath,
+                    UseShellExecute = true,
+                    Verb = "runas"
+                });
+                Log("installer launch=true");
+            }
+            catch (Win32Exception)
+            {
+                MessageBox.Show("安装已取消。", "下载更新", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                Log("installer launch=false canceled=true");
+            }
+        }
+
+        private static string ComputeSha256(string filePath)
+        {
+            using (SHA256 sha256 = SHA256.Create())
+            using (FileStream stream = File.OpenRead(filePath))
+            {
+                byte[] hash = sha256.ComputeHash(stream);
+                return BitConverter.ToString(hash).Replace("-", string.Empty).ToLowerInvariant();
+            }
+        }
+
+        private static string GetInstallerFileName(UpdateManifest manifest)
+        {
+            try
+            {
+                string fileName = Path.GetFileName(new Uri(manifest.DownloadUrl).LocalPath);
+                if (!string.IsNullOrWhiteSpace(fileName))
+                {
+                    return fileName;
+                }
+            }
+            catch
+            {
+                // 使用版本号生成兜底文件名。
+            }
+
+            return $"zyf-cad-toolkit-{manifest.LatestVersion}.exe";
+        }
+
+        private static void TryDelete(string path)
+        {
+            try
+            {
+                if (File.Exists(path))
+                {
+                    File.Delete(path);
+                }
+            }
+            catch
+            {
+                // 删除失败时让后续文件操作给出明确异常。
             }
         }
 
