@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Text;
 using System.IO;
 using ZYF.autoCAD;
+using ZYF.autoCAD.Services;
     // 由于命名空间“ZYF.autoCAD”中不存在类型或命名空间名“Commands”，移除该引用
     // using ZYF.autoCAD.Commands;
 
@@ -300,5 +301,22 @@ public class MyCommand
     public void DXGSCFG()
     {
         RunDxgsLispCommand(nameof(DXGSCFG));
+    }
+
+    [CommandMethod(nameof(CheckUpdate), CommandFlags.Modal)]
+    public void CheckUpdate()
+    {
+        UpdateCheckResult result = UpdateService.CheckForUpdatesAsync(isManual: true).GetAwaiter().GetResult();
+        UpdateService.ShowManualResult(result);
+    }
+
+    [CommandMethod(nameof(AboutZYFTools), CommandFlags.Modal)]
+    public void AboutZYFTools()
+    {
+        System.Windows.Forms.MessageBox.Show(
+            $"张裕锋工具集\n当前版本：{UpdateService.GetLocalVersion()}\n官网：{UpdateService.HomepageUrl}",
+            "关于",
+            System.Windows.Forms.MessageBoxButtons.OK,
+            System.Windows.Forms.MessageBoxIcon.Information);
     }
 }

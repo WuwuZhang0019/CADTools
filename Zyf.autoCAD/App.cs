@@ -13,6 +13,7 @@ using System.Text;
 using System.Threading.Tasks;
 using ZYF.autoCAD;
 using System.Drawing.Text;
+using ZYF.autoCAD.Services;
 
 [assembly: ExtensionApplication(typeof(App))]
 namespace ZYF.autoCAD
@@ -84,6 +85,8 @@ namespace ZYF.autoCAD
             new PopMenuItem(PTB, "11 PL线转桥架(PTB)", menu, 10);
             new PopMenuItem(DXGS, "12 自动标导线根数", menu, 11);
             new PopMenuItem(UninstallSoftware, "13 软件卸载", menu, 12);
+            new PopMenuItem(CheckUpdate, "14 检查更新", menu, 13);
+            new PopMenuItem(AboutZYFTools, "15 关于", menu, 14);
         }
 
         private MenuMacro _JSSS;
@@ -284,6 +287,34 @@ namespace ZYF.autoCAD
                 return _DXGS;
             }
         }
+
+        private MenuMacro _CheckUpdate;
+        public MenuMacro CheckUpdate
+        {
+            get
+            {
+                if (_CheckUpdate == null)
+                {
+                    _CheckUpdate = new MenuMacro(Parent, "检查更新", "CheckUpdate", "zyf_tag");
+                    _CheckUpdate.macro.SmallImage = $@"{_root}\resource\icon\home.ico";
+                }
+                return _CheckUpdate;
+            }
+        }
+
+        private MenuMacro _AboutZYFTools;
+        public MenuMacro AboutZYFTools
+        {
+            get
+            {
+                if (_AboutZYFTools == null)
+                {
+                    _AboutZYFTools = new MenuMacro(Parent, "关于", "AboutZYFTools", "zyf_tag");
+                    _AboutZYFTools.macro.SmallImage = $@"{_root}\resource\icon\home.ico";
+                }
+                return _AboutZYFTools;
+            }
+        }
         
         public MacroGroup Parent { get; set; }
 
@@ -318,11 +349,13 @@ namespace ZYF.autoCAD
             }
             Application.Idle += OnApplicationIdle;
         }
-        private void OnApplicationIdle(object sender, EventArgs e)
+        private async void OnApplicationIdle(object sender, EventArgs e)
         {            
             // 仅执行一次
             Application.Idle -= OnApplicationIdle;
             StartFontAppIfNotRunning();
+            UpdateCheckResult result = await UpdateService.CheckForUpdatesAsync(isManual: false);
+            UpdateService.ShowAutomaticResult(result);
         }
 
         // 文档创建事件处理程序
