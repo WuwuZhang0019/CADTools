@@ -240,7 +240,7 @@ public class MyCommand
             }
             
             // 2. 启动卸载程序
-            string uninstallPath = "C:\\ProgramData\\Autodesk\\ApplicationPlugins\\ZYF.bundle1\\unins000.exe";
+            string uninstallPath = "C:\\ProgramData\\Autodesk\\ApplicationPlugins\\ZYF.bundle\\unins000.exe";
             
             if (File.Exists(uninstallPath))
             {
