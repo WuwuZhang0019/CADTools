@@ -255,4 +255,17 @@ public class MyCommand
 
         document.SendStringToExecute(loadStr, false, false, false);
     }
+
+    //11 PL线转桥架
+    [CommandMethod(nameof(PTB), CommandFlags.Modal)]
+    public void PTB()
+    {
+        Document document = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
+
+        string lispPath = "C:/ProgramData/Autodesk/ApplicationPlugins/ZYF.bundle/Contents/Tools/11 PL线转桥架.lsp";
+
+        string loadStr = String.Format("(load \"{0}\") PTB\n", lispPath);
+
+        document.SendStringToExecute(loadStr, false, false, false);
+    }
 }
