@@ -12,7 +12,11 @@ namespace ZYF.autoCAD.Services
         public string ReleaseDate { get; set; }
         public string Title { get; set; }
         public List<string> Changelog { get; set; } = new List<string>();
+        public string DistributionMode { get; set; }
+        public string FileName { get; set; }
+        public long FileSize { get; set; }
         public string DownloadUrl { get; set; }
+        public string DownloadCode { get; set; }
         public string Sha256 { get; set; }
         public bool Mandatory { get; set; }
         public string MinimumSupportedVersion { get; set; }
@@ -28,7 +32,11 @@ namespace ZYF.autoCAD.Services
                 ReleaseDate = ReadString(values, "releaseDate"),
                 Title = ReadString(values, "title"),
                 Changelog = ReadStringList(values, "changelog"),
+                DistributionMode = ReadString(values, "distributionMode"),
+                FileName = ReadString(values, "fileName"),
+                FileSize = ReadLong(values, "fileSize"),
                 DownloadUrl = ReadString(values, "downloadUrl"),
+                DownloadCode = ReadString(values, "downloadCode"),
                 Sha256 = ReadString(values, "sha256"),
                 Mandatory = ReadBool(values, "mandatory"),
                 MinimumSupportedVersion = ReadString(values, "minimumSupportedVersion"),
@@ -36,6 +44,9 @@ namespace ZYF.autoCAD.Services
                 ReleaseNotesUrl = ReadString(values, "releaseNotesUrl")
             };
         }
+
+        public bool IsExternalDistribution =>
+            string.Equals(DistributionMode, "external", StringComparison.OrdinalIgnoreCase);
 
         private static string ReadString(IDictionary<string, object> values, string key)
         {
@@ -60,6 +71,16 @@ namespace ZYF.autoCAD.Services
             }
 
             return bool.TryParse(Convert.ToString(value, CultureInfo.InvariantCulture), out bool parsed) && parsed;
+        }
+
+        private static long ReadLong(IDictionary<string, object> values, string key)
+        {
+            if (!values.TryGetValue(key, out object value) || value == null)
+            {
+                return 0;
+            }
+
+            return long.TryParse(Convert.ToString(value, CultureInfo.InvariantCulture), out long parsed) ? parsed : 0;
         }
 
         private static List<string> ReadStringList(IDictionary<string, object> values, string key)

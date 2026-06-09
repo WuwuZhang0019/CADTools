@@ -50,18 +50,18 @@ namespace ZYF.autoCAD.UI
                 ReadOnly = true,
                 ScrollBars = ScrollBars.Vertical,
                 Size = new Size(420, 150),
-                Text = string.Join("\r\n", manifest.Changelog.Select(item => $"- {item}"))
+                Text = BuildDetailText(manifest)
             };
 
             var installButton = new Button
             {
                 Location = new Point(130, 260),
                 Size = new Size(98, 32),
-                Text = "下载并安装"
+                Text = manifest.IsExternalDistribution ? "打开网盘" : "下载并安装"
             };
             installButton.Click += (sender, args) =>
             {
-                Result = UpdatePromptResult.DownloadAndInstall;
+                Result = manifest.IsExternalDistribution ? UpdatePromptResult.OpenDownload : UpdatePromptResult.DownloadAndInstall;
                 Close();
             };
 
@@ -69,7 +69,7 @@ namespace ZYF.autoCAD.UI
             {
                 Location = new Point(236, 260),
                 Size = new Size(74, 32),
-                Text = "立即查看"
+                Text = manifest.IsExternalDistribution ? "官网" : "立即查看"
             };
             openButton.Click += (sender, args) =>
             {
@@ -111,6 +111,29 @@ namespace ZYF.autoCAD.UI
                 };
                 Controls.Add(skipButton);
             }
+        }
+
+        private static string BuildDetailText(UpdateManifest manifest)
+        {
+            var lines = manifest.Changelog.Select(item => $"- {item}").ToList();
+
+            if (manifest.IsExternalDistribution)
+            {
+                lines.Add(string.Empty);
+                lines.Add($"文件名：{manifest.FileName}");
+                if (manifest.FileSize > 0)
+                {
+                    lines.Add($"文件大小：{manifest.FileSize} 字节");
+                }
+                if (!string.IsNullOrWhiteSpace(manifest.DownloadCode))
+                {
+                    lines.Add($"网盘提取码：{manifest.DownloadCode}");
+                }
+                lines.Add($"SHA-256：{manifest.Sha256}");
+                lines.Add("请从网盘下载后自行核对 SHA-256。");
+            }
+
+            return string.Join("\r\n", lines);
         }
     }
 }

@@ -179,6 +179,12 @@ namespace ZYF.autoCAD.Services
                 }
                 else if (form.Result == UpdatePromptResult.DownloadAndInstall)
                 {
+                    if (result.Manifest.IsExternalDistribution)
+                    {
+                        OpenUrl(string.IsNullOrWhiteSpace(result.Manifest.DownloadUrl) ? result.Manifest.HomepageUrl : result.Manifest.DownloadUrl);
+                        return;
+                    }
+
                     DownloadAndInstallAsync(result.Manifest).GetAwaiter().GetResult();
                 }
                 else if (form.Result == UpdatePromptResult.SkipVersion)
