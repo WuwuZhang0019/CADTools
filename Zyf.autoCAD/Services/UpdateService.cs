@@ -24,21 +24,29 @@ namespace ZYF.autoCAD.Services
             Timeout = TimeSpan.FromSeconds(5)
         };
 
+        public static UpdateCheckResult CachedResult { get; private set; }
+        private static bool _hasNotifiedThisSession = false;
+
+        public static void CheckAndNotifyUpdateOnCommandRun()
+        {
+            if (_hasNotifiedThisSession) return;
+
+            if (CachedResult != null && CachedResult.HasUpdate)
+            {
+                _hasNotifiedThisSession = true;
+                MessageBox.Show(
+                    "检测到新版本可用，您可以在空闲时前往菜单栏的【关于】面板进行检查更新与升级。",
+                    "更新提醒",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+            }
+        }
+
         public static async Task<UpdateCheckResult> CheckForUpdatesAsync(bool isManual)
         {
             var settings = UpdateSettings.Load();
             string localVersion = GetLocalVersion();
-
-            if (!isManual && settings.LastCheckUpdateDate.HasValue &&
-                DateTimeOffset.Now - settings.LastCheckUpdateDate.Value < TimeSpan.FromDays(30))
-            {
-                return new UpdateCheckResult
-                {
-                    Status = UpdateCheckStatus.FrequencySkipped,
-                    LocalVersion = localVersion,
-                    Message = "距离上次检查不足 30 天。"
-                };
-            }
+            UpdateCheckResult result;
 
             try
             {
@@ -51,7 +59,7 @@ namespace ZYF.autoCAD.Services
 
                 if (!IsManifestValid(manifest))
                 {
-                    return new UpdateCheckResult
+                    result = new UpdateCheckResult
                     {
                         Status = UpdateCheckStatus.InvalidManifest,
                         LocalVersion = localVersion,
@@ -59,63 +67,62 @@ namespace ZYF.autoCAD.Services
                         Message = "版本清单格式不完整或 appId 不匹配。"
                     };
                 }
-
-                Version local = ParseVersion(localVersion);
-                Version online = ParseVersion(manifest.LatestVersion);
-                bool isForced = IsForcedUpdate(local, manifest);
-
-                Log($"check local={localVersion} online={manifest.LatestVersion} success=true");
-
-                if (online <= local)
+                else
                 {
-                    return new UpdateCheckResult
+                    Version local = ParseVersion(localVersion);
+                    Version online = ParseVersion(manifest.LatestVersion);
+                    bool isForced = IsForcedUpdate(local, manifest);
+
+                    Log($"check local={localVersion} online={manifest.LatestVersion} success=true");
+
+                    if (online <= local)
                     {
-                        Status = UpdateCheckStatus.Latest,
-                        LocalVersion = localVersion,
-                        Manifest = manifest,
-                        Message = "当前已是最新版本。"
-                    };
-                }
-
-                if (!isManual && !isForced && string.Equals(settings.SkippedVersion, manifest.LatestVersion, StringComparison.OrdinalIgnoreCase))
-                {
-                    return new UpdateCheckResult
+                        result = new UpdateCheckResult
+                        {
+                            Status = UpdateCheckStatus.Latest,
+                            LocalVersion = localVersion,
+                            Manifest = manifest,
+                            Message = "当前已是最新版本。"
+                        };
+                    }
+                    else if (!isManual && !isForced && string.Equals(settings.SkippedVersion, manifest.LatestVersion, StringComparison.OrdinalIgnoreCase))
                     {
-                        Status = UpdateCheckStatus.VersionSkipped,
-                        LocalVersion = localVersion,
-                        Manifest = manifest,
-                        Message = "已跳过此版本。"
-                    };
+                        result = new UpdateCheckResult
+                        {
+                            Status = UpdateCheckStatus.VersionSkipped,
+                            LocalVersion = localVersion,
+                            Manifest = manifest,
+                            Message = "已跳过此版本。"
+                        };
+                    }
+                    else
+                    {
+                        result = new UpdateCheckResult
+                        {
+                            Status = UpdateCheckStatus.UpdateAvailable,
+                            LocalVersion = localVersion,
+                            Manifest = manifest,
+                            IsForced = isForced,
+                            Message = $"发现新版本 {manifest.LatestVersion}。"
+                        };
+                    }
                 }
-
-                return new UpdateCheckResult
-                {
-                    Status = UpdateCheckStatus.UpdateAvailable,
-                    LocalVersion = localVersion,
-                    Manifest = manifest,
-                    IsForced = isForced,
-                    Message = $"发现新版本 {manifest.LatestVersion}。"
-                };
             }
             catch (Exception ex)
             {
                 Log($"check local={localVersion} success=false error={ex.GetType().Name}");
-                return new UpdateCheckResult
+                result = new UpdateCheckResult
                 {
                     Status = UpdateCheckStatus.Failed,
                     LocalVersion = localVersion,
                     Message = "检查更新失败，请稍后重试。"
                 };
             }
+
+            CachedResult = result;
+            return result;
         }
 
-        public static void ShowAutomaticResult(UpdateCheckResult result)
-        {
-            if (result?.HasUpdate == true)
-            {
-                ShowUpdatePrompt(result, allowSkip: !result.IsForced);
-            }
-        }
 
         public static void ShowManualResult(UpdateCheckResult result)
         {

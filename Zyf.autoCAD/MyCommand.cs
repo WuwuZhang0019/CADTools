@@ -47,6 +47,7 @@ public class MyCommand
     [CommandMethod(nameof(JSSS), CommandFlags.Modal)]
     public void JSSS()
     {
+        UpdateService.CheckAndNotifyUpdateOnCommandRun();
         Document document = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
 
         string lispPath = "C:/ProgramData/Autodesk/ApplicationPlugins/ZYF.bundle/Contents/Tools/01 CAD急速瘦身(jsss).lsp";
@@ -60,6 +61,7 @@ public class MyCommand
     [CommandMethod(nameof(MEE), CommandFlags.Modal)]
     public void MEE()
     {
+        UpdateService.CheckAndNotifyUpdateOnCommandRun();
         Document document = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
 
         string lispPath = "C:/ProgramData/Autodesk/ApplicationPlugins/ZYF.bundle/Contents/Tools/02 布置地面疏散指示(mee).lsp";
@@ -73,6 +75,7 @@ public class MyCommand
     [CommandMethod(nameof(DTCL), CommandFlags.Modal)]
     public void DTCL()
     {
+        UpdateService.CheckAndNotifyUpdateOnCommandRun();
         Document document = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
 
         string lispPath = "C:/ProgramData/Autodesk/ApplicationPlugins/ZYF.bundle/Contents/Tools/03 底图处理(DTCL).lsp";
@@ -86,6 +89,7 @@ public class MyCommand
     [CommandMethod(nameof(THDZ), CommandFlags.Modal)]
     public void THDZ()
     {
+        UpdateService.CheckAndNotifyUpdateOnCommandRun();
         Document document = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
 
         string lispPath = "C:/ProgramData/Autodesk/ApplicationPlugins/ZYF.bundle/Contents/Tools/04 图号文字递增V2.0(thdz).lsp";
@@ -99,6 +103,7 @@ public class MyCommand
     [CommandMethod(nameof(QHK), CommandFlags.Modal)]
     public void QHK()
     {
+        UpdateService.CheckAndNotifyUpdateOnCommandRun();
         Document document = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
 
         string lispPath = "C:/ProgramData/Autodesk/ApplicationPlugins/ZYF.bundle/Contents/Tools/05 图片去黑框(QHK).lsp";
@@ -112,6 +117,7 @@ public class MyCommand
     [CommandMethod(nameof(MAA), CommandFlags.Modal)]
     public void MAA()
     {
+        UpdateService.CheckAndNotifyUpdateOnCommandRun();
         Document document = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
 
         string lispPath = "C:/ProgramData/Autodesk/ApplicationPlugins/ZYF.bundle/Contents/Tools/06 文字复制(maa).lsp";
@@ -142,6 +148,7 @@ public class MyCommand
     [CommandMethod(nameof(P0), CommandFlags.Modal)]
     public void P0()
     {
+        UpdateService.CheckAndNotifyUpdateOnCommandRun();
         Document document = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
 
         string lispPath = "C:/ProgramData/Autodesk/ApplicationPlugins/ZYF.bundle/Contents/Tools/08 0层置为当前图层(P0).lsp";
@@ -263,6 +270,7 @@ public class MyCommand
     [CommandMethod(nameof(FAS), CommandFlags.Modal)]
     public void FAS()
     {
+        UpdateService.CheckAndNotifyUpdateOnCommandRun();
         Document document = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
 
         string lispPath = "C:/ProgramData/Autodesk/ApplicationPlugins/ZYF.bundle/Contents/Tools/10 消防回路统计(FAS).lsp";
@@ -276,6 +284,7 @@ public class MyCommand
     [CommandMethod(nameof(PTB), CommandFlags.Modal)]
     public void PTB()
     {
+        UpdateService.CheckAndNotifyUpdateOnCommandRun();
         Document document = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
 
         string lispPath = "C:/ProgramData/Autodesk/ApplicationPlugins/ZYF.bundle/Contents/Tools/11 PL线转桥架.lsp";
@@ -289,6 +298,7 @@ public class MyCommand
     [CommandMethod(nameof(DXGS), CommandFlags.Modal)]
     public void DXGS()
     {
+        UpdateService.CheckAndNotifyUpdateOnCommandRun();
         RunDxgsLispCommand(nameof(DXGS));
     }
 

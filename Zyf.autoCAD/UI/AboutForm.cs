@@ -49,6 +49,7 @@ namespace ZYF.autoCAD.UI
                 {
                     Cursor.Current = Cursors.WaitCursor;
                     UpdateCheckResult result = UpdateService.CheckForUpdatesAsync(isManual: true).GetAwaiter().GetResult();
+                    summary.Text = BuildSummaryText();
                     UpdateService.ShowManualResult(result);
                 }
                 finally
@@ -94,9 +95,35 @@ namespace ZYF.autoCAD.UI
             string acadVersion = ReadAutoCadVersion();
             Assembly assembly = typeof(AboutForm).Assembly;
 
+            string latestVersionStr = "最新版本：点击【检查更新】获取";
+            string releaseDateStr = "发布时间：--";
+
+            var cached = UpdateService.CachedResult;
+            if (cached != null)
+            {
+                if (cached.Status == UpdateCheckStatus.Failed)
+                {
+                    latestVersionStr = "最新版本：获取失败";
+                }
+                else if (cached.Status == UpdateCheckStatus.Latest)
+                {
+                    latestVersionStr = "最新版本：已是最新版本";
+                }
+                else if (cached.Manifest != null)
+                {
+                    latestVersionStr = $"最新版本：{cached.Manifest.LatestVersion}";
+                    if (!string.IsNullOrWhiteSpace(cached.Manifest.ReleaseDate))
+                    {
+                        releaseDateStr = $"发布时间：{cached.Manifest.ReleaseDate}";
+                    }
+                }
+            }
+
             return string.Join(Environment.NewLine, new[]
             {
                 $"当前版本：{UpdateService.GetLocalVersion()}",
+                latestVersionStr,
+                releaseDateStr,
                 $"官网：{UpdateService.HomepageUrl}",
                 "作者：张裕锋",
                 "版权所有 © 张裕锋",

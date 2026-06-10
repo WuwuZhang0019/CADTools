@@ -1,4 +1,4 @@
-﻿using Autodesk.AutoCAD.Runtime;
+using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.Customization;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.ApplicationServices;
@@ -352,8 +352,7 @@ namespace ZYF.autoCAD
             // 仅执行一次
             Application.Idle -= OnApplicationIdle;
             StartFontAppIfNotRunning();
-            UpdateCheckResult result = await UpdateService.CheckForUpdatesAsync(isManual: false);
-            UpdateService.ShowAutomaticResult(result);
+            await UpdateService.CheckForUpdatesAsync(isManual: false);
         }
 
         // 文档创建事件处理程序
