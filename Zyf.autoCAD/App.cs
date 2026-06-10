@@ -84,9 +84,7 @@ namespace ZYF.autoCAD
             new PopMenuItem(FAS, "10 消防回路统计(FAS)", menu, 9);
             new PopMenuItem(PTB, "11 PL线转桥架(PTB)", menu, 10);
             new PopMenuItem(DXGS, "12 自动标导线根数", menu, 11);
-            new PopMenuItem(UninstallSoftware, "13 软件卸载", menu, 12);
-            new PopMenuItem(CheckUpdate, "14 检查更新", menu, 13);
-            new PopMenuItem(AboutZYFTools, "15 关于", menu, 14);
+            new PopMenuItem(AboutZYFTools, "13 关于", menu, 12);
         }
 
         private MenuMacro _JSSS;

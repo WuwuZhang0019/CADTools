@@ -143,7 +143,9 @@ namespace ZYF.autoCAD.Services
         {
             Assembly assembly = typeof(UpdateService).Assembly;
             string version = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
-            return string.IsNullOrWhiteSpace(version) ? assembly.GetName().Version.ToString() : version;
+            string localVersion = string.IsNullOrWhiteSpace(version) ? assembly.GetName().Version.ToString() : version;
+            int metadataIndex = localVersion.IndexOf('+');
+            return metadataIndex > 0 ? localVersion.Substring(0, metadataIndex) : localVersion;
         }
 
         public static void OpenUrl(string url)

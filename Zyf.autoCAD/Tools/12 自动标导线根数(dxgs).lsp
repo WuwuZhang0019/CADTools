@@ -270,23 +270,23 @@
 
 (defun dxgs:default-switch-catalog ()
   (list
-    (list (cons "name" "å•è”å•æ§")
+    (list (cons "name" "µ¥Áªµ¥¿Ø")
           (cons "control_count" 1)
           (cons "control_wire_count" 1)
           (cons "kind" "SINGLE"))
-    (list (cons "name" "åŒè”å•æ§")
+    (list (cons "name" "Ë«Áªµ¥¿Ø")
           (cons "control_count" 2)
           (cons "control_wire_count" 2)
           (cons "kind" "SINGLE"))
-    (list (cons "name" "ä¸‰è”å•æ§")
+    (list (cons "name" "ÈıÁªµ¥¿Ø")
           (cons "control_count" 3)
           (cons "control_wire_count" 3)
           (cons "kind" "SINGLE"))
-    (list (cons "name" "å››è”å•æ§")
+    (list (cons "name" "ËÄÁªµ¥¿Ø")
           (cons "control_count" 4)
           (cons "control_wire_count" 4)
           (cons "kind" "SINGLE"))
-    (list (cons "name" "å•è”åŒæ§")
+    (list (cons "name" "µ¥ÁªË«¿Ø")
           (cons "control_count" 1)
           (cons "control_wire_count" 2)
           (cons "kind" "DOUBLE"))
@@ -371,10 +371,10 @@
   (if old
     (princ
       (strcat
-        "\n[DXGS] å·²é…ç½® [" name "]ï¼Œå›è½¦ä¿ç•™ï¼›é‡æ–°é€‰æ‹©å°†è¦†ç›–è¯¥ç±»å‹ã€‚"
-        "\n        å½“å‰å—å: " (vl-princ-to-string (dxgs:get old "blocks"))
-        "ï¼Œå›¾å±‚: " (vl-princ-to-string (dxgs:get old "layers"))))
-    (princ (strcat "\n[DXGS] è¯·é€‰æ‹© [" name "] å¼€å…³å›¾ä¾‹å—ï¼›æ²¡æœ‰åˆ™ç›´æ¥å›è½¦è·³è¿‡ã€‚"))
+        "\n[DXGS] ÒÑÅäÖÃ [" name "]£¬»Ø³µ±£Áô£»ÖØĞÂÑ¡Ôñ½«¸²¸Ç¸ÃÀàĞÍ¡£"
+        "\n        µ±Ç°¿éÃû: " (vl-princ-to-string (dxgs:get old "blocks"))
+        "£¬Í¼²ã: " (vl-princ-to-string (dxgs:get old "layers"))))
+    (princ (strcat "\n[DXGS] ÇëÑ¡Ôñ [" name "] ¿ª¹ØÍ¼Àı¿é£»Ã»ÓĞÔòÖ±½Ó»Ø³µÌø¹ı¡£"))
   )
   (setq ss (ssget '((0 . "INSERT"))))
   (if ss
@@ -389,17 +389,17 @@
                   (cons "kind" kind)
                   (cons "blocks" (dxgs:get sig "blocks"))
                   (cons "layers" (dxgs:get sig "layers"))))
-          (princ (strcat "\n[DXGS] å·²è®°å½• [" name "]ã€‚"))
+          (princ (strcat "\n[DXGS] ÒÑ¼ÇÂ¼ [" name "]¡£"))
           item)
         (progn
-          (princ (strcat "\n[DXGS] æœªä» [" name "] é€‰æ‹©é›†ä¸­è¯»å–åˆ°æœ‰æ•ˆå¼€å…³å›¾å—ã€‚"))
+          (princ (strcat "\n[DXGS] Î´´Ó [" name "] Ñ¡Ôñ¼¯ÖĞ¶ÁÈ¡µ½ÓĞĞ§¿ª¹ØÍ¼¿é¡£"))
           old)
       )
     )
     (progn
       (if old
-        (princ (strcat "\n[DXGS] ä¿ç•™ [" name "] åŸé…ç½®ã€‚"))
-        (princ (strcat "\n[DXGS] è·³è¿‡ [" name "]ã€‚"))
+        (princ (strcat "\n[DXGS] ±£Áô [" name "] Ô­ÅäÖÃ¡£"))
+        (princ (strcat "\n[DXGS] Ìø¹ı [" name "]¡£"))
       )
       old)
   )
@@ -417,7 +417,7 @@
   )
   (if out
     out
-    (dxgs:abort "æœªé…ç½®ä»»ä½•å¼€å…³å›¾ä¾‹ï¼Œé…ç½®ä¸­æ­¢ã€‚")
+    (dxgs:abort "Î´ÅäÖÃÈÎºÎ¿ª¹ØÍ¼Àı£¬ÅäÖÃÖĞÖ¹¡£")
   )
 )
 
@@ -430,7 +430,7 @@
   (setq picked
     (entsel
       (strcat
-        "\né€‰æ‹©ä¸€ä¸ªå®ä½“ä½œä¸ºè‡ªåŠ¨æ ‡æ³¨è¾“å‡ºå›¾å±‚ï¼Œæˆ–å›è½¦è¾“å…¥/ä¿ç•™ ["
+        "\nÑ¡ÔñÒ»¸öÊµÌå×÷Îª×Ô¶¯±ê×¢Êä³öÍ¼²ã£¬»ò»Ø³µÊäÈë/±£Áô ["
         fallback "]: ")))
   (if picked
     (dxgs:entity-layer (car picked))
@@ -438,7 +438,7 @@
       (setq value
         (dxgs:trim
           (getstring T
-            (strcat "\nè¾“å…¥è‡ªåŠ¨æ ‡æ³¨è¾“å‡ºå›¾å±‚åï¼Œå›è½¦ä½¿ç”¨ [" fallback "]: "))))
+            (strcat "\nÊäÈë×Ô¶¯±ê×¢Êä³öÍ¼²ãÃû£¬»Ø³µÊ¹ÓÃ [" fallback "]: "))))
       (if (= value "")
         fallback
         value
@@ -450,20 +450,20 @@
 (defun dxgs:config-summary (cfg / text st)
   (setq text
     (strcat
-      "\n[DXGS] å½“å‰é…ç½®:"
-      "\n  å¯¼çº¿å›¾å±‚: " (vl-princ-to-string (dxgs:get cfg "wire_layers"))
-      "\n  ç¯å…·å—å: " (vl-princ-to-string (dxgs:get cfg "lamp_blocks"))
-      "\n  ç¯å…·å›¾å±‚: " (vl-princ-to-string (dxgs:get cfg "lamp_layers"))
-      "\n  æ ‡æ³¨å›¾å±‚: " (dxgs:get cfg "label_layer")))
+      "\n[DXGS] µ±Ç°ÅäÖÃ:"
+      "\n  µ¼ÏßÍ¼²ã: " (vl-princ-to-string (dxgs:get cfg "wire_layers"))
+      "\n  µÆ¾ß¿éÃû: " (vl-princ-to-string (dxgs:get cfg "lamp_blocks"))
+      "\n  µÆ¾ßÍ¼²ã: " (vl-princ-to-string (dxgs:get cfg "lamp_layers"))
+      "\n  ±ê×¢Í¼²ã: " (dxgs:get cfg "label_layer")))
   (princ text)
   (foreach st (dxgs:get cfg "switch_types")
     (princ
       (strcat
-        "\n  å¼€å…³ç±»å‹: " (dxgs:get st "name")
-        " / å›è·¯æ•° " (itoa (dxgs:get st "control_count"))
-        " / æ§åˆ¶çº¿ " (itoa (dxgs:switch-control-wire-count st))
-        " / å—å " (vl-princ-to-string (dxgs:get st "blocks"))
-        " / å›¾å±‚ " (vl-princ-to-string (dxgs:get st "layers"))))
+        "\n  ¿ª¹ØÀàĞÍ: " (dxgs:get st "name")
+        " / »ØÂ·Êı " (itoa (dxgs:get st "control_count"))
+        " / ¿ØÖÆÏß " (itoa (dxgs:switch-control-wire-count st))
+        " / ¿éÃû " (vl-princ-to-string (dxgs:get st "blocks"))
+        " / Í¼²ã " (vl-princ-to-string (dxgs:get st "layers"))))
   )
 )
 
@@ -472,12 +472,12 @@
   (if (dxgs:config-valid-p existing)
     (progn
       (setq *DXGS-CONFIG* existing)
-      (princ "\n[DXGS] å¼€å§‹ä¿®æ”¹æœ¬å›¾çº¸çš„è¯†åˆ«é…ç½®ã€‚å›è½¦å¯ä¿ç•™å·²æœ‰é¡¹ã€‚")
+      (princ "\n[DXGS] ¿ªÊ¼ĞŞ¸Ä±¾Í¼Ö½µÄÊ¶±ğÅäÖÃ¡£»Ø³µ¿É±£ÁôÒÑÓĞÏî¡£")
       (dxgs:config-summary existing))
-    (princ "\n[DXGS] å¼€å§‹å»ºç«‹æœ¬å›¾çº¸çš„è¯†åˆ«é…ç½®ã€‚")
+    (princ "\n[DXGS] ¿ªÊ¼½¨Á¢±¾Í¼Ö½µÄÊ¶±ğÅäÖÃ¡£")
   )
 
-  (princ "\nè¯·é€‰æ‹©ä¸€ä¸ªæˆ–å¤šä¸ªç¯å…·å›¾ä¾‹å—ï¼›å·²æœ‰é…ç½®æ—¶å›è½¦ä¿ç•™ã€‚")
+  (princ "\nÇëÑ¡ÔñÒ»¸ö»ò¶à¸öµÆ¾ßÍ¼Àı¿é£»ÒÑÓĞÅäÖÃÊ±»Ø³µ±£Áô¡£")
   (setq lamp-ss (ssget '((0 . "INSERT"))))
   (if lamp-ss
     (setq lamp-sig (dxgs:collect-insert-signature lamp-ss))
@@ -485,17 +485,17 @@
       (setq lamp-sig
         (list (cons "blocks" (dxgs:get existing "lamp_blocks"))
               (cons "layers" (dxgs:get existing "lamp_layers"))))
-      (dxgs:abort "æœªé€‰æ‹©ç¯å…·å›¾ä¾‹ï¼Œé…ç½®ä¸­æ­¢ã€‚")
+      (dxgs:abort "Î´Ñ¡ÔñµÆ¾ßÍ¼Àı£¬ÅäÖÃÖĞÖ¹¡£")
     )
   )
   (if (or (null (dxgs:get lamp-sig "blocks"))
           (null (dxgs:get lamp-sig "layers")))
-    (dxgs:abort "æœªèƒ½ä»ç¯å…·å›¾ä¾‹ä¸­è¯»å–å—åå’Œå›¾å±‚ã€‚")
+    (dxgs:abort "Î´ÄÜ´ÓµÆ¾ßÍ¼ÀıÖĞ¶ÁÈ¡¿éÃûºÍÍ¼²ã¡£")
   )
 
   (setq switch-types (dxgs:setup-switch-types (dxgs:get existing "switch_types")))
 
-  (princ "\nè¯·é€‰æ‹©ä¸€æ¡æˆ–å¤šæ¡å¯¼çº¿æ ·ä¾‹ï¼ˆLINE/LWPOLYLINE/POLYLINEï¼‰ï¼›å·²æœ‰é…ç½®æ—¶å›è½¦ä¿ç•™ã€‚")
+  (princ "\nÇëÑ¡ÔñÒ»Ìõ»ò¶àÌõµ¼ÏßÑùÀı£¨LINE/LWPOLYLINE/POLYLINE£©£»ÒÑÓĞÅäÖÃÊ±»Ø³µ±£Áô¡£")
   (setq wire-ss (ssget '((0 . "LINE,LWPOLYLINE,POLYLINE"))))
   (if wire-ss
     (setq wire-sig (dxgs:collect-wire-signature wire-ss))
@@ -503,11 +503,11 @@
       (setq wire-sig
         (list (cons "layers" (dxgs:get existing "wire_layers"))
               (cons "types" (dxgs:get existing "wire_types"))))
-      (dxgs:abort "æœªé€‰æ‹©å¯¼çº¿æ ·ä¾‹ï¼Œé…ç½®ä¸­æ­¢ã€‚")
+      (dxgs:abort "Î´Ñ¡Ôñµ¼ÏßÑùÀı£¬ÅäÖÃÖĞÖ¹¡£")
     )
   )
   (if (null (dxgs:get wire-sig "layers"))
-    (dxgs:abort "æœªèƒ½ä»å¯¼çº¿æ ·ä¾‹ä¸­è¯»å–å›¾å±‚ã€‚")
+    (dxgs:abort "Î´ÄÜ´Óµ¼ÏßÑùÀıÖĞ¶ÁÈ¡Í¼²ã¡£")
   )
 
   (setq label-layer (dxgs:prompt-label-layer (dxgs:get existing "label_layer")))
@@ -521,7 +521,7 @@
           (cons "label_layer" label-layer)))
   (setq *DXGS-CONFIG* (dxgs:config-save cfg))
   (dxgs:config-summary cfg)
-  (princ "\n[DXGS] é…ç½®å·²ä¿å­˜åˆ°å½“å‰ DWGã€‚")
+  (princ "\n[DXGS] ÅäÖÃÒÑ±£´æµ½µ±Ç° DWG¡£")
   cfg
 )
 
@@ -533,7 +533,7 @@
       cfg
     )
     (progn
-      (princ "\n[DXGS] å½“å‰å›¾çº¸å°šæœªé…ç½®ç¯å…·ã€å¼€å…³å’Œå¯¼çº¿è¯†åˆ«è§„åˆ™ã€‚")
+      (princ "\n[DXGS] µ±Ç°Í¼Ö½ÉĞÎ´ÅäÖÃµÆ¾ß¡¢¿ª¹ØºÍµ¼ÏßÊ¶±ğ¹æÔò¡£")
       (dxgs:setup-config)
     )
   )
@@ -793,8 +793,8 @@
     )
   )
   (princ
-    (strcat "\n[DXGS] å·²æå–ç®¡çº¿å®ä½“ " (itoa kept)
-            " ä¸ªï¼Œå›¾å±‚/ç±»å‹ä¸åŒ¹é…è·³è¿‡ " (itoa skipped) " ä¸ªã€‚"))
+    (strcat "\n[DXGS] ÒÑÌáÈ¡¹ÜÏßÊµÌå " (itoa kept)
+            " ¸ö£¬Í¼²ã/ÀàĞÍ²»Æ¥ÅäÌø¹ı " (itoa skipped) " ¸ö¡£"))
   out
 )
 
@@ -943,7 +943,7 @@
     (setq out (append out (dxgs:split-segment-by-points seg pts)))
   )
   (if (> t-count 0)
-    (princ (strcat "\n[DXGS] æ£€æµ‹å¹¶è™šæ‹Ÿåˆ‡åˆ† T æ¥ç‚¹ " (itoa t-count) " å¤„ã€‚"))
+    (princ (strcat "\n[DXGS] ¼ì²â²¢ĞéÄâÇĞ·Ö T ½Óµã " (itoa t-count) " ´¦¡£"))
   )
   out
 )
@@ -1009,7 +1009,7 @@
       (cond
         ((> (length hits) 1)
          (dxgs:abort
-           (strcat "æ£€æµ‹åˆ°é‡å è®¾å¤‡å†²çªï¼Œè¯·æ£€æŸ¥è®¾å¤‡é—´è·ã€‚ç®¡çº¿ç«¯ç‚¹: "
+           (strcat "¼ì²âµ½ÖØµşÉè±¸³åÍ»£¬Çë¼ì²éÉè±¸¼ä¾à¡£¹ÜÏß¶Ëµã: "
                    (rtos (car pt) 2 2) "," (rtos (cadr pt) 2 2))))
         ((= (length hits) 1)
          (setq node (dxgs:get (car hits) "node")))
@@ -1254,7 +1254,7 @@
         (setq idx (1+ idx)))
     )
   )
-  (princ (strcat "\n[DXGS] ç”Ÿæˆé€»è¾‘ç®¡çº¿è¾¹ " (itoa (length out)) " æ¡ã€‚"))
+  (princ (strcat "\n[DXGS] Éú³ÉÂß¼­¹ÜÏß±ß " (itoa (length out)) " Ìõ¡£"))
   (reverse out)
 )
 
@@ -1487,15 +1487,15 @@
   (while (null sw)
     (setq pick
       (entsel
-        (strcat "\nè¯·é€‰æ‹©ç¬¬ " (itoa idx) "/" (itoa total) " ä¸ªå¼€å…³: ")))
+        (strcat "\nÇëÑ¡ÔñµÚ " (itoa idx) "/" (itoa total) " ¸ö¿ª¹Ø: ")))
     (if pick
       (progn
         (setq sw (dxgs:switch-by-handle switches (dxgs:entity-handle (car pick))))
         (if (null sw)
-          (princ "\n[DXGS] è¯·é€‰æ‹©æœ¬æ¬¡åˆ†æèŒƒå›´å†…å°šæœªåˆ†ç»„çš„å·²è¯†åˆ«å¼€å…³ã€‚")
+          (princ "\n[DXGS] ÇëÑ¡Ôñ±¾´Î·ÖÎö·¶Î§ÄÚÉĞÎ´·Ö×éµÄÒÑÊ¶±ğ¿ª¹Ø¡£")
         )
       )
-      (princ "\n[DXGS] æœªé€‰æ‹©å¼€å…³ï¼Œè¯·ç‚¹é€‰ä¸€ä¸ªå¼€å…³ã€‚")
+      (princ "\n[DXGS] Î´Ñ¡Ôñ¿ª¹Ø£¬ÇëµãÑ¡Ò»¸ö¿ª¹Ø¡£")
     )
   )
   sw
@@ -1579,15 +1579,15 @@
     nil
     (progn
       (if (> count 1)
-        (princ (strcat "\n[DXGS] å¼€å…³ [" (dxgs:get switch "switch_name") "] ä¸º " (itoa count) " è”ï¼Œè¯·æŒ‰æ¯ä¸€è”é€‰æ‹©æ§åˆ¶çš„ç¯å…·ã€‚"))
-        (princ (strcat "\n[DXGS] å¼€å…³ [" (dxgs:get switch "switch_name") "] ä¸ºå•è”ï¼Œè¯·é€‰æ‹©å…¶æ§åˆ¶çš„ç¯å…·ã€‚"))
+        (princ (strcat "\n[DXGS] ¿ª¹Ø [" (dxgs:get switch "switch_name") "] Îª " (itoa count) " Áª£¬Çë°´Ã¿Ò»ÁªÑ¡Ôñ¿ØÖÆµÄµÆ¾ß¡£"))
+        (princ (strcat "\n[DXGS] ¿ª¹Ø [" (dxgs:get switch "switch_name") "] Îªµ¥Áª£¬ÇëÑ¡ÔñÆä¿ØÖÆµÄµÆ¾ß¡£"))
       )
       (setq idx 1
             groups nil)
       (while (<= idx count)
         (if (> count 1)
-          (princ (strcat "\nè¯·é€‰æ‹©ç¬¬ " (itoa idx) " è”æ§åˆ¶çš„ç¯å…·ç»„ï¼Œå›è½¦è·³è¿‡è¯¥è”: "))
-          (princ "\nè¯·é€‰æ‹©è¯¥å¼€å…³æ§åˆ¶çš„ç¯å…·ç»„ï¼Œå›è½¦è·³è¿‡: ")
+          (princ (strcat "\nÇëÑ¡ÔñµÚ " (itoa idx) " Áª¿ØÖÆµÄµÆ¾ß×é£¬»Ø³µÌø¹ı¸ÃÁª: "))
+          (princ "\nÇëÑ¡Ôñ¸Ã¿ª¹Ø¿ØÖÆµÄµÆ¾ß×é£¬»Ø³µÌø¹ı: ")
         )
         (setq ss (ssget '((0 . "INSERT"))))
         (if ss
@@ -1597,13 +1597,13 @@
               (progn
                 (setq groups (cons (cons idx selected) groups))
                 (princ
-                  (strcat "\n[DXGS] è®°å½•ç¯å…· "
-                          (itoa (length selected)) " ä¸ªã€‚")))
+                  (strcat "\n[DXGS] ¼ÇÂ¼µÆ¾ß "
+                          (itoa (length selected)) " ¸ö¡£")))
               (princ
-                "\n[DXGS] æœªé€‰åˆ°å½“å‰åˆ†æèŒƒå›´å†…çš„å·²è¯†åˆ«ç¯å…·ã€‚")
+                "\n[DXGS] Î´Ñ¡µ½µ±Ç°·ÖÎö·¶Î§ÄÚµÄÒÑÊ¶±ğµÆ¾ß¡£")
             )
           )
-          (princ "\n[DXGS] è·³è¿‡é€‰æ‹©ã€‚")
+          (princ "\n[DXGS] Ìø¹ıÑ¡Ôñ¡£")
         )
         (setq idx (1+ idx))
       )
@@ -1618,7 +1618,7 @@
         prompt-all (>= total 2))
   (if prompt-all
     (progn
-      (princ "\n[DXGS] æ£€æµ‹åˆ°å¤šä¸ªå¼€å…³ï¼Œè¯·æŒ‰å®é™…æ§åˆ¶é¡ºåºä¾æ¬¡ç‚¹é€‰å¼€å…³å¹¶æŒ‡å®šç¯å…·åˆ†ç»„ã€‚")
+      (princ "\n[DXGS] ¼ì²âµ½¶à¸ö¿ª¹Ø£¬Çë°´Êµ¼Ê¿ØÖÆË³ĞòÒÀ´ÎµãÑ¡¿ª¹Ø²¢Ö¸¶¨µÆ¾ß·Ö×é¡£")
       (setq remaining switches
             idx 1)
       (while remaining
@@ -1629,8 +1629,8 @@
             (setq groups (dxgs:remaining-lamp-groups lamps out))
             (setq out (append out (list (cons (dxgs:get sw "node") groups))))
             (princ
-              (strcat "\n[DXGS] æœ€åä¸€ä¸ªå¼€å…³ä¸ºå•è”å•æ§ï¼Œè‡ªåŠ¨åˆ†é…å‰©ä½™ç¯å…· "
-                      (itoa (length (if groups (cdr (car groups)) nil))) " ä¸ªã€‚"))
+              (strcat "\n[DXGS] ×îºóÒ»¸ö¿ª¹ØÎªµ¥Áªµ¥¿Ø£¬×Ô¶¯·ÖÅäÊ£ÓàµÆ¾ß "
+                      (itoa (length (if groups (cdr (car groups)) nil))) " ¸ö¡£"))
           )
           (progn
             (setq groups (dxgs:prompt-switch-gang-lamps sw lamps T))
@@ -1684,7 +1684,7 @@
 (defun dxgs:path-or-warn (start end adj edges blocked label / path)
   (setq path (dxgs:bfs-path start end adj edges blocked))
   (if (null path)
-    (princ (strcat "\n[DXGS] è­¦å‘Š: æœªæ‰¾åˆ°è·¯å¾„ï¼Œè·³è¿‡ " label "ã€‚"))
+    (princ (strcat "\n[DXGS] ¾¯¸æ: Î´ÕÒµ½Â·¾¶£¬Ìø¹ı " label "¡£"))
   )
   path
 )
@@ -1836,7 +1836,7 @@
       )
       (if (and fallback (<= (cdr fallback) (* *DXGS-CONNECT-TOL* *DXGS-CONNECT-TOL*)))
         (progn
-          (princ "\n[DXGS] æœªæŒ‰å®ä½“ handle åŒ¹é…åˆ°ç”µæºçº¿ï¼Œå·²æŒ‰æ‹¾å–ç‚¹è·ç¦»åŒ¹é…æœ€è¿‘ç®¡çº¿ã€‚")
+          (princ "\n[DXGS] Î´°´ÊµÌå handle Æ¥Åäµ½µçÔ´Ïß£¬ÒÑ°´Ê°È¡µã¾àÀëÆ¥Åä×î½ü¹ÜÏß¡£")
           (car fallback))
         nil)
     )
@@ -1853,15 +1853,15 @@
 
 (defun dxgs:print-source-edge-debug (power-ename power-handle logical-edges / edge)
   (princ
-    (strcat "\n[DXGS] è°ƒè¯•: ç”µæºé€‰æ‹©å¯¹è±¡ ç±»å‹ "
+    (strcat "\n[DXGS] µ÷ÊÔ: µçÔ´Ñ¡Ôñ¶ÔÏó ÀàĞÍ "
             (vl-princ-to-string (dxgs:entity-type power-ename))
-            " / å›¾å±‚ "
+            " / Í¼²ã "
             (vl-princ-to-string (dxgs:entity-layer power-ename))
             " / handle "
             (vl-princ-to-string power-handle)))
   (foreach edge logical-edges
     (princ
-      (strcat "\n[DXGS] è°ƒè¯•: é€»è¾‘è¾¹ "
+      (strcat "\n[DXGS] µ÷ÊÔ: Âß¼­±ß "
               (dxgs:get edge "id")
               " / handles "
               (vl-princ-to-string (dxgs:edge-handle-list edge)))))
@@ -1880,7 +1880,7 @@
           (not (dxgs:string-prefix-p "D:" n1)))
      n1)
     (t
-     (setq ans (getpoint "\næ— æ³•è‡ªåŠ¨åˆ¤æ–­ç”µæºä¾§æ ¹èŠ‚ç‚¹ï¼Œè¯·ç‚¹é€‰è¯¥ç®¡çº¿çš„ç”µæºä¾§ç«¯ç‚¹: "))
+     (setq ans (getpoint "\nÎŞ·¨×Ô¶¯ÅĞ¶ÏµçÔ´²à¸ù½Úµã£¬ÇëµãÑ¡¸Ã¹ÜÏßµÄµçÔ´²à¶Ëµã: "))
      (if (<= (dxgs:dist2 ans p1) (dxgs:dist2 ans p2))
        n1
        n2)))
@@ -1995,7 +1995,7 @@
   (if edges
     (progn
       (setq groups (dxgs:group-edges-by-wire-count edges))
-      (princ (strcat "\n[DXGS] æ­£åœ¨è°ƒç”¨å¤©æ­£ BDXS æ ‡æ³¨ " (itoa (length edges)) " ä¸ªå¯¼çº¿æ ¹æ•°ã€‚"))
+      (princ (strcat "\n[DXGS] ÕıÔÚµ÷ÓÃÌìÕı BDXS ±ê×¢ " (itoa (length edges)) " ¸öµ¼Ïß¸ùÊı¡£"))
       (command *DXGS-BDXS-COMMAND*)
       (foreach group groups
         (setq count (car group))
@@ -2028,8 +2028,8 @@
   (if unsupported
     (progn
       (princ
-        (strcat "\n[DXGS] BDXS ä»…æ”¯æŒ 1~8 æ ¹ï¼Œ"
-                (itoa (length unsupported)) " ä¸ªæ ‡æ³¨å·²æ”¹ç”¨ TEXTã€‚"))
+        (strcat "\n[DXGS] BDXS ½öÖ§³Ö 1~8 ¸ù£¬"
+                (itoa (length unsupported)) " ¸ö±ê×¢ÒÑ¸ÄÓÃ TEXT¡£"))
       (dxgs:create-text-labels unsupported))
   )
   (if supported
@@ -2039,7 +2039,7 @@
       (if (vl-catch-all-error-p result)
         (progn
           (princ
-            (strcat "\n[DXGS] BDXS æ ‡æ³¨å¤±è´¥ï¼Œå·²æ”¹ç”¨ TEXTã€‚é”™è¯¯: "
+            (strcat "\n[DXGS] BDXS ±ê×¢Ê§°Ü£¬ÒÑ¸ÄÓÃ TEXT¡£´íÎó: "
                     (vl-catch-all-error-message result)))
           (dxgs:create-text-labels supported))
       )
@@ -2100,22 +2100,22 @@
 (defun dxgs:prompt-model (/ value normalized model)
   (setq value
     (dxgs:trim
-      (getstring "\næ¥çº¿æ¨¡å‹ [Aç”µæºè¿›ç¯ç›’(1)/Bç”µæºè¿›å¼€å…³(2)] <A>: ")))
+      (getstring "\n½ÓÏßÄ£ĞÍ [AµçÔ´½øµÆºĞ(1)/BµçÔ´½ø¿ª¹Ø(2)] <A>: ")))
   (if (= value "") (setq value "A"))
   (setq normalized (strcase value))
   (cond
     ((or (= normalized "A")
          (= normalized "1")
-         (= value "ç”µæºè¿›ç¯ç›’")
-         (= value "ç¯ç›’"))
+         (= value "µçÔ´½øµÆºĞ")
+         (= value "µÆºĞ"))
      (setq model "A"))
     ((or (= normalized "B")
          (= normalized "2")
-         (= value "ç”µæºè¿›å¼€å…³")
-         (= value "å¼€å…³"))
+         (= value "µçÔ´½ø¿ª¹Ø")
+         (= value "¿ª¹Ø"))
      (setq model "B"))
     (t
-     (princ (strcat "\n[DXGS] æœªè¯†åˆ«æ¥çº¿æ¨¡å‹ [" value "]ï¼Œä½¿ç”¨é»˜è®¤ [A]ã€‚"))
+     (princ (strcat "\n[DXGS] Î´Ê¶±ğ½ÓÏßÄ£ĞÍ [" value "]£¬Ê¹ÓÃÄ¬ÈÏ [A]¡£"))
      (setq model "A"))
   )
   model
@@ -2124,29 +2124,29 @@
 (defun dxgs:prompt-filter (/ value normalized filter)
   (setq value
     (dxgs:trim
-      (getstring "\næ ‡æ³¨è¿‡æ»¤ [Allå…¨éƒ¨(1)/Skip2ä¸æ ‡2æ ¹(2)/Skip3ä¸æ ‡3æ ¹(3)] <Skip3>: ")))
+      (getstring "\n±ê×¢¹ıÂË [AllÈ«²¿(1)/Skip2²»±ê2¸ù(2)/Skip3²»±ê3¸ù(3)] <Skip3>: ")))
   (if (= value "") (setq value "Skip3"))
   (setq normalized (strcase value))
   (cond
     ((or (= normalized "ALL")
          (= normalized "A")
          (= normalized "1")
-         (= value "å…¨éƒ¨"))
+         (= value "È«²¿"))
      (setq filter "ALL"))
     ((or (= normalized "SKIP2")
          (= normalized "S2")
          (= normalized "2")
-         (= value "ä¸æ ‡2æ ¹")
-         (= value "ä¸æ ‡2"))
+         (= value "²»±ê2¸ù")
+         (= value "²»±ê2"))
      (setq filter "SKIP2"))
     ((or (= normalized "SKIP3")
          (= normalized "S3")
          (= normalized "3")
-         (= value "ä¸æ ‡3æ ¹")
-         (= value "ä¸æ ‡3"))
+         (= value "²»±ê3¸ù")
+         (= value "²»±ê3"))
      (setq filter "SKIP3"))
     (t
-     (princ (strcat "\n[DXGS] æœªè¯†åˆ«æ ‡æ³¨è¿‡æ»¤ [" value "]ï¼Œä½¿ç”¨é»˜è®¤ [Skip3]ã€‚"))
+     (princ (strcat "\n[DXGS] Î´Ê¶±ğ±ê×¢¹ıÂË [" value "]£¬Ê¹ÓÃÄ¬ÈÏ [Skip3]¡£"))
      (setq filter "SKIP3"))
   )
   filter
@@ -2157,7 +2157,7 @@
   (setq value
     (dxgs:trim
       (getstring
-        (strcat "\næ ‡æ³¨æ–¹å¼ [Textæ™®é€šæ–‡å­—(1)/BDXSå¤©æ­£å¯¼çº¿æ ¹æ•°(2)] <" default ">: "))))
+        (strcat "\n±ê×¢·½Ê½ [TextÆÕÍ¨ÎÄ×Ö(1)/BDXSÌìÕıµ¼Ïß¸ùÊı(2)] <" default ">: "))))
   (if (= value "")
     (setq value default)
   )
@@ -2166,17 +2166,17 @@
     ((or (= normalized "BDXS")
          (= normalized "B")
          (= normalized "2")
-         (= value "å¤©æ­£")
-         (= value "å¤©æ­£å¯¼çº¿æ ¹æ•°"))
+         (= value "ÌìÕı")
+         (= value "ÌìÕıµ¼Ïß¸ùÊı"))
      (setq method "BDXS"))
     ((or (= normalized "TEXT")
          (= normalized "T")
          (= normalized "1")
-         (= value "æ™®é€šæ–‡å­—")
-         (= value "æ–‡å­—"))
+         (= value "ÆÕÍ¨ÎÄ×Ö")
+         (= value "ÎÄ×Ö"))
      (setq method "TEXT"))
     (t
-     (princ (strcat "\n[DXGS] æœªè¯†åˆ«æ ‡æ³¨æ–¹å¼ [" value "]ï¼Œä½¿ç”¨é»˜è®¤ [" default "]ã€‚"))
+     (princ (strcat "\n[DXGS] Î´Ê¶±ğ±ê×¢·½Ê½ [" value "]£¬Ê¹ÓÃÄ¬ÈÏ [" default "]¡£"))
      (setq method (strcase default)))
   )
   (setq *DXGS-USE-BDXS* (= method "BDXS"))
@@ -2193,7 +2193,7 @@
     (if old-lay (setvar "CLAYER" old-lay))
     (if (and msg
              (not (member msg '("Function cancelled" "quit / exit abort" "console break"))))
-      (princ (strcat "\n[DXGS] é…ç½®é”™è¯¯: " msg))
+      (princ (strcat "\n[DXGS] ÅäÖÃ´íÎó: " msg))
     )
     (princ)
   )
@@ -2219,7 +2219,7 @@
   (setq cfg (dxgs:config-load))
   (if (dxgs:config-valid-p cfg)
     (dxgs:config-summary cfg)
-    (princ "\n[DXGS] å½“å‰ DWG å°šæœªä¿å­˜é…ç½®ã€‚è¿è¡Œ DXGSSETUP å»ºç«‹é…ç½®ã€‚")
+    (princ "\n[DXGS] µ±Ç° DWG ÉĞÎ´±£´æÅäÖÃ¡£ÔËĞĞ DXGSSETUP ½¨Á¢ÅäÖÃ¡£")
   )
   (princ)
 )
@@ -2240,7 +2240,7 @@
     (if old-lay (setvar "CLAYER" old-lay))
     (if (and msg
              (not (member msg '("Function cancelled" "quit / exit abort" "console break"))))
-      (princ (strcat "\n[DXGS] é”™è¯¯: " msg))
+      (princ (strcat "\n[DXGS] ´íÎó: " msg))
     )
     (princ)
   )
@@ -2259,15 +2259,15 @@
   (setq label-method "BDXS")
   (setq *DXGS-USE-BDXS* T)
 
-  (princ "\nè¯·é€‰æ‹©æœ¬æ¬¡åˆ†æèŒƒå›´ï¼ˆåŒ…å«å¯¼çº¿ã€ç¯å…·ã€å¼€å…³ï¼‰ã€‚")
+  (princ "\nÇëÑ¡Ôñ±¾´Î·ÖÎö·¶Î§£¨°üº¬µ¼Ïß¡¢µÆ¾ß¡¢¿ª¹Ø£©¡£")
   (setq analysis-ss (ssget))
   (if (null analysis-ss)
-    (dxgs:abort "æœªé€‰æ‹©åˆ†æèŒƒå›´ï¼Œå‘½ä»¤ç»“æŸã€‚")
+    (dxgs:abort "Î´Ñ¡Ôñ·ÖÎö·¶Î§£¬ÃüÁî½áÊø¡£")
   )
 
-  (setq power-pick (entsel "\nè¯·é€‰æ‹©ç”µæºæ¥æºç®¡çº¿: "))
+  (setq power-pick (entsel "\nÇëÑ¡ÔñµçÔ´À´Ô´¹ÜÏß: "))
   (if (null power-pick)
-    (dxgs:abort "æœªé€‰æ‹©ç”µæºæ¥æºç®¡çº¿ï¼Œå‘½ä»¤ç»“æŸã€‚")
+    (dxgs:abort "Î´Ñ¡ÔñµçÔ´À´Ô´¹ÜÏß£¬ÃüÁî½áÊø¡£")
   )
   (setq power-ename (car power-pick)
         power-handle (dxgs:entity-handle power-ename)
@@ -2277,20 +2277,20 @@
         switches (dxgs:collect-devices analysis-ss "SWITCH")
         devices (append lamps switches))
   (if (or (null lamps) (null switches))
-    (dxgs:abort "åœ¨åˆ†æèŒƒå›´å†…æœªè¯†åˆ«åˆ°å·²é…ç½®çš„ç¯å…·æˆ–å¼€å…³ï¼Œè¯·è¿è¡Œ DXGSSETUP æ£€æŸ¥é…ç½®ã€‚")
+    (dxgs:abort "ÔÚ·ÖÎö·¶Î§ÄÚÎ´Ê¶±ğµ½ÒÑÅäÖÃµÄµÆ¾ß»ò¿ª¹Ø£¬ÇëÔËĞĞ DXGSSETUP ¼ì²éÅäÖÃ¡£")
   )
   (princ
-    (strcat "\n[DXGS] å·²è¯»å–ç¯å…· " (itoa (length lamps))
-            " ä¸ªï¼Œå¼€å…³ " (itoa (length switches)) " ä¸ªã€‚"))
+    (strcat "\n[DXGS] ÒÑ¶ÁÈ¡µÆ¾ß " (itoa (length lamps))
+            " ¸ö£¬¿ª¹Ø " (itoa (length switches)) " ¸ö¡£"))
 
   (setq base-segments (dxgs:collect-wire-segments analysis-ss))
   (if (null base-segments)
-    (dxgs:abort "åˆ†æèŒƒå›´å†…æ²¡æœ‰ç¬¦åˆå½“å‰é…ç½®å¯¼çº¿å›¾å±‚çš„ç®¡çº¿ã€‚")
+    (dxgs:abort "·ÖÎö·¶Î§ÄÚÃ»ÓĞ·ûºÏµ±Ç°ÅäÖÃµ¼ÏßÍ¼²ãµÄ¹ÜÏß¡£")
   )
   (setq split-segments (dxgs:split-t-junctions base-segments))
   (setq node-segments (dxgs:assign-nodes-to-segments split-segments devices))
   (if (null node-segments)
-    (dxgs:abort "æ²¡æœ‰å¯ç”¨äºæ‹“æ‰‘åˆ†æçš„ç®¡çº¿æ®µã€‚")
+    (dxgs:abort "Ã»ÓĞ¿ÉÓÃÓÚÍØÆË·ÖÎöµÄ¹ÜÏß¶Î¡£")
   )
 
   (setq logical-edges (dxgs:build-logical-edges node-segments devices))
@@ -2299,14 +2299,14 @@
   (if (null source-edge)
     (progn
       (dxgs:print-source-edge-debug power-ename power-handle logical-edges)
-      (dxgs:abort "ç”µæºæ¥æºç®¡çº¿ä¸åœ¨å·²åˆ†æçš„ç®¡çº¿é›†åˆä¸­ï¼Œæˆ–è¢«å›¾å±‚è¿‡æ»¤æ’é™¤ã€‚")
+      (dxgs:abort "µçÔ´À´Ô´¹ÜÏß²»ÔÚÒÑ·ÖÎöµÄ¹ÜÏß¼¯ºÏÖĞ£¬»ò±»Í¼²ã¹ıÂËÅÅ³ı¡£")
     )
   )
   (setq root-node (dxgs:infer-root-node source-edge))
-  (princ (strcat "\n[DXGS] æ ¹èŠ‚ç‚¹: " root-node))
+  (princ (strcat "\n[DXGS] ¸ù½Úµã: " root-node))
 
   (if (dxgs:component-cycle-p root-node adj logical-edges)
-    (dxgs:abort "æ£€æµ‹åˆ°å°é—­ç¯è·¯ï¼Œè¯·ä¿®æ­£å›¾çº¸åé‡æ–°è¿è¡Œã€‚")
+    (dxgs:abort "¼ì²âµ½·â±Õ»·Â·£¬ÇëĞŞÕıÍ¼Ö½ºóÖØĞÂÔËĞĞ¡£")
   )
 
   (setq logical-edges (dxgs:assign-wires logical-edges root-node devices model filter))
@@ -2320,11 +2320,11 @@
   (setvar "CLAYER" old-lay)
 
   (princ
-    (strcat "\n[DXGS] å¯¼çº¿æ ¹æ•°æ ‡æ³¨è®¡ç®—å·²å®Œæˆã€‚è¾“å‡ºæ ‡æ³¨ "
-            (itoa label-count) " ä¸ªï¼ŒæŒ‰è¿‡æ»¤è§„åˆ™è·³è¿‡ "
-            (itoa skip-count) " ä¸ªã€‚"))
+    (strcat "\n[DXGS] µ¼Ïß¸ùÊı±ê×¢¼ÆËãÒÑÍê³É¡£Êä³ö±ê×¢ "
+            (itoa label-count) " ¸ö£¬°´¹ıÂË¹æÔòÌø¹ı "
+            (itoa skip-count) " ¸ö¡£"))
   (princ)
 )
 
-(princ "\nDXGS å·²åŠ è½½ multi-gang-select 2026-06-09ã€‚é¦–æ¬¡ä½¿ç”¨æˆ–ä¿®æ”¹é…ç½®è¿è¡Œ DXGSSETUPï¼ŒæŸ¥çœ‹é…ç½®è¿è¡Œ DXGSCFGï¼Œæ ‡æ³¨è¿è¡Œ DXGSã€‚")
+(princ "\nDXGS ÒÑ¼ÓÔØ multi-gang-select 2026-06-09¡£Ê×´ÎÊ¹ÓÃ»òĞŞ¸ÄÅäÖÃÔËĞĞ DXGSSETUP£¬²é¿´ÅäÖÃÔËĞĞ DXGSCFG£¬±ê×¢ÔËĞĞ DXGS¡£")
 (princ)

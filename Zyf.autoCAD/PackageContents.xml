@@ -4,7 +4,7 @@
 				ProductCode="D33FF8C5-66B0-4F5C-A4C0-1094E75BE7A5"					 
 				Name="ZYFtool"
 				NameChs="张裕锋工具集"
-				Author="WuwuZhang"
+				Author="张裕锋"
 				SupportedProducts="AutoCAD:24.0;AutoCAD:25.0;AutoCAD:26.0" 
 				CompatibilityLevel="19.2" 
 				GIT="https://github.com/WuwuZhang/CADTools.git"
