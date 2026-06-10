@@ -1,5 +1,5 @@
 #define AppName "张裕锋工具集"
-#define AppVersion "1.1.1"
+#define AppVersion "1.2.0"
 #define AppPublisher "张裕锋"
 #define ProjectRoot "G:\rust\CADTools"
 #define BuildOutput ProjectRoot + "\Zyf.autoCAD\bin\Release\net47"
