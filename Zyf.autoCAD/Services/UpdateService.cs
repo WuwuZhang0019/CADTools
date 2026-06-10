@@ -24,6 +24,11 @@ namespace ZYF.autoCAD.Services
             Timeout = TimeSpan.FromSeconds(5)
         };
 
+        private static readonly HttpClient DownloadHttpClient = new HttpClient
+        {
+            Timeout = TimeSpan.FromMinutes(10)
+        };
+
         public static UpdateCheckResult CachedResult { get; private set; }
         private static bool _hasNotifiedThisSession = false;
 
@@ -238,8 +243,17 @@ namespace ZYF.autoCAD.Services
             }
             catch (Exception ex)
             {
-                Log($"download success=false error={ex.GetType().Name}");
-                MessageBox.Show("安装包下载失败，请稍后重试，或打开官网下载。", "下载更新", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                Log($"download success=false url={manifest.DownloadUrl} error={ex.GetType().Name} message={ex.Message}");
+                DialogResult openDownload = MessageBox.Show(
+                    $"安装包下载失败：{ex.Message}\n\n是否打开下载页面手动下载？",
+                    "下载更新",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Warning);
+
+                if (openDownload == DialogResult.Yes)
+                {
+                    OpenUrl(string.IsNullOrWhiteSpace(manifest.DownloadUrl) ? manifest.HomepageUrl : manifest.DownloadUrl);
+                }
             }
         }
 
@@ -254,7 +268,7 @@ namespace ZYF.autoCAD.Services
 
             TryDelete(partialPath);
 
-            using (HttpResponseMessage response = await HttpClient.GetAsync(manifest.DownloadUrl).ConfigureAwait(false))
+            using (HttpResponseMessage response = await DownloadHttpClient.GetAsync(manifest.DownloadUrl).ConfigureAwait(false))
             {
                 response.EnsureSuccessStatusCode();
                 using (Stream source = await response.Content.ReadAsStreamAsync().ConfigureAwait(false))
