@@ -30,7 +30,31 @@ namespace ZYF.autoCAD;
 public class MyCommand
 {
     private const string DxgsFileName = "12 自动标导线根数(dxgs).lsp";
+    private static Document pendingMenuYjstDocument;
 
+    // 在菜单命令退出后投递真实的 YJST 命令，与命令行输入走同一入口。
+    private static void DispatchMenuYjstOnIdle(object sender, EventArgs e)
+    {
+        Autodesk.AutoCAD.ApplicationServices.Core.Application.Idle -= DispatchMenuYjstOnIdle;
+        Document document = pendingMenuYjstDocument;
+        pendingMenuYjstDocument = null;
+        if (document == null ||
+            Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument != document)
+            return;
+
+        document.SendStringToExecute("YJST\n", false, false, false);
+    }
+
+    [CommandMethod("YJST_MENU", CommandFlags.Session | CommandFlags.NoUndoMarker)]
+    public void YjstMenu()
+    {
+        Document document = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
+        if (document == null) return;
+        if (pendingMenuYjstDocument != null) return;
+
+        pendingMenuYjstDocument = document;
+        Autodesk.AutoCAD.ApplicationServices.Core.Application.Idle += DispatchMenuYjstOnIdle;
+    }
     private static void RunDxgsLispCommand(string commandName)
     {
         Document document = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
@@ -128,21 +152,36 @@ public class MyCommand
     }
 
     //07图框自动编号
+    [CommandMethod(nameof(FSN), CommandFlags.Modal)]
+    public void FSN()
+    {
+        UpdateService.CheckAndNotifyUpdateOnCommandRun();
+        RunFsnLispCommand(true);
+    }
+
     [CommandMethod(nameof(FSN_LOAD), CommandFlags.Modal)]
     public void FSN_LOAD()
     {
-        Document document = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
+        RunFsnLispCommand(false);
+    }
 
-        // 使用Assembly获取当前程序集路径，避免硬编码路径
-        string filePath = System.Reflection.Assembly.GetAssembly(typeof(MyCommand)).Location;
-        string AssemPath = System.IO.Path.GetDirectoryName(filePath);
-        
-        // 拼接VLX文件路径，注意转义反斜杠
-        string path = AssemPath.Replace(@"\", @"\\") + @"\\Tools\\07 图框自动编号(fsn).VLX";
-        
-        // 加载VLX文件后，显式调用FSN命令来启动图形界面
-        string loadStr = $"(load \"{path}\") ";
-        document.SendStringToExecute(loadStr, false, false, true);
+    private static void RunFsnLispCommand(bool execute)
+    {
+        Document document = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
+        if (document == null) return;
+
+        string assemblyPath = Path.GetDirectoryName(typeof(MyCommand).Assembly.Location);
+        string path = Path.Combine(assemblyPath, "Tools", "07 图框自动编号(fsn).VLX").Replace(@"\", "/");
+        if (!File.Exists(path))
+        {
+            document.Editor.WriteMessage($"\n未找到图框自动编号工具：{path}");
+            return;
+        }
+
+        // 在当前图纸的 LISP 环境中检查命令，避免切换图纸或重复使用时重新加载。
+        string invoke = execute ? " (C:FSN)" : "";
+        string loadStr = $"(progn (if (not C:FSN) (load \"{path}\")){invoke} (princ))\n";
+        document.SendStringToExecute(loadStr, false, false, false);
     }
     //08 0层置为当前层
     [CommandMethod(nameof(P0), CommandFlags.Modal)]
@@ -312,6 +351,25 @@ public class MyCommand
     public void DXGSCFG()
     {
         RunDxgsLispCommand(nameof(DXGSCFG));
+    }
+
+    //13 一键统一宋体
+    [CommandMethod(nameof(YJST), CommandFlags.Modal)]
+    public void YJST()
+    {
+        UpdateService.CheckAndNotifyUpdateOnCommandRun();
+        Document document = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
+        if (document == null) return;
+
+        string assemblyPath = Path.GetDirectoryName(typeof(MyCommand).Assembly.Location);
+        string lispPath = Path.Combine(assemblyPath, "Tools", "13 一键统一宋体(yjst).lsp").Replace(@"\", "/");
+        if (!File.Exists(lispPath))
+        {
+            document.Editor.WriteMessage($"\n未找到一键统一宋体工具：{lispPath}");
+            return;
+        }
+
+        document.SendStringToExecute($"(progn (load \"{lispPath}\") (C:YJST))\n", false, false, false);
     }
 
     [CommandMethod(nameof(CheckUpdate), CommandFlags.Modal)]

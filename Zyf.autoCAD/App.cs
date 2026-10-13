@@ -84,7 +84,8 @@ namespace ZYF.autoCAD
             new PopMenuItem(FAS, "10 消防回路统计(FAS)", menu, 9);
             new PopMenuItem(PTB, "11 PL线转桥架(PTB)", menu, 10);
             new PopMenuItem(DXGS, "12 自动标导线根数", menu, 11);
-            new PopMenuItem(AboutZYFTools, "13 关于", menu, 12);
+            new PopMenuItem(YJST, "13 一键统一宋体(YJST)", menu, 12);
+            new PopMenuItem(AboutZYFTools, "14 关于", menu, 13);
         }
 
         private MenuMacro _JSSS;
@@ -286,6 +287,20 @@ namespace ZYF.autoCAD
             }
         }
 
+        private MenuMacro _YJST;
+        public MenuMacro YJST
+        {
+            get
+            {
+                if (_YJST == null)
+                {
+                    _YJST = new MenuMacro(Parent, "13 一键统一宋体(YJST)", "YJST_MENU", "zyf_tag");
+                    _YJST.macro.SmallImage = $@"{_root}\resource\icon\home.ico";
+                }
+                return _YJST;
+            }
+        }
+
         private MenuMacro _CheckUpdate;
         public MenuMacro CheckUpdate
         {
@@ -404,8 +419,6 @@ namespace ZYF.autoCAD
                     });
                 }
                 
-                // 程序加载完成后自动执行FSN命令
-                Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument.SendStringToExecute("FSN_LOAD ", false, false, true);
             }
             catch { /* 静默处理 */ }
         }
