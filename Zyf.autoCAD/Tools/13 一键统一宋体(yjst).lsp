@@ -1,45 +1,45 @@
 ;;; =====================================================================
 ;;; one-click-simsun.lsp
-;;; ä¸€é”®ç»Ÿä¸€å®‹ä½“ï¼ˆYJSTï¼‰ï¼šå°†å½“å‰å›¾çº¸æ–‡å­—å­—ä½“ç»Ÿä¸€ä¸ºå®‹ä½“ï¼ˆSimSunï¼‰
+;;; Ò»¼üÍ³Ò»ËÎÌå£¨YJST£©£º½«µ±Ç°Í¼Ö½ÎÄ×Ö×ÖÌåÍ³Ò»ÎªËÎÌå£¨SimSun£©
 ;;;
-;;; æ—¥æœŸï¼š2026-10-13
-;;; çŠ¶æ€ï¼šå®ç°å®Œæˆï¼Œå¾…åŸç”Ÿ AutoCAD éªŒæ”¶ï¼ˆè§ docs/AutoCADéªŒæ”¶è®°å½•.mdï¼‰
-;;; ç¼–ç ï¼šå¼€å‘æºç  UTF-8ï¼ˆæ—  BOMï¼‰ï¼›CAD åŠ è½½è¯·ä½¿ç”¨ output/gb2312/ äº¤ä»˜æ–‡ä»¶
+;;; ÈÕÆÚ£º2026-10-13
+;;; ×´Ì¬£ºÊµÏÖÍê³É£¬´ıÔ­Éú AutoCAD ÑéÊÕ£¨¼û docs/AutoCADÑéÊÕ¼ÇÂ¼.md£©
+;;; ±àÂë£º¿ª·¢Ô´Âë UTF-8£¨ÎŞ BOM£©£»CAD ¼ÓÔØÇëÊ¹ÓÃ output/gb2312/ ½»¸¶ÎÄ¼ş
 ;;;
-;;; ä¾æ®ï¼šdocs/AutoLISPä¸€é”®ç»Ÿä¸€å®‹ä½“å®æ–½æ–¹æ¡ˆ.md
-;;; å‘½ä»¤ï¼šAPPLOAD åŠ è½½æœ¬æ–‡ä»¶åæ‰§è¡Œ YJST
-;;; çº¦å®šï¼šæ‰€æœ‰å‡½æ•°ä½¿ç”¨ OCS: å‰ç¼€ï¼ˆç”¨æˆ·å‘½ä»¤ä¸º c:YJSTï¼‰
+;;; ÒÀ¾İ£ºdocs/AutoLISPÒ»¼üÍ³Ò»ËÎÌåÊµÊ©·½°¸.md
+;;; ÃüÁî£ºAPPLOAD ¼ÓÔØ±¾ÎÄ¼şºóÖ´ĞĞ YJST
+;;; Ô¼¶¨£ºËùÓĞº¯ÊıÊ¹ÓÃ OCS: Ç°×º£¨ÓÃ»§ÃüÁîÎª c:YJST£©
 ;;;
-;;; åªæ”¹å˜å­—ä½“å®šä¹‰ä¸æ–‡å­—å†…å®¹ä¸­çš„æœ‰æ•ˆå­—ä½“åˆ‡æ¢æŒ‡ä»¤ï¼›
-;;; ä¸æ”¹å­—é«˜ã€å®½åº¦ã€æ—‹è½¬ã€å¯¹é½ã€å›¾å±‚ã€é¢œè‰²ç­‰ä»»ä½•å…¶ä»–æ•°æ®ï¼›
-;;; ä¸æ‰§è¡Œ ATTSYNC / ResetBlock / EXPLODE / SAVEAS / è‡ªåŠ¨ä¿å­˜ï¼›
-;;; ä¸ä¿®æ”¹ FONTALT / FONTMAP / SECURELOAD / LISPSYSï¼›
-;;; å¤–éƒ¨å‚ç…§åŠå…¶ä¾èµ–æ ·å¼è·³è¿‡ï¼Œä¸æ‰“å¼€ã€ä¸æ”¹å†™å¤–éƒ¨æ–‡ä»¶ã€‚
+;;; Ö»¸Ä±ä×ÖÌå¶¨ÒåÓëÎÄ×ÖÄÚÈİÖĞµÄÓĞĞ§×ÖÌåÇĞ»»Ö¸Áî£»
+;;; ²»¸Ä×Ö¸ß¡¢¿í¶È¡¢Ğı×ª¡¢¶ÔÆë¡¢Í¼²ã¡¢ÑÕÉ«µÈÈÎºÎÆäËûÊı¾İ£»
+;;; ²»Ö´ĞĞ ATTSYNC / ResetBlock / EXPLODE / SAVEAS / ×Ô¶¯±£´æ£»
+;;; ²»ĞŞ¸Ä FONTALT / FONTMAP / SECURELOAD / LISPSYS£»
+;;; Íâ²¿²ÎÕÕ¼°ÆäÒÀÀµÑùÊ½Ìø¹ı£¬²»´ò¿ª¡¢²»¸ÄĞ´Íâ²¿ÎÄ¼ş¡£
 ;;; =====================================================================
 
 (vl-load-com)
 
 ;;; =====================================================================
-;;; AutoLISP è¾…åŠ©å‡½æ•°ï¼šä¸ä¾èµ– Common Lisp çš„ consp/stringp/errorã€‚
-;;; Blocks æ˜¯ ActiveX å±æ€§ï¼Œç›´æ¥è°ƒç”¨ vla-get-Blocks éªŒè¯ã€‚
-;;; ä¸èƒ½å‡­è¿™äº›å‡½æ•°æˆ–å±æ€§/æ–¹æ³•æ¢é’ˆç»“æœåˆ¤æ–­ CAD å‚å•†ã€‚
+;;; AutoLISP ¸¨Öúº¯Êı£º²»ÒÀÀµ Common Lisp µÄ consp/stringp/error¡£
+;;; Blocks ÊÇ ActiveX ÊôĞÔ£¬Ö±½Óµ÷ÓÃ vla-get-Blocks ÑéÖ¤¡£
+;;; ²»ÄÜÆ¾ÕâĞ©º¯Êı»òÊôĞÔ/·½·¨Ì½Õë½á¹ûÅĞ¶Ï CAD ³§ÉÌ¡£
 ;;; =====================================================================
 
-;; conspï¼š(and (listp x) (not (atom x)))
-;;   åŸå­ï¼ˆæ•°/ä¸²/ç¬¦å·/T/nilï¼‰ä¼šè¢« atom è§†ä¸º Tï¼Œæ­£å¥½è®©ç©ºè¡¨ () é€šè¿‡ï¼Œ
-;;   æ ‡å‡† AutoLISP é‡Œç©ºè¡¨æ˜¯ nilï¼ˆatom=nil=()ï¼‰ï¼Œconsp è¿” nilï¼Œ
-;;   æˆ‘ä»¬çš„å®ç° (and (listp nil) (not (atom nil))) = (and T (not T)) = nilï¼Œä¸€è‡´ã€‚
+;; consp£º(and (listp x) (not (atom x)))
+;;   Ô­×Ó£¨Êı/´®/·ûºÅ/T/nil£©»á±» atom ÊÓÎª T£¬ÕıºÃÈÃ¿Õ±í () Í¨¹ı£¬
+;;   ±ê×¼ AutoLISP Àï¿Õ±íÊÇ nil£¨atom=nil=()£©£¬consp ·µ nil£¬
+;;   ÎÒÃÇµÄÊµÏÖ (and (listp nil) (not (atom nil))) = (and T (not T)) = nil£¬Ò»ÖÂ¡£
 (defun OCS:consp (x)
   (and (listp x) (not (atom x)))
 )
 
-;; stringpï¼šç”¨ type è¿”å›çš„ç¬¦å·åˆ¤æ–­ã€‚å„å¼•æ“è¡Œä¸ºä¸ä¸€ï¼Œå…ˆæ¢æµ‹å†ç¼“å­˜ã€‚
-;; æ¢æµ‹æ–¹æ³•ï¼š(type "x") çš„è¿”å›å€¼æ¯”è¾ƒã€‚æ ‡å‡† AutoLISP è¿”å› SYMä¸€ç¬” STRã€‚
-;; æ—  type æ—¶å›é€€åˆ°ï¼šä¸æ˜¯æ•°ã€ä¸æ˜¯ç¬¦å·ã€ä¸æ˜¯ nilã€èƒ½ strlen åˆ™å½“ä½œå­—ç¬¦ä¸²ã€‚
+;; stringp£ºÓÃ type ·µ»ØµÄ·ûºÅÅĞ¶Ï¡£¸÷ÒıÇæĞĞÎª²»Ò»£¬ÏÈÌ½²âÔÙ»º´æ¡£
+;; Ì½²â·½·¨£º(type "x") µÄ·µ»ØÖµ±È½Ï¡£±ê×¼ AutoLISP ·µ»Ø SYMÒ»±Ê STR¡£
+;; ÎŞ type Ê±»ØÍËµ½£º²»ÊÇÊı¡¢²»ÊÇ·ûºÅ¡¢²»ÊÇ nil¡¢ÄÜ strlen Ôòµ±×÷×Ö·û´®¡£
 (setq *OCS:StrType* nil)
 (if (not (boundp '*OCS:StrType*))
   (setq *OCS:StrType* nil))
-;; æ¢æµ‹ï¼šæ±‚ (type "abc")ï¼Œè‹¥è¿”å›ç¬¦å· STR åˆ™ç”¨ type åˆ¤åˆ«ï¼›å¦åˆ™ç”¨å›é€€æ³•ã€‚
+;; Ì½²â£ºÇó (type "abc")£¬Èô·µ»Ø·ûºÅ STR ÔòÓÃ type ÅĞ±ğ£»·ñÔòÓÃ»ØÍË·¨¡£
 (if (not *OCS:StrType*)
   (progn
     (setq *OCS:StrType* (vl-catch-all-apply 'type (list "abc")))
@@ -55,40 +55,40 @@
          (not (listp x))))
 )
 
-;; errorï¼šç”¨ (exit) ç¡¬é€€ï¼ˆå¼•æ“æ—  error å‡½æ•°æ—¶ï¼‰
+;; error£ºÓÃ (exit) Ó²ÍË£¨ÒıÇæÎŞ error º¯ÊıÊ±£©
 (defun OCS:fail (msg)
   (setq *OCS:FailureMessage* msg)
-  (princ (strcat "\nOCS é”™è¯¯ï¼š" msg))
+  (princ (strcat "\nOCS ´íÎó£º" msg))
   (exit)
 )
 
-;; vlax-method-applicable-p åœ¨æŸäº›å…‹éš†å¼•æ“ä¸Šè¿” NIL ä½†æ–¹æ³•å®é™…å¯ç”¨ï¼š
-;; OCS:methodOk ç”¨è¯•è°ƒä¸€ç©ºå‚åˆ—è¡¨æ›¿ä»£ï¼šèƒ½è°ƒé€šå³è®¤ä¸ºå¯ç”¨ã€‚
+;; vlax-method-applicable-p ÔÚÄ³Ğ©¿ËÂ¡ÒıÇæÉÏ·µ NIL µ«·½·¨Êµ¼Ê¿ÉÓÃ£º
+;; OCS:methodOk ÓÃÊÔµ÷Ò»¿Õ²ÎÁĞ±íÌæ´ú£ºÄÜµ÷Í¨¼´ÈÏÎª¿ÉÓÃ¡£
 (defun OCS:methodOk (obj meth / r)
   (setq r (vl-catch-all-apply meth (list obj)))
   (not (vl-catch-all-error-p r))
 )
-;; æ”¹å†™é¢„æ£€é‡Œçš„æ¥å£æ£€æŸ¥ï¼›it was: (if (not (vlax-method-applicable-p doc 'GetBlocks))
-;;   (setq res (OCS:addProblem res "error" "Blocks é›†åˆæ¥å£ä¸å¯ç”¨")))
+;; ¸ÄĞ´Ô¤¼ìÀïµÄ½Ó¿Ú¼ì²é£»it was: (if (not (vlax-method-applicable-p doc 'GetBlocks))
+;;   (setq res (OCS:addProblem res "error" "Blocks ¼¯ºÏ½Ó¿Ú²»¿ÉÓÃ")))
 
-;;; ------------------------- å…¨å±€çŠ¶æ€ -------------------------
+;;; ------------------------- È«¾Ö×´Ì¬ -------------------------
 (setq *OCS:Version*      "0.2.10")
 (setq *OCS:CollectReverse* nil)
 (setq *OCS:ClockStart* nil *OCS:PhaseStart* nil *OCS:PhaseName* nil *OCS:PhaseTimes* nil)
 (setq *OCS:CheckOnly* nil *OCS:LastCheckReport* nil)
-(setq *OCS:Stage* "åˆå§‹åŒ–")
+(setq *OCS:Stage* "³õÊ¼»¯")
 (setq *OCS:FailureMessage* nil *OCS:ProbeStyle* nil *OCS:UndoAttempted* nil)
-(setq *OCS:Plan*         nil)   ; ä¿®æ”¹è®¡åˆ’
-(setq *OCS:Report*       nil)   ; ç»“æ„åŒ–æŠ¥å‘Š
-(setq *OCS:LastReport*   nil)   ; æœ€è¿‘ä¸€æ¬¡è¿è¡Œï¼ˆä¾›è°ƒè¯•/è‡ªåŠ¨éªŒæ”¶è¯»å–ï¼‰
-(setq *OCS:Running*      nil)   ; é‡å…¥ä¿æŠ¤
-(setq *OCS:UndoMark*     nil)   ; æœ¬æ¬¡ Undo åˆ†ç»„æ ‡è®°
-(setq *OCS:Wrote*        nil)   ; åˆ†ç»„å†…è‡³å°‘ä¸€æ¬¡å†™å…¥æˆåŠŸï¼Œæ‰å…è®¸æ’¤é”€
-(setq *OCS:TempState*    nil)   ; ä¸´æ—¶çŠ¶æ€ï¼ˆé”å®šå±‚ã€è¡¨æ ¼å†ç”Ÿã€OSMODE ç­‰ï¼‰
-(setq *OCS:EscRequested* nil)   ; Esc/å–æ¶ˆè¯·æ±‚
-(setq *OCS:FaultPoint*   nil)   ; æ•…éšœæ³¨å…¥ç‚¹ï¼ˆOCS:TestFault ç”¨ï¼‰
+(setq *OCS:Plan*         nil)   ; ĞŞ¸Ä¼Æ»®
+(setq *OCS:Report*       nil)   ; ½á¹¹»¯±¨¸æ
+(setq *OCS:LastReport*   nil)   ; ×î½üÒ»´ÎÔËĞĞ£¨¹©µ÷ÊÔ/×Ô¶¯ÑéÊÕ¶ÁÈ¡£©
+(setq *OCS:Running*      nil)   ; ÖØÈë±£»¤
+(setq *OCS:UndoMark*     nil)   ; ±¾´Î Undo ·Ö×é±ê¼Ç
+(setq *OCS:Wrote*        nil)   ; ·Ö×éÄÚÖÁÉÙÒ»´ÎĞ´Èë³É¹¦£¬²ÅÔÊĞí³·Ïú
+(setq *OCS:TempState*    nil)   ; ÁÙÊ±×´Ì¬£¨Ëø¶¨²ã¡¢±í¸ñÔÙÉú¡¢OSMODE µÈ£©
+(setq *OCS:EscRequested* nil)   ; Esc/È¡ÏûÇëÇó
+(setq *OCS:FaultPoint*   nil)   ; ¹ÊÕÏ×¢Èëµã£¨OCS:TestFault ÓÃ£©
 
-;;; æ—¥æœŸï¼š2026-10-13ã€‚æ¯æ¬¡å‘½ä»¤ç‹¬ç«‹è½ç›˜ï¼›æ—¥å¿—å¤±è´¥ä¸å¾—æ”¹å˜ä¸šåŠ¡ç»“æœã€‚
+;;; ÈÕÆÚ£º2026-10-13¡£Ã¿´ÎÃüÁî¶ÀÁ¢ÂäÅÌ£»ÈÕÖ¾Ê§°Ü²»µÃ¸Ä±äÒµÎñ½á¹û¡£
 (setq *OCS:LogPath* nil *OCS:LogEncoding* nil *OCS:LogError* nil)
 (setq *OCS:LogTail* nil *OCS:LogSeq* 0 *OCS:TraceActive* nil)
 (setq *OCS:LogPending* nil *OCS:LogPendingCount* 0)
@@ -113,13 +113,13 @@
   (if fd
     (progn
       (setq result (vl-catch-all-apply 'OCS:logWriteBatch (list lines fd)))
-      ;; æ‰¹æ¬¡å†…å†™å…¥å¤±è´¥ä¹Ÿå…³é—­æ–‡ä»¶ï¼Œä¿ç•™å·²å†™å…¥çš„å‰åºè®°å½•ã€‚
+      ;; Åú´ÎÄÚĞ´ÈëÊ§°ÜÒ²¹Ø±ÕÎÄ¼ş£¬±£ÁôÒÑĞ´ÈëµÄÇ°Ğò¼ÇÂ¼¡£
       (setq closed (vl-catch-all-apply 'close (list fd)))
       (cond
         ((vl-catch-all-error-p result) (vl-catch-all-error-message result))
         ((vl-catch-all-error-p closed) (vl-catch-all-error-message closed))
         (T nil)))
-    "æ— æ³•æ‰“å¼€æ—¥å¿—æ–‡ä»¶")
+    "ÎŞ·¨´ò¿ªÈÕÖ¾ÎÄ¼ş")
 )
 
 (defun OCS:logFlush ( / lines problem)
@@ -140,7 +140,7 @@
   (if (> (length *OCS:LogTail*) 40) (setq *OCS:LogTail* (cdr *OCS:LogTail*)))
   (setq *OCS:LogPending* (cons line *OCS:LogPending*)
         *OCS:LogPendingCount* (1+ *OCS:LogPendingCount*))
-  ;; æ—¥æœŸï¼š2026-10-13ã€‚æ™®é€šè¯»å–æ¯ 64 æ¡è½ç›˜ï¼›å¤±è´¥ã€æ¢å¤ã€é˜¶æ®µè¾¹ç•Œå’Œç»“æŸç«‹å³è½ç›˜ã€‚
+  ;; ÈÕÆÚ£º2026-10-13¡£ÆÕÍ¨¶ÁÈ¡Ã¿ 64 ÌõÂäÅÌ£»Ê§°Ü¡¢»Ö¸´¡¢½×¶Î±ß½çºÍ½áÊøÁ¢¼´ÂäÅÌ¡£
   (if (or (>= *OCS:LogPendingCount* 64)
           (member event (list "RUN_BEGIN" "RUN_RESULT" "RUN_END" "RUN_TIMING" "PHASE_TIME"
             "CALL_ERROR" "ERROR" "REPORT_ERROR" "ROLLBACK_BEGIN" "ROLLBACK_END" "RECOVERY_RESULT")))
@@ -175,12 +175,12 @@
         (if (not (member (substr dir (strlen dir) 1) (list "/" "\\")))
           (setq dir (strcat dir "/")))
         (setq index 0 path (strcat dir "YJST-" stamp ".log"))
-        ;; ä¸ä½¿ç”¨ mktempï¼šå…¶ç”Ÿæˆçš„æ–‡ä»¶ä¼šåœ¨ CAD é€€å‡ºæ—¶è¢«è‡ªåŠ¨åˆ é™¤ã€‚
+        ;; ²»Ê¹ÓÃ mktemp£ºÆäÉú³ÉµÄÎÄ¼ş»áÔÚ CAD ÍË³öÊ±±»×Ô¶¯É¾³ı¡£
         (while (findfile path)
           (setq index (1+ index) path (strcat dir "YJST-" stamp "-" (itoa index) ".log")))
         (setq *OCS:LogEncoding* "UTF-8")
         (setq fd (vl-catch-all-apply 'open (list path "w" "utf8")))
-        ;; æ—§ AutoLISP ä¸æ¥å—ç¼–ç å‚æ•°ï¼Œæ²¿ç”¨å¼•æ“æ–‡æœ¬ç¼–ç å¹¶å†™å…¥ç¼–ç æ ‡è®°ã€‚
+        ;; ¾É AutoLISP ²»½ÓÊÜ±àÂë²ÎÊı£¬ÑØÓÃÒıÇæÎÄ±¾±àÂë²¢Ğ´Èë±àÂë±ê¼Ç¡£
         (if (or (vl-catch-all-error-p fd) (not fd))
           (progn
             (setq *OCS:LogEncoding* "CAD-legacy")
@@ -189,37 +189,37 @@
           (progn
             (setq result (vl-catch-all-apply 'close (list fd)))
             (if (not (vl-catch-all-error-p result)) (setq *OCS:LogPath* path)))))))
-  (if (not *OCS:LogPath*) (setq *OCS:LogError* "æ—¥å¿—ç›®å½•ä¸å¯å†™ï¼Œä»…ä¿ç•™æœ€è¿‘ 40 æ¡å†…å­˜è®°å½•"))
+  (if (not *OCS:LogPath*) (setq *OCS:LogError* "ÈÕÖ¾Ä¿Â¼²»¿ÉĞ´£¬½ö±£Áô×î½ü 40 ÌõÄÚ´æ¼ÇÂ¼"))
   (OCS:trace "RUN_BEGIN" (list "version" *OCS:Version* "date" day "cdate" stamp "encoding" *OCS:LogEncoding*))
   (foreach name (list "ACADVER" "PRODUCT" "PLATFORM" "LISPSYS" "DWGPREFIX" "DWGNAME" "DWGTITLED" "UNDOCTL")
     (setq value (OCS:logVar name))
     (OCS:trace "ENV" (list name value)))
-  (princ (if *OCS:LogPath* (strcat "\næ’æŸ¥æ—¥å¿—ï¼š" *OCS:LogPath*) "\næ’æŸ¥æ—¥å¿—æ— æ³•è½ç›˜ï¼Œè¿è¡Œåè¾“å…¥ YJSTLOG æŸ¥çœ‹è®°å½•ã€‚"))
+  (princ (if *OCS:LogPath* (strcat "\nÅÅ²éÈÕÖ¾£º" *OCS:LogPath*) "\nÅÅ²éÈÕÖ¾ÎŞ·¨ÂäÅÌ£¬ÔËĞĞºóÊäÈë YJSTLOG ²é¿´¼ÇÂ¼¡£"))
 )
 
 (defun OCS:logStart ( / result)
   (setq *OCS:LogPath* nil *OCS:LogError* nil *OCS:LogEncoding* nil
-        *OCS:LogTail* nil *OCS:LogSeq* 0 *OCS:TraceActive* T *OCS:Stage* "åˆå§‹åŒ–æ—¥å¿—"
+        *OCS:LogTail* nil *OCS:LogSeq* 0 *OCS:TraceActive* T *OCS:Stage* "³õÊ¼»¯ÈÕÖ¾"
         *OCS:LogPending* nil *OCS:LogPendingCount* 0)
   (setq result (vl-catch-all-apply 'OCS:logStartBody nil))
   (if (vl-catch-all-error-p result)
     (progn
       (setq *OCS:LogError* (vl-catch-all-error-message result))
-      (princ "\næ—¥å¿—åˆå§‹åŒ–å¤±è´¥ï¼Œè¿è¡Œåè¾“å…¥ YJSTLOG æŸ¥çœ‹è®°å½•ã€‚")))
+      (princ "\nÈÕÖ¾³õÊ¼»¯Ê§°Ü£¬ÔËĞĞºóÊäÈë YJSTLOG ²é¿´¼ÇÂ¼¡£")))
   nil
 )
 
 (defun c:YJSTLOG ( / line)
-  (if *OCS:LogPath* (princ (strcat "\næœ€è¿‘ä¸€æ¬¡æ’æŸ¥æ—¥å¿—ï¼š" *OCS:LogPath*))
-    (princ "\næœ€è¿‘ä¸€æ¬¡è¿è¡Œæ²¡æœ‰å¯ç”¨æ—¥å¿—æ–‡ä»¶ã€‚"))
+  (if *OCS:LogPath* (princ (strcat "\n×î½üÒ»´ÎÅÅ²éÈÕÖ¾£º" *OCS:LogPath*))
+    (princ "\n×î½üÒ»´ÎÔËĞĞÃ»ÓĞ¿ÉÓÃÈÕÖ¾ÎÄ¼ş¡£"))
   (if *OCS:LogError*
     (progn
-      (princ (strcat "\næ—¥å¿—å†™å…¥å¼‚å¸¸ï¼š" *OCS:LogError* "ï¼›ä»¥ä¸‹ä¸ºæœ€è¿‘ 40 æ¡å†…å­˜è®°å½•ï¼š"))
+      (princ (strcat "\nÈÕÖ¾Ğ´ÈëÒì³££º" *OCS:LogError* "£»ÒÔÏÂÎª×î½ü 40 ÌõÄÚ´æ¼ÇÂ¼£º"))
       (foreach line *OCS:LogTail* (princ (strcat "\n" line)))))
   (princ)
 )
 
-;; è°ƒç”¨å‚æ•°åªè®°å½•çŸ­æ ‡é‡å’Œç±»å‹ï¼Œé¿å…æŠŠé•¿ç¯‡å›¾çº¸æ­£æ–‡æˆ– COM å¯¹è±¡å±•å¼€åˆ°æ—¥å¿—ã€‚
+;; µ÷ÓÃ²ÎÊıÖ»¼ÇÂ¼¶Ì±êÁ¿ºÍÀàĞÍ£¬±ÜÃâ°Ñ³¤ÆªÍ¼Ö½ÕıÎÄ»ò COM ¶ÔÏóÕ¹¿ªµ½ÈÕÖ¾¡£
 (defun OCS:logArgs (args / out value)
   (setq out nil)
   (foreach value args
@@ -235,9 +235,9 @@
   (if *OCS:TraceActive*
     (progn
       (setq detail (vl-catch-all-apply 'OCS:logArgs (list args)))
-      (if (vl-catch-all-error-p detail) (setq detail "<å‚æ•°æ‘˜è¦ä¸å¯ç”¨>"))
+      (if (vl-catch-all-error-p detail) (setq detail "<²ÎÊıÕªÒª²»¿ÉÓÃ>"))
       (OCS:trace "CALL_BEGIN" (list (vl-symbol-name fn) detail))
-      ;; å†™å…¥æ¥å£å‰ä¿å­˜è°ƒç”¨ä¸Šä¸‹æ–‡ï¼›æ™®é€šè¯»å–æ‰¹é‡è½ç›˜ã€‚
+      ;; Ğ´Èë½Ó¿ÚÇ°±£´æµ÷ÓÃÉÏÏÂÎÄ£»ÆÕÍ¨¶ÁÈ¡ÅúÁ¿ÂäÅÌ¡£
       (if (not (or (= (substr (strcase (vl-symbol-name fn)) 1 8) "VLA-GET-")
                    (member (strcase (vl-symbol-name fn)) (list "VLA-ITEM" "VLA-GETFONT"))))
         (OCS:logFlush))))
@@ -248,9 +248,9 @@
   result
 )
 
-;;; ------------------------- å°å·¥å…· -------------------------
+;;; ------------------------- Ğ¡¹¤¾ß -------------------------
 
-;; å­—ç¬¦ä¸²åŒ…å«
+;; ×Ö·û´®°üº¬
 (defun OCS:strContains (s sub / ls lsub i result)
   (setq ls (strlen s) lsub (strlen sub))
   (if (or (= lsub 0) (< ls lsub))
@@ -266,7 +266,7 @@
   )
 )
 
-;; å­—ç¬¦ä¸²ä¸­ç¬¬ n æ¬¡å‡ºç° sub çš„èµ·å§‹ä½ç½®ï¼Œæ‰¾ä¸åˆ°è¿”å› nil
+;; ×Ö·û´®ÖĞµÚ n ´Î³öÏÖ sub µÄÆğÊ¼Î»ÖÃ£¬ÕÒ²»µ½·µ»Ø nil
 (defun OCS:strFindNth (s sub n / ls lsub i c)
   (setq ls (strlen s) lsub (strlen sub) i 1 c 0)
   (if (= lsub 0) nil
@@ -280,7 +280,7 @@
   )
 )
 
-;; æ˜¯å¦ä¸ºåå…­è¿›åˆ¶å­—ç¬¦
+;; ÊÇ·ñÎªÊ®Áù½øÖÆ×Ö·û
 (defun OCS:isHexChar (ch)
   (and (= (strlen ch) 1)
        (or (and (>= ch "0") (<= ch "9"))
@@ -288,10 +288,10 @@
            (and (>= ch "A") (<= ch "F"))))
 )
 
-;; é”®å…¥åè¿›åˆ¶æ•´æ•° â†’ åå…­è¿›åˆ¶å­—ç¬¦ä¸²ï¼ˆç”¨äº 1071 æ‰“åŒ…ï¼‰
+;; ¼üÈëÊ®½øÖÆÕûÊı ¡ú Ê®Áù½øÖÆ×Ö·û´®£¨ÓÃÓÚ 1071 ´ò°ü£©
 (defun OCS:toHex (n / digits map out q r)
   (setq digits "0123456789ABCDEF" out "")
-  (if (< n 0) (setq n (+ n 4294967296)))  ; æœ‰ç¬¦å· â†’ æ— ç¬¦å· 32 ä½
+  (if (< n 0) (setq n (+ n 4294967296)))  ; ÓĞ·ûºÅ ¡ú ÎŞ·ûºÅ 32 Î»
   (if (= n 0) "0"
     (progn
       (while (> n 0)
@@ -304,7 +304,7 @@
   )
 )
 
-;; åå…­è¿›åˆ¶å­—ç¬¦ä¸² â†’ æ•´æ•°
+;; Ê®Áù½øÖÆ×Ö·û´® ¡ú ÕûÊı
 (defun OCS:fromHex (s / digits n i p)
   (setq digits "0123456789ABCDEF" n 0 i 1)
   (while (<= i (strlen s))
@@ -324,8 +324,8 @@
   out
 )
 
-;; æ‰“åŒ… 1071ï¼šä½ 8 ä½ charsetï¼Œä½ 8 boldï¼Œä½ 9 italicï¼Œ
-;; ä½ 16-23 pitch/familyï¼ˆå‚è€ƒ DXF 1071 ä¸ SetFont å‚æ•°ï¼‰
+;; ´ò°ü 1071£ºµÍ 8 Î» charset£¬Î» 8 bold£¬Î» 9 italic£¬
+;; Î» 16-23 pitch/family£¨²Î¿¼ DXF 1071 Óë SetFont ²ÎÊı£©
 (defun OCS:pack1071 (charSet bold italic pitchFamily / v)
   (setq v (logand charSet 255))
   (if bold   (setq v (logior v 256)))
@@ -342,16 +342,16 @@
   (list charSet bold italic pf)
 )
 
-;; å…³è”åˆ—è¡¨å–å€¼ï¼ˆæ— åˆ™é»˜è®¤ï¼‰
+;; ¹ØÁªÁĞ±íÈ¡Öµ£¨ÎŞÔòÄ¬ÈÏ£©
 (defun OCS:assocd (key lst default / pair found value)
-  ;; æ•°å­—é”®åªç”¨äº DXF ç‚¹å¯¹ï¼›ä¸šåŠ¡æ•°æ®ä½¿ç”¨å­—ç¬¦ä¸²é”®çš„æ‰å¹³ plistã€‚
+  ;; Êı×Ö¼üÖ»ÓÃÓÚ DXF µã¶Ô£»ÒµÎñÊı¾İÊ¹ÓÃ×Ö·û´®¼üµÄ±âÆ½ plist¡£
   (if (numberp key)
     (if (setq pair (assoc key lst)) (cdr pair) default)
     (progn
       (setq found nil value default)
       (while (and lst (not found))
         (if (OCS:consp (car lst))
-          (setq lst (cdr lst)) ; è·³è¿‡ problem ä¸‰å…ƒç»„
+          (setq lst (cdr lst)) ; Ìø¹ı problem ÈıÔª×é
           (progn
             (if (and (equal (car lst) key) (cdr lst))
               (setq found T value (cadr lst)))
@@ -364,30 +364,30 @@
   )
 )
 
-;; æ³¨æ„ï¼šä¸ä½¿ç”¨ defmacro / åå¼•å·å®ã€‚éƒ¨åˆ† CAD å¼•æ“ä¸æŠŠ defmacro å½“ç‰¹æ®Šå½¢å¼ï¼Œ
-;; åŠ è½½æ—¶ä¼šæŠŠ (fn &rest args) å‚æ•°è¡¨å½“æ™®é€šè°ƒç”¨æ±‚å€¼ï¼ŒæŠ¥ "no function definition: FN"ã€‚
-;; æŠ¥é”™åŒ…è£…ç›´æ¥ç”¨ vl-catch-all-applyï¼ˆè§å„è°ƒç”¨ç‚¹ï¼‰ï¼Œæ­¤å¤„åªä¿ç•™ errp/errmsgã€‚
+;; ×¢Òâ£º²»Ê¹ÓÃ defmacro / ·´ÒıºÅºê¡£²¿·Ö CAD ÒıÇæ²»°Ñ defmacro µ±ÌØÊâĞÎÊ½£¬
+;; ¼ÓÔØÊ±»á°Ñ (fn &rest args) ²ÎÊı±íµ±ÆÕÍ¨µ÷ÓÃÇóÖµ£¬±¨ "no function definition: FN"¡£
+;; ±¨´í°ü×°Ö±½ÓÓÃ vl-catch-all-apply£¨¼û¸÷µ÷ÓÃµã£©£¬´Ë´¦Ö»±£Áô errp/errmsg¡£
 
-;; æŠ¥é”™åˆ¤æ–­
+;; ±¨´íÅĞ¶Ï
 (defun OCS:errp (x)
   (and (OCS:consp x) (equal (car x) "error"))
 )
 
-;; é”™è¯¯ä¿¡æ¯å–æ–‡æœ¬
+;; ´íÎóĞÅÏ¢È¡ÎÄ±¾
 (defun OCS:errmsg (x)
   (if (OCS:errp x) (cdr x) "")
 )
 
 ;;; =====================================================================
-;;; çº¯å‡½æ•°ï¼šå­—ä½“æ ¼å¼æ‰«æå™¨ OCS:NormalizeFontRuns
-;;; ï¼ˆæ–¹æ¡ˆç¬¬ 5 èŠ‚ï¼›ä¸è®¿é—®ä»»ä½• CAD å¯¹è±¡ï¼‰
+;;; ´¿º¯Êı£º×ÖÌå¸ñÊ½É¨ÃèÆ÷ OCS:NormalizeFontRuns
+;;; £¨·½°¸µÚ 5 ½Ú£»²»·ÃÎÊÈÎºÎ CAD ¶ÔÏó£©
 ;;; =====================================================================
 
-;; å†…éƒ¨çŠ¶æ€ plistï¼š(:i ä½ç½® :issues é—®é¢˜åˆ—è¡¨ :changes ä¿®æ”¹è®¡æ•°)
-;; è¿”å›æ–° plistã€‚
+;; ÄÚ²¿×´Ì¬ plist£º(:i Î»ÖÃ :issues ÎÊÌâÁĞ±í :changes ĞŞ¸Ä¼ÆÊı)
+;; ·µ»ØĞÂ plist¡£
 
-;; è¯»å–å­—æ®µèŒƒå›´ %< ... >%ï¼ˆæ”¯æŒè½¬ä¹‰ä¸åµŒå¥— %< >%ï¼‰ï¼Œè¿”å› (æ–°ä½ç½® ç»“æŸä½ç½®)
-;; è‹¥å­—æ®µæœªé—­åˆï¼Œè®°å½• UNTERMINATED_FIELD å¹¶æŠŠä½ç½®æ¨åˆ°ä¸²å°¾ã€‚
+;; ¶ÁÈ¡×Ö¶Î·¶Î§ %< ... >%£¨Ö§³Ö×ªÒåÓëÇ¶Ì× %< >%£©£¬·µ»Ø (ĞÂÎ»ÖÃ ½áÊøÎ»ÖÃ)
+;; Èô×Ö¶ÎÎ´±ÕºÏ£¬¼ÇÂ¼ UNTERMINATED_FIELD ²¢°ÑÎ»ÖÃÍÆµ½´®Î²¡£
 (defun OCS:scanField (s i len st / depth c j closed)
   (setq j (+ i 2) depth 1 closed nil)
   (while (and (<= j len) (not closed))
@@ -406,14 +406,14 @@
   )
   (if (not closed)
     (progn
-      (setq st (OCS:addIssue st "UNTERMINATED_FIELD" i "å­—æ®µ %<...>% æœªé—­åˆ"))
+      (setq st (OCS:addIssue st "UNTERMINATED_FIELD" i "×Ö¶Î %<...>% Î´±ÕºÏ"))
       (setq j (1+ len))
     )
   )
-  (list (1- j) j)  ; è¿”å› (å­—æ®µç»“æŸä½ç½®(å«) ä¸‹ä¸€æ‰«æä½ç½®)
+  (list (1- j) j)  ; ·µ»Ø (×Ö¶Î½áÊøÎ»ÖÃ(º¬) ÏÂÒ»É¨ÃèÎ»ÖÃ)
 )
 
-;; è¯»å–å­—ä½“æè¿°è‡³ ;ï¼ˆè¯†åˆ«è½¬ä¹‰ä¸åµŒå¥—èŠ±æ‹¬å·ï¼‰ï¼Œè¿”å› (æè¿° ç»“æŸåä½ç½® err)
+;; ¶ÁÈ¡×ÖÌåÃèÊöÖÁ ;£¨Ê¶±ğ×ªÒåÓëÇ¶Ì×»¨À¨ºÅ£©£¬·µ»Ø (ÃèÊö ½áÊøºóÎ»ÖÃ err)
 (defun OCS:readFontDesc (s i len / j c depth buf err closed)
   (setq j i depth 0 buf "" err nil closed nil)
   (while (and (<= j len) (not err) (not closed))
@@ -422,34 +422,34 @@
       ((= c "\\")
        (if (< j len)
          (progn (setq buf (strcat buf c (substr s (1+ j) 1))) (setq j (+ j 2)))
-         (progn (setq err "å­—ä½“æè¿°ä»¥å­¤ç«‹åæ–œæ ç»“å°¾") (setq j (1+ j)))
+         (progn (setq err "×ÖÌåÃèÊöÒÔ¹ÂÁ¢·´Ğ±¸Ü½áÎ²") (setq j (1+ j)))
        ))
       ((= c "{") (setq depth (1+ depth) buf (strcat buf c) j (1+ j)))
       ((= c "}")
        (if (> depth 0)
          (progn (setq depth (1- depth) buf (strcat buf c) j (1+ j)))
-         (progn (setq err "å­—ä½“æè¿°ä¸­å‡ºç°å¤šä½™çš„ }") (setq j (1+ j)))
+         (progn (setq err "×ÖÌåÃèÊöÖĞ³öÏÖ¶àÓàµÄ }") (setq j (1+ j)))
        ))
       ((= c ";")
        (if (= depth 0)
-         (setq closed T j (1+ j))              ; é‡åˆ°åˆ†å·ç«‹å³ç»“æŸ
+         (setq closed T j (1+ j))              ; Óöµ½·ÖºÅÁ¢¼´½áÊø
          (progn (setq buf (strcat buf c) j (1+ j)))
        ))
       (T (setq buf (strcat buf c) j (1+ j)))
     )
   )
   (if (and (not err) (> depth 0))
-    (setq err "å­—ä½“æè¿°ä¸­èŠ±æ‹¬å·æœªé—­åˆ")
+    (setq err "×ÖÌåÃèÊöÖĞ»¨À¨ºÅÎ´±ÕºÏ")
   )
   (if (and (not err) (not closed))
-    ;; å¾ªç¯é€€å‡ºä½†æ²¡é‡åˆ° ';'ï¼šè¯´æ˜ä¸²å·²è€—å°½
-    (setq err "å­—ä½“æŒ‡ä»¤ä¸å®Œæ•´ï¼ˆç¼ºå°‘åˆ†å·ï¼‰")
+    ;; Ñ­»·ÍË³öµ«Ã»Óöµ½ ';'£ºËµÃ÷´®ÒÑºÄ¾¡
+    (setq err "×ÖÌåÖ¸Áî²»ÍêÕû£¨È±ÉÙ·ÖºÅ£©")
   )
   (list buf (1- j) err)
 )
 
 (defun OCS:chompDesc (s)
-  ;; å»æ‰å°¾éƒ¨ç©ºç™½
+  ;; È¥µôÎ²²¿¿Õ°×
   (while (and (> (strlen s) 0)
               (OCS:isSpaceChar (substr s (strlen s) 1)))
     (setq s (substr s 1 (1- (strlen s))))
@@ -465,7 +465,7 @@
   (and (> (strlen s) 0) (= (substr s (strlen s) 1) c))
 )
 
-;; åˆ†å‰²å­—ä½“æè¿°å‚æ•° a|b|c  â†’ ("a" "b" "c")
+;; ·Ö¸î×ÖÌåÃèÊö²ÎÊı a|b|c  ¡ú ("a" "b" "c")
 (defun OCS:splitDesc (desc / out i pos start)
   (setq out nil i 1 start 1)
   (while (<= i (strlen desc))
@@ -481,22 +481,22 @@
   out
 )
 
-;; åº”ç”¨ç›®æ ‡å­—ä½“è§„åˆ™ï¼šä¿ç•™ b/iï¼Œé‡å†™ charset ä¸ pitch/familyï¼ˆè‹¥æè¿°ä¸­å·²å¸¦ï¼‰
-;; è¿”å›æ–°æè¿°ï¼ˆæ—  ;ï¼‰
+;; Ó¦ÓÃÄ¿±ê×ÖÌå¹æÔò£º±£Áô b/i£¬ÖØĞ´ charset Óë pitch/family£¨ÈôÃèÊöÖĞÒÑ´ø£©
+;; ·µ»ØĞÂÃèÊö£¨ÎŞ ;£©
 (defun OCS:applyFamily (desc family target / parts out head p kv first)
   (setq parts (OCS:splitDesc desc) out nil head nil)
   (foreach p parts
     (cond
       ((= p "") nil)
       ((and (= (substr p 1 1) "b") (OCS:allDigits (substr p 2 100)) (not head))
-       nil)  ; ä½ç½®å‚æ•°åœ¨åé¢ç»Ÿä¸€å¤„ç†
+       nil)  ; Î»ÖÃ²ÎÊıÔÚºóÃæÍ³Ò»´¦Àí
       ((and (= (substr p 1 1) "i") (OCS:allDigits (substr p 2 100)) (not head))
        nil)
       ((not head) (setq head p))
       (T nil)
     )
   )
-  ;; é‡æ–°æŒ‰åŸå§‹é¡ºåºæ„é€ ï¼šhead æ›¿æ¢ä¸º familyï¼›ä¿ç•™ bã€iã€cã€pf å¹¶æŒ‰ç›®æ ‡è¦†ç›– c/pf
+  ;; ÖØĞÂ°´Ô­Ê¼Ë³Ğò¹¹Ôì£ºhead Ìæ»»Îª family£»±£Áô b¡¢i¡¢c¡¢pf ²¢°´Ä¿±ê¸²¸Ç c/pf
   (setq out nil)
   (setq first T)
   (foreach p parts
@@ -505,7 +505,7 @@
       (first
         (setq out (list family))
         (setq first nil)
-        ;; åŒä¸€ token å¯èƒ½æ˜¯ "Arial|b1" é£æ ¼å—ï¼Ÿä¸ï¼Œå·²æŒ‰ | åˆ†å‰²
+        ;; Í¬Ò» token ¿ÉÄÜÊÇ "Arial|b1" ·ç¸ñÂğ£¿²»£¬ÒÑ°´ | ·Ö¸î
       )
       ((and (= (substr p 1 1) "b") (OCS:allDigits (substr p 2 100)))
        (setq out (append out (list p))))
@@ -518,7 +518,7 @@
       (T (setq out (append out (list p))))
     )
   )
-  ;; è‹¥æè¿°åŸæœ¬æ²¡æœ‰ä»»ä½• c/pf å‚æ•°ï¼ŒæŒ‰ç›®æ ‡è§„åˆ™è¡¥ä¸Šï¼ˆç›®æ ‡å­—ä½“å‚æ•°ï¼‰
+  ;; ÈôÃèÊöÔ­±¾Ã»ÓĞÈÎºÎ c/pf ²ÎÊı£¬°´Ä¿±ê¹æÔò²¹ÉÏ£¨Ä¿±ê×ÖÌå²ÎÊı£©
   (if (OCS:targetAppendParams target)
     (progn
       (if (not (OCS:hasParam out "c"))
@@ -527,7 +527,7 @@
         (setq out (append out (list (strcat "pf" (itoa (OCS:targetPitchFamily target)))))))
     )
   )
-  ;; æ‹¼æ¥
+  ;; Æ´½Ó
   (setq kv "")
   (foreach p out
     (if (= kv "") (setq kv p) (setq kv (strcat kv "|" p)))
@@ -557,8 +557,8 @@
   ok
 )
 
-;; ç›®æ ‡å­—ä½“å‚æ•°ï¼ˆS01 ç»“æœé€šè¿‡ *OCS:FontTarget* æ³¨å…¥ï¼›ç¼ºçœä¸ºå·²éªŒè¯çš„
-;; SimSun è§„åˆ™ï¼šcharset=134ï¼Œpitch/family=22(0x16)=2|16|4ï¼‰
+;; Ä¿±ê×ÖÌå²ÎÊı£¨S01 ½á¹ûÍ¨¹ı *OCS:FontTarget* ×¢Èë£»È±Ê¡ÎªÒÑÑéÖ¤µÄ
+;; SimSun ¹æÔò£ºcharset=134£¬pitch/family=22(0x16)=2|16|4£©
 (defun OCS:targetCharSet (target)
   (OCS:assocd "charSet" target 134)
 )
@@ -569,7 +569,7 @@
   (OCS:assocd "appendParams" target T)
 )
 
-;; è¿½åŠ è§£æé—®é¢˜
+;; ×·¼Ó½âÎöÎÊÌâ
 (defun OCS:addIssue (st code pos msg)
   (list "i"   (OCS:assocd "i" st 1)
         "issues" (append (OCS:assocd "issues" st nil)
@@ -578,15 +578,15 @@
         "len" (OCS:assocd "len" st 0))
 )
 
-;; åˆ¤æ–­å­—ä½“æ—æ˜¯å¦å·²æ˜¯ç›®æ ‡æ—ï¼ˆä¸åŒºåˆ†å¤§å°å†™ï¼›æ¥å—â€œå®‹ä½“â€ï¼‰
+;; ÅĞ¶Ï×ÖÌå×åÊÇ·ñÒÑÊÇÄ¿±ê×å£¨²»Çø·Ö´óĞ¡Ğ´£»½ÓÊÜ¡°ËÎÌå¡±£©
 (defun OCS:isTargetFamily (fam target / tf)
   (setq tf (OCS:assocd "family" target "SimSun"))
   (or (OCS:equalsIgnoreCase fam tf)
       (and (OCS:equalsIgnoreCase tf "SimSun")
-           (or (OCS:equalsIgnoreCase fam "å®‹ä½“")
+           (or (OCS:equalsIgnoreCase fam "ËÎÌå")
                (OCS:equalsIgnoreCase fam "sim sun")
                (OCS:equalsIgnoreCase fam "SimSun")))
-      (OCS:equalsIgnoreCase fam "å®‹ä½“"))
+      (OCS:equalsIgnoreCase fam "ËÎÌå"))
 )
 
 (defun OCS:equalsIgnoreCase (a b)
@@ -609,23 +609,23 @@
   out
 )
 
-;;; ä¸»æ‰«æå™¨ï¼ˆçº¯å‡½æ•°ï¼‰
-;;; è¾“å…¥ï¼š
-;;;   s       ï¼š æ–‡å­—åŸå§‹å†…å®¹ï¼ˆMTEXT å…¨é‡åŸå§‹ä¸² / å±æ€§å†…å®¹ç­‰ï¼‰
-;;;   target  ï¼š (list (cons :family "SimSun") (cons :charSet 134)
+;;; Ö÷É¨ÃèÆ÷£¨´¿º¯Êı£©
+;;; ÊäÈë£º
+;;;   s       £º ÎÄ×ÖÔ­Ê¼ÄÚÈİ£¨MTEXT È«Á¿Ô­Ê¼´® / ÊôĞÔÄÚÈİµÈ£©
+;;;   target  £º (list (cons :family "SimSun") (cons :charSet 134)
 ;;;                     (cons :pitchFamily 36) (cons :appendParams T))
-;;; è¾“å‡º plistï¼š
-;;;   (:text æ–°å†…å®¹ :changes ä¿®æ”¹æ•° :issues ((code pos len msg)...) )
-;;; è§„åˆ™ï¼ˆæ–¹æ¡ˆç¬¬ 5 èŠ‚ï¼‰ï¼š
-;;;   - ä»…æ›¿æ¢æœ‰æ•ˆ \fã€\F æŒ‡ä»¤ä¸­çš„å­—ä½“æ—ï¼›
-;;;   - %<...>% å­—æ®µæ•´ä½“ä¿æŠ¤ï¼ˆå…¶ä¸­ \f ä¸æ˜¯å­—ä½“æŒ‡ä»¤ï¼‰ï¼›
-;;;   - è½¬ä¹‰ \\ ä¸ \{ \} ä¸ä½œä¸ºæ ¼å¼å¼€å…³ï¼›
-;;;   - ä¿ç•™å…¶ä»–ä¸€åˆ‡æ ¼å¼ç ä¸åŸæ–‡å­—ç¬¦ï¼›
-;;;   - è§£æå¤±è´¥åªè®°å½•é—®é¢˜ï¼Œä¸åˆ é™¤ä»»ä½•æ®µè½ã€‚
+;;; Êä³ö plist£º
+;;;   (:text ĞÂÄÚÈİ :changes ĞŞ¸ÄÊı :issues ((code pos len msg)...) )
+;;; ¹æÔò£¨·½°¸µÚ 5 ½Ú£©£º
+;;;   - ½öÌæ»»ÓĞĞ§ \f¡¢\F Ö¸ÁîÖĞµÄ×ÖÌå×å£»
+;;;   - %<...>% ×Ö¶ÎÕûÌå±£»¤£¨ÆäÖĞ \f ²»ÊÇ×ÖÌåÖ¸Áî£©£»
+;;;   - ×ªÒå \\ Óë \{ \} ²»×÷Îª¸ñÊ½¿ª¹Ø£»
+;;;   - ±£ÁôÆäËûÒ»ÇĞ¸ñÊ½ÂëÓëÔ­ÎÄ×Ö·û£»
+;;;   - ½âÎöÊ§°ÜÖ»¼ÇÂ¼ÎÊÌâ£¬²»É¾³ıÈÎºÎ¶ÎÂä¡£
 ;;; =====================================================================
 (defun OCS:NormalizeFontRuns (s target / st len out i c r desc endp err fam newDesc next)
   (if (not (OCS:stringp s))
-    (list "text" s "changes" 0 "issues" (list (list "BAD_INPUT" 0 0 "è¾“å…¥ä¸æ˜¯å­—ç¬¦ä¸²")))
+    (list "text" s "changes" 0 "issues" (list (list "BAD_INPUT" 0 0 "ÊäÈë²»ÊÇ×Ö·û´®")))
     (progn
       (setq len (strlen s))
       (setq st  (list "i" 1 "issues" nil "changes" 0 "len" len))
@@ -634,21 +634,21 @@
       (while (<= i len)
         (setq c (substr s i 1))
         (cond
-          ;; è½¬ä¹‰åºåˆ—ï¼ˆ\\ã€\{ã€\}ã€\; ç­‰ï¼‰ï¼šæ•´ä½“åŸæ ·è¾“å‡ºï¼Œä¸ä½œä¸ºæ ¼å¼å¼€å…³
-          ;; æ³¨æ„é¡ºåºï¼šå…ˆåˆ¤æ–­è½¬ä¹‰ï¼Œå†åˆ¤æ–­ \f/\Fï¼ˆ\f ä¹Ÿæ˜¯åˆæ³•è½¬ä¹‰ä¹‹ä¸€ï¼Œ
-          ;; ä½†ä½œä¸ºæ ¼å¼æŒ‡ä»¤æ—¶å…¶åæ˜¯æè¿°æ–‡æœ¬ï¼Œä¸ä¼šæ•´ä½“èµ°è½¬ä¹‰åˆ†æ”¯ï¼‰
+          ;; ×ªÒåĞòÁĞ£¨\\¡¢\{¡¢\}¡¢\; µÈ£©£ºÕûÌåÔ­ÑùÊä³ö£¬²»×÷Îª¸ñÊ½¿ª¹Ø
+          ;; ×¢ÒâË³Ğò£ºÏÈÅĞ¶Ï×ªÒå£¬ÔÙÅĞ¶Ï \f/\F£¨\f Ò²ÊÇºÏ·¨×ªÒåÖ®Ò»£¬
+          ;; µ«×÷Îª¸ñÊ½Ö¸ÁîÊ±ÆäºóÊÇÃèÊöÎÄ±¾£¬²»»áÕûÌå×ß×ªÒå·ÖÖ§£©
           ((and (= c "\\") (< i len) (OCS:isEscapable (substr s (1+ i) 1)))
            (setq out (strcat out c (substr s (1+ i) 1)))
            (setq i (+ i 2))
           )
-          ;; å­—æ®µèŒƒå›´ä¿æŠ¤ï¼š%< ... >% æ•´ä½“åŸæ ·è¾“å‡º
+          ;; ×Ö¶Î·¶Î§±£»¤£º%< ... >% ÕûÌåÔ­ÑùÊä³ö
           ((and (= c "%") (< i len) (= (substr s (1+ i) 1) "<"))
            (setq next (OCS:scanFieldEnd s i len))
            (setq st (OCS:scanFieldSt s i len st))
            (setq out (strcat out (substr s i (- next i))))
            (setq i next)
           )
-          ;; å­—ä½“åç§°å¯ä»¥ä»¥è‹±æ–‡å­—æ¯å¼€å¤´ï¼Œå¦‚ Arialã€‚
+          ;; ×ÖÌåÃû³Æ¿ÉÒÔÒÔÓ¢ÎÄ×ÖÄ¸¿ªÍ·£¬Èç Arial¡£
           ((and (= c "\\") (< i len)
                 (or (= (substr s (1+ i) 1) "f") (= (substr s (1+ i) 1) "F")))
            (setq r (OCS:readFontDesc s (+ i 2) len))
@@ -656,7 +656,7 @@
            (if err
              (progn
                (setq st (OCS:addIssue st "UNTERMINATED_FONT" i err))
-               ;; ä¿ç•™åŸæ–‡ï¼Œä¸åˆ é™¤ä»»ä½•æ®µè½ï¼ˆæœ¬æŒ‡ä»¤æŒ‰åŸæ ·è¾“å‡ºï¼‰
+               ;; ±£ÁôÔ­ÎÄ£¬²»É¾³ıÈÎºÎ¶ÎÂä£¨±¾Ö¸Áî°´Ô­ÑùÊä³ö£©
                (setq out (strcat out c (substr s (1+ i) 1)))
                (setq i (+ i 2))
              )
@@ -664,7 +664,7 @@
                (setq fam (car (OCS:splitDesc (OCS:chompDesc desc))))
                (if (or (= fam "") (OCS:isTargetFamily fam target))
                  (progn
-                   ;; å·²æ˜¯ç›®æ ‡æ—ï¼šåŸæ ·ä¿ç•™ï¼ˆå¹‚ç­‰ï¼Œä¸é‡å¤è¿½åŠ å‚æ•°ï¼‰
+                   ;; ÒÑÊÇÄ¿±ê×å£ºÔ­Ñù±£Áô£¨ÃİµÈ£¬²»ÖØ¸´×·¼Ó²ÎÊı£©
                    (setq out (strcat out c (substr s (1+ i) 1) desc ";"))
                    (setq i (1+ endp))
                  )
@@ -691,24 +691,24 @@
   )
 )
 
-;; å­—æ¯åˆ¤æ–­å·¥å…·ï¼ˆå­—ä½“åç§°å…è®¸è‹±æ–‡å­—æ¯å¼€å¤´ï¼‰
+;; ×ÖÄ¸ÅĞ¶Ï¹¤¾ß£¨×ÖÌåÃû³ÆÔÊĞíÓ¢ÎÄ×ÖÄ¸¿ªÍ·£©
 (defun OCS:alphaChar (ch)
   (and (= (strlen ch) 1)
        (or (and (>= ch "a") (<= ch "z"))
            (and (>= ch "A") (<= ch "Z"))))
 )
 
-;; è½¬ä¹‰å­—ç¬¦ï¼š\ åé¢è¿™äº›å­—ç¬¦å±äºâ€œåˆæ³•è½¬ä¹‰â€ï¼Œæ•´ä½“åŸæ ·ä¿ç•™
-;; æ³¨æ„ï¼šf/F ä¸åœ¨æ­¤åˆ—ï¼Œ\f \F è¦èµ°å­—ä½“æŒ‡ä»¤åˆ†æ”¯ï¼ˆç”± NormalizeFontRuns çš„
-;; é¡ºåºä¿è¯ï¼šè½¬ä¹‰åˆ†æ”¯å·²æ’é™¤ \f \F åéšéå­—æ¯çš„æƒ…å½¢ï¼‰
+;; ×ªÒå×Ö·û£º\ ºóÃæÕâĞ©×Ö·ûÊôÓÚ¡°ºÏ·¨×ªÒå¡±£¬ÕûÌåÔ­Ñù±£Áô
+;; ×¢Òâ£ºf/F ²»ÔÚ´ËÁĞ£¬\f \F Òª×ß×ÖÌåÖ¸Áî·ÖÖ§£¨ÓÉ NormalizeFontRuns µÄ
+;; Ë³Ğò±£Ö¤£º×ªÒå·ÖÖ§ÒÑÅÅ³ı \f \F ºóËæ·Ç×ÖÄ¸µÄÇéĞÎ£©
 (defun OCS:isEscapable (ch / lst)
   (setq lst (list "\\" "{" "}" ";" "P" "p" "H" "W" "T" "Q" "C" "c"
                    "S" "s" "A" "a" "L" "l" "~" "-" "+" " " "n" "^"))
   (and (= (strlen ch) 1) (vl-position ch lst))
 )
 
-;; è®¡ç®—å­—æ®µ %< ... >% çš„ç»“æŸä½ç½®ï¼šè¿”å›â€œä¸‹ä¸€æ‰«æä½ç½®â€ï¼ˆ1-basedï¼Œå­—æ®µä¹‹åï¼‰
-;; è‹¥æœªé—­åˆï¼Œè¿”å› (1+ len)
+;; ¼ÆËã×Ö¶Î %< ... >% µÄ½áÊøÎ»ÖÃ£º·µ»Ø¡°ÏÂÒ»É¨ÃèÎ»ÖÃ¡±£¨1-based£¬×Ö¶ÎÖ®ºó£©
+;; ÈôÎ´±ÕºÏ£¬·µ»Ø (1+ len)
 (defun OCS:scanFieldEnd (s i len / depth c j closed)
   (setq j (+ i 2) depth 1 closed nil)
   (while (and (<= j len) (not closed))
@@ -726,7 +726,7 @@
   (if closed j (1+ len))
 )
 
-;; å¸¦çŠ¶æ€ç‰ˆæœ¬çš„å­—æ®µæ‰«æ
+;; ´ø×´Ì¬°æ±¾µÄ×Ö¶ÎÉ¨Ãè
 (defun OCS:scanFieldSt (s i len st / depth c j closed)
   (setq j (+ i 2) depth 1 closed nil)
   (while (and (<= j len) (not closed))
@@ -742,7 +742,7 @@
     )
   )
   (if (not closed)
-    (setq st (OCS:addIssue st "UNTERMINATED_FIELD" i "å­—æ®µ %<...>% æœªé—­åˆ"))
+    (setq st (OCS:addIssue st "UNTERMINATED_FIELD" i "×Ö¶Î %<...>% Î´±ÕºÏ"))
   )
   st
 )
@@ -754,7 +754,7 @@
         "len" (OCS:assocd "len" st 0))
 )
 
-;; é‡å†™å­—ä½“æè¿°ï¼šæ›¿æ¢æ—åï¼Œä¿ç•™ b/iï¼ŒæŒ‰ç›®æ ‡è¦†ç›–/è¿½åŠ  cã€pf
+;; ÖØĞ´×ÖÌåÃèÊö£ºÌæ»»×åÃû£¬±£Áô b/i£¬°´Ä¿±ê¸²¸Ç/×·¼Ó c¡¢pf
 (defun OCS:rewriteDesc (desc target / parts out first p fam kv)
   (setq parts (OCS:splitDesc desc) out nil first T fam nil)
   (foreach p parts
@@ -776,12 +776,12 @@
       (T (setq out (append out (list p))))
     )
   )
-  ;; è¡¥ç›®æ ‡å‚æ•°
+  ;; ²¹Ä¿±ê²ÎÊı
   (if (not (OCS:hasParam out "c"))
     (setq out (append out (list (strcat "c" (itoa (OCS:targetCharSet target)))))))
   (if (not (OCS:hasParam out "pf"))
     (setq out (append out (list (strcat "pf" (itoa (OCS:targetPitchFamily target)))))))
-  ;; æ‹¼æ¥
+  ;; Æ´½Ó
   (setq kv "")
   (foreach p out
     (if (= kv "") (setq kv p) (setq kv (strcat kv "|" p)))
@@ -790,31 +790,31 @@
 )
 
 ;;; =====================================================================
-;;; é¢„æ£€ï¼šOCS:Preflight / OCS:ResolveSongFont
+;;; Ô¤¼ì£ºOCS:Preflight / OCS:ResolveSongFont
 ;;; =====================================================================
 
-;; ç›®æ ‡å­—ä½“è§£æï¼ˆæ–¹æ¡ˆç¬¬ 3 èŠ‚ï¼‰ï¼š
-;; 1) æ£€æµ‹ç³»ç»Ÿä¸ CAD å­—ä½“ç›®å½•ä¸­çš„ SimSun å­—ä½“æ–‡ä»¶ï¼›
-;; 2) ç”Ÿæˆè¯•éªŒæ ·å¼ï¼Œå†™å…¥ FontFile + SetFontï¼Œè¯»å›éªŒè¯ï¼›
-;; 3) æ¸…ç©ºå¤§å­—ä½“å¹¶è¯»å›ç¡®è®¤ï¼›
-;; 4) ä»»ä¸€å¤±è´¥ â†’ åœ¨ä¸šåŠ¡å†™å…¥ä¹‹å‰é€€å‡ºã€‚
+;; Ä¿±ê×ÖÌå½âÎö£¨·½°¸µÚ 3 ½Ú£©£º
+;; 1) ¼ì²âÏµÍ³Óë CAD ×ÖÌåÄ¿Â¼ÖĞµÄ SimSun ×ÖÌåÎÄ¼ş£»
+;; 2) Éú³ÉÊÔÑéÑùÊ½£¬Ğ´Èë FontFile + SetFont£¬¶Á»ØÑéÖ¤£»
+;; 3) Çå¿Õ´ó×ÖÌå²¢¶Á»ØÈ·ÈÏ£»
+;; 4) ÈÎÒ»Ê§°Ü ¡ú ÔÚÒµÎñĞ´ÈëÖ®Ç°ÍË³ö¡£
 (defun OCS:ResolveSongFont ( / f res )
-  ;; æ‰å¹³ plistï¼ˆä¸ makeReport ä¸€è‡´ï¼‰
+  ;; ±âÆ½ plist£¨Óë makeReport Ò»ÖÂ£©
   (setq res (list "ok" nil "family" "SimSun" "charSet" 134 "pitchFamily" 22
                   "fontFile" nil "fontFileSource" nil "bigFontEmpty" nil
                   "problems" nil "appendParams" T))
-  ;; å€™é€‰å­—ä½“æ–‡ä»¶ï¼ˆé¡ºåºå³ä¼˜å…ˆçº§ï¼›ä¸æ¥å— NSimSun/SimHei/STSong é¡¶æ›¿ï¼‰
-  (setq res (OCS:addProblem res "info" "å€™é€‰å­—ä½“æ–‡ä»¶æ‰«æ"))
+  ;; ºòÑ¡×ÖÌåÎÄ¼ş£¨Ë³Ğò¼´ÓÅÏÈ¼¶£»²»½ÓÊÜ NSimSun/SimHei/STSong ¶¥Ìæ£©
+  (setq res (OCS:addProblem res "info" "ºòÑ¡×ÖÌåÎÄ¼şÉ¨Ãè"))
   (setq f (OCS:findSimSunFile))
   (if (not f)
     (setq res (OCS:addProblem res "error"
-      "æœªæ‰¾åˆ° SimSun å­—ä½“æ–‡ä»¶ï¼ˆsimsun.ttc / simsun.ttf / SIMSUN.TTFï¼‰ï¼Œä¸èƒ½ç”¨å…¶ä»–å­—ä½“æ›¿ä»£"))
+      "Î´ÕÒµ½ SimSun ×ÖÌåÎÄ¼ş£¨simsun.ttc / simsun.ttf / SIMSUN.TTF£©£¬²»ÄÜÓÃÆäËû×ÖÌåÌæ´ú"))
     (progn
       (setq res (OCS:putPair res "fontFile" f))
       (setq res (OCS:putPair res "fontFileSource" (OCS:fontFileSource f)))
     )
   )
-  ;; è¯•éªŒæ ·å¼å†™å…¥éªŒè¯
+  ;; ÊÔÑéÑùÊ½Ğ´ÈëÑéÖ¤
   (setq res (OCS:putPair res "ok" (not (OCS:hasError res))))
   res
 )
@@ -844,7 +844,7 @@
   out
 )
 (defun OCS:getVal (res key default / i n)
-  ;; å›ºå®šä¸‰ä¸ªå‚æ•°ï¼šæ‰€æœ‰è°ƒç”¨æ˜¾å¼ä¼ å…¥ç¼ºçœå€¼ã€‚
+  ;; ¹Ì¶¨Èı¸ö²ÎÊı£ºËùÓĞµ÷ÓÃÏÔÊ½´«ÈëÈ±Ê¡Öµ¡£
   (OCS:assocd key res default)
 )
 
@@ -862,12 +862,12 @@
   )
 )
 
-;; å­—ä½“æ–‡ä»¶æ¥æºï¼šç”¨äºæŠ¥å‘Šçš„åŸå§‹åç§°ï¼›å†™å…¥æ—¶ä¼˜å…ˆä½¿ç”¨ findfile è§£æè·¯å¾„ã€‚
+;; ×ÖÌåÎÄ¼şÀ´Ô´£ºÓÃÓÚ±¨¸æµÄÔ­Ê¼Ãû³Æ£»Ğ´ÈëÊ±ÓÅÏÈÊ¹ÓÃ findfile ½âÎöÂ·¾¶¡£
 (defun OCS:fontFileSource ( pair )
   (if (OCS:consp pair) (cadr pair) pair)
 )
 
-;;; æ—¥æœŸï¼š2026-10-13ã€‚è¯•å†™å’Œæ­£å¼å†™å…¥å…±ç”¨ï¼›æ¥å£æˆåŠŸå¿…é¡»å†æ ¸å¯¹å®é™…è¯»å›ã€‚
+;;; ÈÕÆÚ£º2026-10-13¡£ÊÔĞ´ºÍÕıÊ½Ğ´Èë¹²ÓÃ£»½Ó¿Ú³É¹¦±ØĞëÔÙºË¶ÔÊµ¼Ê¶Á»Ø¡£
 (defun OCS:songFontFileP (file)
   (and (OCS:stringp file) (> (strlen file) 0)
        (= (strcase (vl-filename-base file)) "SIMSUN")
@@ -885,8 +885,8 @@
   state
 )
 
-;; æ—¥æœŸï¼š2026-10-13ã€‚TTC å¯ç”± SetFont æè¿°ç¬¦ç»‘å®šï¼Œæ­¤æ—¶ä¸¤å¤„æ–‡ä»¶åå‡ä¸ºç©ºã€‚
-;; åªå…è®¸ä¸¤å¤„å‡ä¸ºå®‹ä½“æ–‡ä»¶æˆ–å‡ä¸ºç©ºï¼›éç©ºé”™è¯¯æ–‡ä»¶å’Œæ¥å£ä¸ä¸€è‡´ä»æ‹’ç»ã€‚
+;; ÈÕÆÚ£º2026-10-13¡£TTC ¿ÉÓÉ SetFont ÃèÊö·û°ó¶¨£¬´ËÊ±Á½´¦ÎÄ¼şÃû¾ùÎª¿Õ¡£
+;; Ö»ÔÊĞíÁ½´¦¾ùÎªËÎÌåÎÄ¼ş»ò¾ùÎª¿Õ£»·Ç¿Õ´íÎóÎÄ¼şºÍ½Ó¿Ú²»Ò»ÖÂÈÔ¾Ü¾ø¡£
 (defun OCS:fontBindingMode (state / file dxf)
   (setq file (OCS:assocd "file" state nil) dxf (OCS:assocd "dxf3" state nil))
   (cond
@@ -915,18 +915,18 @@
   (setq files (OCS:assocd "fontFile" spec nil))
   (if (not (listp files)) (setq files (list files)))
   (setq preferred (OCS:assocd "setFontFamily" spec "SimSun"))
-  (setq faces (list preferred (if (= preferred "å®‹ä½“") "SimSun" "å®‹ä½“")) answer nil errors nil)
-  ;; æ—¥æœŸï¼š2026-10-13ã€‚entmod ä¼šé‡ç½®éƒ¨åˆ† CAD çš„å­—ä½“æè¿°ç¬¦ï¼Œå¿…é¡»å…ˆæ¸…å¤§å­—ä½“ã€‚
-  ;; bold/italic å·²ç”±è°ƒç”¨è€…åœ¨ä»»ä½•å†™å…¥ä¹‹å‰ä¿å­˜ï¼›SetFont ååªå…è®¸åªè¯»æ ¸å¯¹ã€‚
+  (setq faces (list preferred (if (= preferred "ËÎÌå") "SimSun" "ËÎÌå")) answer nil errors nil)
+  ;; ÈÕÆÚ£º2026-10-13¡£entmod »áÖØÖÃ²¿·Ö CAD µÄ×ÖÌåÃèÊö·û£¬±ØĞëÏÈÇå´ó×ÖÌå¡£
+  ;; bold/italic ÒÑÓÉµ÷ÓÃÕßÔÚÈÎºÎĞ´ÈëÖ®Ç°±£´æ£»SetFont ºóÖ»ÔÊĞíÖ»¶ÁºË¶Ô¡£
   (setq ent (vlax-vla-object->ename obj) name (OCS:requireProp obj 'Name))
   (setq result (OCS:clearBigFont ent name))
   (if (OCS:errp result)
-    (setq faces nil errors (list (strcat "å¤§å­—ä½“é¢„æ¸…ç©ºå¤±è´¥ï¼š" (OCS:errmsg result)))))
+    (setq faces nil errors (list (strcat "´ó×ÖÌåÔ¤Çå¿ÕÊ§°Ü£º" (OCS:errmsg result)))))
   (foreach face faces
     (if (not answer)
       (progn
         (setq selected nil)
-        ;; findfile è§£æåˆ°çš„å®Œæ•´è·¯å¾„ä¼˜å…ˆï¼›ä¸å†å…ˆè¯•ç°åœºå·²å¤±è´¥çš„è£¸æ–‡ä»¶åã€‚
+        ;; findfile ½âÎöµ½µÄÍêÕûÂ·¾¶ÓÅÏÈ£»²»ÔÙÏÈÊÔÏÖ³¡ÒÑÊ§°ÜµÄÂãÎÄ¼şÃû¡£
         (foreach path files
           (if (and (not selected) (OCS:stringp path) (> (strlen path) 0))
             (progn
@@ -942,22 +942,22 @@
               (setq errors (cons (vl-catch-all-error-message result) errors))
               (progn
                 (setq state (OCS:fontState obj "after-SetFont") order "clearBigFont -> FontFile -> SetFont")
-                ;; ä¸å†é‡å†™ FontFileï¼šç°åœºè¯æ®æ˜¾ç¤ºè¿™ä¼šæ¸…ç©ºå·²æ­£ç¡®è§£æçš„å®‹ä½“æè¿°ç¬¦ã€‚
+                ;; ²»ÔÙÖØĞ´ FontFile£ºÏÖ³¡Ö¤¾İÏÔÊ¾Õâ»áÇå¿ÕÒÑÕıÈ·½âÎöµÄËÎÌåÃèÊö·û¡£
                 (if (and (not (vl-catch-all-error-p result)) (OCS:fontStateMatches state bold italic))
                   (setq answer (list "ok" T "setFontFamily" face "fontFileApplied" selected "writeOrder" order "state" state))
-                  (setq errors (cons (strcat face "ï¼šå­—ä½“æ–‡ä»¶ã€å­—ä½“æ—ã€å­—ç¬¦é›†æˆ–ç²—æ–œä½“è¯»å›ä¸åŒ¹é…") errors))))))))))
+                  (setq errors (cons (strcat face "£º×ÖÌåÎÄ¼ş¡¢×ÖÌå×å¡¢×Ö·û¼¯»ò´ÖĞ±Ìå¶Á»Ø²»Æ¥Åä") errors))))))))))
   (if answer
     (progn
       (setq result (OCS:checkBigFontEmpty ent name))
       (if (OCS:errp result)
-        (setq answer nil errors (cons (strcat "è®¾ç½®å®‹ä½“åå¤§å­—ä½“æ ¡éªŒå¤±è´¥ï¼š" (OCS:errmsg result)) errors)))))
+        (setq answer nil errors (cons (strcat "ÉèÖÃËÎÌåºó´ó×ÖÌåĞ£ÑéÊ§°Ü£º" (OCS:errmsg result)) errors)))))
   (if (not answer)
-    (setq answer (list "ok" nil "error" (strcat "å®‹ä½“å†™å…¥è¯»å›å¤±è´¥ï¼š" (OCS:fmt (reverse errors))))))
+    (setq answer (list "ok" nil "error" (strcat "ËÎÌåĞ´Èë¶Á»ØÊ§°Ü£º" (OCS:fmt (reverse errors))))))
   (OCS:trace "FONT_WRITE_RESULT" answer)
   answer
 )
 
-;; åœ¨ä¸´æ—¶æ ·å¼ä¸ŠéªŒè¯å†™å…¥/è¯»å›
+;; ÔÚÁÙÊ±ÑùÊ½ÉÏÑéÖ¤Ğ´Èë/¶Á»Ø
 (defun OCS:probeFontBody (res name / ent obj created writeResult key expected)
   (setq created (OCS:writeCall 'entmake
     (list (list (cons 0 "STYLE") (cons 100 "AcDbSymbolTableRecord")
@@ -966,30 +966,30 @@
       (cons 3 (OCS:styleBaseFont)) (cons 4 "")))))
   (setq ent (tblobjname "STYLE" name))
   (if (or (vl-catch-all-error-p created) (not ent))
-    (OCS:addProblem res "error" "åˆ›å»ºè¯•éªŒæ–‡å­—æ ·å¼å¤±è´¥")
+    (OCS:addProblem res "error" "´´½¨ÊÔÑéÎÄ×ÖÑùÊ½Ê§°Ü")
     (progn
       (setq *OCS:Wrote* T obj (vlax-ename->vla-object ent))
       (setq writeResult (OCS:writeSongFont obj res :vlax-false :vlax-false))
       (if (not (OCS:assocd "ok" writeResult nil))
-        (setq res (OCS:addProblem res "error" (OCS:assocd "error" writeResult "å®‹ä½“è¯•å†™å¤±è´¥")))
+        (setq res (OCS:addProblem res "error" (OCS:assocd "error" writeResult "ËÎÌåÊÔĞ´Ê§°Ü")))
         (progn
           (foreach key (list "setFontFamily" "fontFileApplied" "writeOrder")
             (setq res (OCS:putPair res key (OCS:assocd key writeResult nil))))
           (setq res (OCS:verifyBigFontClear res ent name))
           (setq expected (OCS:assocd "state" writeResult nil))
           (if (not (OCS:fontStateStable expected (OCS:fontState obj "probe-after-check")))
-            (setq res (OCS:addProblem res "error" "ä¸´æ—¶æ ·å¼åªè¯»å¤æ ¸åå®‹ä½“ç»‘å®šä¸åŒ¹é…")))
+            (setq res (OCS:addProblem res "error" "ÁÙÊ±ÑùÊ½Ö»¶Á¸´ºËºóËÎÌå°ó¶¨²»Æ¥Åä")))
           (if (not (OCS:hasError res))
             (progn
               (OCS:mustCall 'vla-Regen (list (OCS:activeDoc) 1))
               (if (not (OCS:fontStateStable expected (OCS:fontState obj "probe-after-regen")))
-                (setq res (OCS:addProblem res "error" "ä¸´æ—¶æ ·å¼å†ç”Ÿåå®‹ä½“ç»‘å®šè¯»å›ä¸åŒ¹é…")))))))
-      ;; æ¸…ç†ç”± verifyFontWrite çš„ç»Ÿä¸€å‡ºå£æ‰§è¡Œã€‚
+                (setq res (OCS:addProblem res "error" "ÁÙÊ±ÑùÊ½ÔÙÉúºóËÎÌå°ó¶¨¶Á»Ø²»Æ¥Åä")))))))
+      ;; ÇåÀíÓÉ verifyFontWrite µÄÍ³Ò»³ö¿ÚÖ´ĞĞ¡£
       res))
 )
 
 (defun OCS:hasError (res / p)
-  ;; æ‰«æåˆ—è¡¨ä¸­æ˜¯å¦æœ‰ error çº§ problemï¼ˆforeach+conspï¼Œé¿å… assoc å¯¹æ‰å¹³è£¸å­—ç¬¦ä¸²æŠ¥é”™ï¼‰
+  ;; É¨ÃèÁĞ±íÖĞÊÇ·ñÓĞ error ¼¶ problem£¨foreach+consp£¬±ÜÃâ assoc ¶Ô±âÆ½Âã×Ö·û´®±¨´í£©
   (OCS:findError res)
 )
 (defun OCS:findError (res / found item)
@@ -1015,7 +1015,7 @@
 )
 
 (defun OCS:styleBaseFont ()
-  ;; æ ·å¼åŸºå­—ä½“ä½¿ç”¨æ™®é€š txtï¼Œè‹¥ä¸å¯ç”¨é€€å› romansï¼›ä¸ç›®æ ‡å­—ä½“æ— å…³
+  ;; ÑùÊ½»ù×ÖÌåÊ¹ÓÃÆÕÍ¨ txt£¬Èô²»¿ÉÓÃÍË»Ø romans£»ÓëÄ¿±ê×ÖÌåÎŞ¹Ø
   (if (findfile "txt.shx") "txt.shx" (if (findfile "romans.shx") "romans.shx" "simplex.shx"))
 )
 
@@ -1026,12 +1026,12 @@
   )
 )
 
-;; æ—¥æœŸï¼š2026-10-13ã€‚å†™å…¥ç”± writeSongFont å‰ç½®æ¸…ç†å®Œæˆï¼Œæ­¤å¤„åªè¯»ã€‚
+;; ÈÕÆÚ£º2026-10-13¡£Ğ´ÈëÓÉ writeSongFont Ç°ÖÃÇåÀíÍê³É£¬´Ë´¦Ö»¶Á¡£
 (defun OCS:verifyBigFontClear (res ent name / r)
   (setq r (OCS:checkBigFontEmpty ent name))
   (if (OCS:errp r)
     (setq res (OCS:addProblem res "error"
-                (strcat "å¤§å­—ä½“åªè¯»æ ¡éªŒå¤±è´¥ï¼š" (OCS:errmsg r))))
+                (strcat "´ó×ÖÌåÖ»¶ÁĞ£ÑéÊ§°Ü£º" (OCS:errmsg r))))
     (setq res (OCS:putPair res "bigFontEmpty" T)))
   res
 )
@@ -1040,13 +1040,13 @@
   (setq o (vlax-ename->vla-object (cdr (assoc -1 e))))
   (setq r (OCS:writeCall 'vla-put-BigFontFile (list o val)))
   (if (vl-catch-all-error-p r)
-    ;; æ–‡æ¡£ä¸å…è®¸ç©ºå­—ç¬¦ä¸²ï¼Œä½†å…è®¸éç©ºï¼›å†™å…¥å¤±è´¥åˆ™ç”¨ entmod è¡¥ç»„ç  4
+    ;; ÎÄµµ²»ÔÊĞí¿Õ×Ö·û´®£¬µ«ÔÊĞí·Ç¿Õ£»Ğ´ÈëÊ§°ÜÔòÓÃ entmod ²¹×éÂë 4
     (vl-catch-all-apply 'entmod (list (OCS:substDxf4 val e)))
   )
   T
 )
 
-;; æ›¿æ¢ç»„ç  4ï¼ˆæ— åˆ™è¿½åŠ ï¼‰ï¼Œè¿”å›æ–° entlistï¼›entmod é”™è¯¯ä»¥ (:error . msg) è¡¨ç¤º
+;; Ìæ»»×éÂë 4£¨ÎŞÔò×·¼Ó£©£¬·µ»ØĞÂ entlist£»entmod ´íÎóÒÔ (:error . msg) ±íÊ¾
 (defun OCS:substDxf4 (val e / out found r pair)
   (setq out nil found nil)
   (foreach pair e
@@ -1064,41 +1064,41 @@
   (setq r (OCS:writeCall 'entmod (list out)))
   (if (vl-catch-all-error-p r)
     (cons "error" (vl-catch-all-error-message r))
-    (if (null r) (cons "error" "entmod è¿”å› nil") out)
+    (if (null r) (cons "error" "entmod ·µ»Ø nil") out)
   )
 )
 
 ;;; =====================================================================
-;;; ç¯å¢ƒé¢„æ£€ OCS:Preflight
+;;; »·¾³Ô¤¼ì OCS:Preflight
 ;;; =====================================================================
 
 (defun OCS:Preflight ( / res acadObj undoctl)
   (setq res (list "ok" nil))
-  ;; 1. AutoLISP/Visual LISP/ActiveXï¼ˆåªæ¢æµ‹ï¼Œä¸æ‰§è¡Œä»»ä½•å‘½ä»¤ï¼‰
+  ;; 1. AutoLISP/Visual LISP/ActiveX£¨Ö»Ì½²â£¬²»Ö´ĞĞÈÎºÎÃüÁî£©
   (setq res (OCS:putPair res "acadver" (getvar "ACADVER")))
   (setq res (OCS:putPair res "product"  (getvar "PRODUCT")))
   (setq res (OCS:putPair res "lispys"   (getvar "LISPSYS")))
   (setq res (OCS:putPair res "platform" (getvar "PLATFORM")))
   (setq acadObj (vl-catch-all-apply 'vlax-get-acad-object nil))
   (if (vl-catch-all-error-p acadObj)
-    (setq res (OCS:addProblem res "error" "Visual LISP/ActiveX ä¸å¯ç”¨"))
+    (setq res (OCS:addProblem res "error" "Visual LISP/ActiveX ²»¿ÉÓÃ"))
   )
-  ;; 2. æ’¤é”€å¯ç”¨æ€§ï¼ˆUNDOCTL ä½ 0 = UNDO å¼€å¯ï¼‰
+  ;; 2. ³·Ïú¿ÉÓÃĞÔ£¨UNDOCTL Î» 0 = UNDO ¿ªÆô£©
   (setq undoctl (getvar "UNDOCTL"))
   (setq res (OCS:putPair res "undoctl" undoctl))
   (if (= 0 (logand undoctl 1))
-    (setq res (OCS:addProblem res "error" "å›¾çº¸æ’¤é”€ï¼ˆUNDOï¼‰ä¸å¯ç”¨ï¼Œä¸èƒ½ä¿è¯ä¸€æ¬¡ U æ¢å¤"))
+    (setq res (OCS:addProblem res "error" "Í¼Ö½³·Ïú£¨UNDO£©²»¿ÉÓÃ£¬²»ÄÜ±£Ö¤Ò»´Î U »Ö¸´"))
   )
   (if (/= 0 (logand undoctl 8))
-    (setq res (OCS:addProblem res "error" "å·²æœ‰å¤–éƒ¨æ’¤é”€åˆ†ç»„ï¼Œä¸èƒ½ä¿è¯åªæ’¤é”€æœ¬æ¬¡æ“ä½œ")))
-  ;; 3. æ–‡æ¡£å¯å†™ï¼ˆé”å®š/åªè¯»ï¼‰
+    (setq res (OCS:addProblem res "error" "ÒÑÓĞÍâ²¿³·Ïú·Ö×é£¬²»ÄÜ±£Ö¤Ö»³·Ïú±¾´Î²Ù×÷")))
+  ;; 3. ÎÄµµ¿ÉĞ´£¨Ëø¶¨/Ö»¶Á£©
   (setq res (OCS:checkDocWritable res))
-  ;; 4. å­—ä½“è§£æ
+  ;; 4. ×ÖÌå½âÎö
   (setq res (OCS:putPair res "font" (OCS:ResolveSongFont)))
   (if (OCS:findError (OCS:getVal res "font" nil))
-    (setq res (OCS:addProblem res "error" "å®‹ä½“å­—ä½“è§£æå¤±è´¥ï¼ˆè¯¦è§ :fontï¼‰"))
+    (setq res (OCS:addProblem res "error" "ËÎÌå×ÖÌå½âÎöÊ§°Ü£¨Ïê¼û :font£©"))
   )
-  ;; 5. å…³é”®æ¥å£å­˜åœ¨æ€§
+  ;; 5. ¹Ø¼ü½Ó¿Ú´æÔÚĞÔ
   (setq res (OCS:checkInterfaces res))
   (setq res (OCS:putPair res "ok" (not (OCS:findError res))))
   res
@@ -1107,13 +1107,13 @@
 (defun OCS:checkDocWritable (res / doc ro)
   (setq doc (OCS:activeDoc))
   (if (not doc)
-    (OCS:addProblem res "error" "æ— æ³•è·å–æ´»åŠ¨æ–‡æ¡£")
+    (OCS:addProblem res "error" "ÎŞ·¨»ñÈ¡»î¶¯ÎÄµµ")
     (progn
       (setq ro (vl-catch-all-apply 'vla-get-ReadOnly (list doc)))
-      ;; åªè¯»é™çº§ä¸ºè­¦å‘Šï¼šéƒ¨åˆ†å…‹éš†å¼•æ“ï¼ˆå¤©æ­£/æµ©è¾°å†…æ ¸ï¼‰è¯¥å±æ€§å­˜æ ¹æ’è¿” TRUEï¼Œ
-      ;; è‹¥å›¾çº¸çœŸåªè¯»ï¼Œåç»­å†™å…¥ä¼šè¢« vl-catch-all æ‹¦æˆªå¹¶èµ°å›æ»šï¼Œä¸ä¼šæŸåå›¾çº¸ã€‚
+      ;; Ö»¶Á½µ¼¶Îª¾¯¸æ£º²¿·Ö¿ËÂ¡ÒıÇæ£¨ÌìÕı/ºÆ³½ÄÚºË£©¸ÃÊôĞÔ´æ¸ùºã·µ TRUE£¬
+      ;; ÈôÍ¼Ö½ÕæÖ»¶Á£¬ºóĞøĞ´Èë»á±» vl-catch-all À¹½Ø²¢×ß»Ø¹ö£¬²»»áËğ»µÍ¼Ö½¡£
       (if (and (not (vl-catch-all-error-p ro)) (equal ro :vlax-true))
-        (OCS:addProblem res "warn" "æ–‡æ¡£æŠ¥å‘Šä¸ºåªè¯»ï¼ˆå¼•æ“å¯èƒ½è¯¯æŠ¥ï¼›å†™å…¥å¤±è´¥å°†è‡ªåŠ¨å›æ»šï¼‰")
+        (OCS:addProblem res "warn" "ÎÄµµ±¨¸æÎªÖ»¶Á£¨ÒıÇæ¿ÉÄÜÎó±¨£»Ğ´ÈëÊ§°Ü½«×Ô¶¯»Ø¹ö£©")
         res
       )
     )
@@ -1123,10 +1123,10 @@
 (defun OCS:checkInterfaces (res / doc)
   (setq doc (OCS:activeDoc))
   (if (not doc)
-    (OCS:addProblem res "error" "ActiveX æ–‡æ¡£ä¸å¯ç”¨")
+    (OCS:addProblem res "error" "ActiveX ÎÄµµ²»¿ÉÓÃ")
     (progn
       (if (not (OCS:methodOk doc 'vla-get-Blocks))
-        (setq res (OCS:addProblem res "error" "Blocks é›†åˆæ¥å£ä¸å¯ç”¨")))
+        (setq res (OCS:addProblem res "error" "Blocks ¼¯ºÏ½Ó¿Ú²»¿ÉÓÃ")))
       res
     )
   )
@@ -1146,26 +1146,26 @@
 )
 
 ;;; =====================================================================
-;;; æ ·å¼æ”¶é›† OCS:CollectStyles
-;;; æ–¹æ¡ˆç¬¬ 3 èŠ‚ï¼šDXF 70 ä½ 1 = å½¢æ–‡ä»¶è®°å½•ï¼Œä½ 16 = å¤–å‚ä¾èµ–ï¼›
-;;; ä¸æŒ‰åç§°å« "|" åˆ¤æ–­ï¼›Standard ä¸æ³¨é‡Šæ€§æ ·å¼ç…§å¸¸å¤„ç†ã€‚
+;;; ÑùÊ½ÊÕ¼¯ OCS:CollectStyles
+;;; ·½°¸µÚ 3 ½Ú£ºDXF 70 Î» 1 = ĞÎÎÄ¼ş¼ÇÂ¼£¬Î» 16 = Íâ²ÎÒÀÀµ£»
+;;; ²»°´Ãû³Æº¬ "|" ÅĞ¶Ï£»Standard Óë×¢ÊÍĞÔÑùÊ½ÕÕ³£´¦Àí¡£
 ;;; =====================================================================
 
 (defun OCS:CollectStyles ( / res ent lst e flg name)
   (setq res (list "normal" nil "shape" nil "xref" nil "vertical" nil "count" 0))
-  (OCS:setStage "è¯»å–æ–‡å­—æ ·å¼è¡¨ STYLE")
+  (OCS:setStage "¶ÁÈ¡ÎÄ×ÖÑùÊ½±í STYLE")
   (setq ent (tblnext "STYLE" T))
   (while ent
     (setq flg (OCS:assocd 70 ent 0)
           name (OCS:assocd 2 ent ""))
-    (OCS:setStage (strcat "æ‰«ææ–‡å­—æ ·å¼ " name))
+    (OCS:setStage (strcat "É¨ÃèÎÄ×ÖÑùÊ½ " name))
     (cond
       ((/= 0 (logand flg 1))
-       ;; å½¢æ–‡ä»¶è®°å½•ï¼ˆLOAD è¯·æ±‚ï¼‰â†’ è·³è¿‡å¹¶åˆ†ç±»è®°å½•
+       ;; ĞÎÎÄ¼ş¼ÇÂ¼£¨LOAD ÇëÇó£©¡ú Ìø¹ı²¢·ÖÀà¼ÇÂ¼
        (setq res (OCS:lstAppend res "shape" name))
       )
       ((/= 0 (logand flg 16))
-       ;; å¤–éƒ¨å‚ç…§ä¾èµ–è®°å½• â†’ è·³è¿‡å¹¶åˆ†ç±»è®°å½•
+       ;; Íâ²¿²ÎÕÕÒÀÀµ¼ÇÂ¼ ¡ú Ìø¹ı²¢·ÖÀà¼ÇÂ¼
        (setq res (OCS:lstAppend res "xref" name))
       )
       (T
@@ -1193,9 +1193,9 @@
     (append (OCS:getVal res key nil) (list val))))
 )
 
-;; æ³¨é‡Šæ€§åˆ¤æ–­ï¼šç»„ç  1071 ä¸å«æ³¨é‡Šä½ï¼›æ³¨é‡Šæ€§åœ¨ç»„ç  70 æ— ä½ï¼Œ
-;; é€šè¿‡æ‰©å±•æ•°æ®/å¯¹è±¡æ¨¡å‹çš„ Annotative å±æ€§åˆ¤æ–­ï¼›æ­¤å¤„ç”¨
-;; entget çš„ 1071 ä¹‹å¤–ï¼Œå¦æŸ¥ (assoc 1071 ...) ä¸å¯é  â†’ ç”¨å¯¹è±¡æ¥å£ã€‚
+;; ×¢ÊÍĞÔÅĞ¶Ï£º×éÂë 1071 ²»º¬×¢ÊÍÎ»£»×¢ÊÍĞÔÔÚ×éÂë 70 ÎŞÎ»£¬
+;; Í¨¹ıÀ©Õ¹Êı¾İ/¶ÔÏóÄ£ĞÍµÄ Annotative ÊôĞÔÅĞ¶Ï£»´Ë´¦ÓÃ
+;; entget µÄ 1071 Ö®Íâ£¬Áí²é (assoc 1071 ...) ²»¿É¿¿ ¡ú ÓÃ¶ÔÏó½Ó¿Ú¡£
 (defun OCS:isAnnotativeStyle (ent / o r)
   (setq o (vlax-ename->vla-object ent))
   (setq r (vl-catch-all-apply 'vla-get-Annotative (list o)))
@@ -1205,10 +1205,10 @@
 )
 
 ;;; =====================================================================
-;;; å›¾å—ä¸å®¿ä¸»æ”¶é›† OCS:CollectHosts
-;;; æ–¹æ¡ˆç¬¬ 4 èŠ‚ï¼šä»¥ Blocks é›†åˆä¸ºä¸»å…¥å£ï¼›æŒ‰å¥æŸ„å»é‡ï¼›
-;;; é‡å¤–å‚å—åœæ­¢è¿›å…¥ï¼›åŠ¨æ€å—åŒæ—¶æ‰«æåŸå§‹å®šä¹‰ä¸åŒ¿åè¡¨ç¤ºï¼›
-;;; æ ‡æ³¨/è¡¨æ ¼ç­‰ç”Ÿæˆçš„åŒ¿åæ˜¾ç¤ºå—æŒ‰æ¥æºåˆ†ç±»å¤„ç†ã€‚
+;;; Í¼¿éÓëËŞÖ÷ÊÕ¼¯ OCS:CollectHosts
+;;; ·½°¸µÚ 4 ½Ú£ºÒÔ Blocks ¼¯ºÏÎªÖ÷Èë¿Ú£»°´¾ä±úÈ¥ÖØ£»
+;;; ÓöÍâ²Î¿éÍ£Ö¹½øÈë£»¶¯Ì¬¿éÍ¬Ê±É¨ÃèÔ­Ê¼¶¨ÒåÓëÄäÃû±íÊ¾£»
+;;; ±ê×¢/±í¸ñµÈÉú³ÉµÄÄäÃûÏÔÊ¾¿é°´À´Ô´·ÖÀà´¦Àí¡£
 ;;; =====================================================================
 
 (defun OCS:CollectHosts ( / res doc blocks count i blk key *OCS:CollectReverse*)
@@ -1218,14 +1218,14 @@
                   "blockList" nil "skipped" nil))
   (setq doc (OCS:activeDoc))
   (if (not doc)
-    (OCS:addProblem res "error" "æ— æ³•è·å–æ´»åŠ¨æ–‡æ¡£")
+    (OCS:addProblem res "error" "ÎŞ·¨»ñÈ¡»î¶¯ÎÄµµ")
     (progn
-      (OCS:setStage "è¯»å–å›¾å—é›†åˆ Blocks")
+      (OCS:setStage "¶ÁÈ¡Í¼¿é¼¯ºÏ Blocks")
       (setq blocks (OCS:requireProp doc 'Blocks)
             count (OCS:requireProp blocks 'Count))
       (setq i 1)
       (while (<= i count)
-        (OCS:setStage (strcat "è¯»å–å›¾å—é›†åˆ Blocksï¼Œç´¢å¼• " (itoa (1- i))))
+        (OCS:setStage (strcat "¶ÁÈ¡Í¼¿é¼¯ºÏ Blocks£¬Ë÷Òı " (itoa (1- i))))
         (setq blk (OCS:safeItem blocks i))
         (if blk
           (setq res (OCS:collectBlock res doc blk))
@@ -1249,25 +1249,25 @@
   (if (not name)
     res
     (progn
-      (OCS:setStage (strcat "æ‰«æå›¾å— " name " [" handle "]"))
+      (OCS:setStage (strcat "É¨ÃèÍ¼¿é " name " [" handle "]"))
       (setq isXref (OCS:boolProp blk 'IsXRef))
-      ;; åŒ¿åå—åˆ†ç±»ï¼šåŠ¨æ€å—è¡¨ç¤º(*U...)ã€æ ‡æ³¨/è¡¨æ ¼æ˜¾ç¤ºç¼“å­˜(*D.../*T...)ã€å…¶ä»–
+      ;; ÄäÃû¿é·ÖÀà£º¶¯Ì¬¿é±íÊ¾(*U...)¡¢±ê×¢/±í¸ñÏÔÊ¾»º´æ(*D.../*T...)¡¢ÆäËû
       (setq btype (OCS:classifyBlockName name))
       (cond
-        ;; å¤–éƒ¨å‚ç…§å—ï¼šåœæ­¢è¿›å…¥ï¼Œä¸è·¨å¤–éƒ¨æ•°æ®åº“
+        ;; Íâ²¿²ÎÕÕ¿é£ºÍ£Ö¹½øÈë£¬²»¿çÍâ²¿Êı¾İ¿â
         ((or isXref (OCS:strContains name "|"))
          (setq res (OCS:putPair res "xrefBlocks" (1+ (OCS:getVal res "xrefBlocks" 0))))
          (setq res (OCS:lstAppend res "skipped" (list "XREF_BLOCK" handle name)))
         )
         ((equal btype "display-cache")
-         ;; æ ‡æ³¨/è¡¨æ ¼ç­‰çš„æ˜¾ç¤ºç¼“å­˜ï¼šäº¤ç”±å…¶æºå®¿ä¸»å¤„ç†ï¼Œä¸ç›´æ¥æ”¹å†™
+         ;; ±ê×¢/±í¸ñµÈµÄÏÔÊ¾»º´æ£º½»ÓÉÆäÔ´ËŞÖ÷´¦Àí£¬²»Ö±½Ó¸ÄĞ´
          (setq res (OCS:putPair res "displayBlocks" (1+ (OCS:getVal res "displayBlocks" 0))))
          (setq res (OCS:lstAppend res "skipped" (list "DISPLAY_CACHE" handle name)))
         )
         (T
          (setq res (OCS:putPair res "blocks" (1+ (OCS:getVal res "blocks" 0))))
          (setq res (OCS:lstAppend res "blockList" (list "name" name "handle" handle "obj" blk)))
-         ;; æ‰«æå—å†…å®ä½“
+         ;; É¨Ãè¿éÄÚÊµÌå
          (setq res (OCS:scanBlockContents res doc blk name handle))
         )
       )
@@ -1276,7 +1276,7 @@
   )
 )
 
-;; åŒ¿åå—æ¥æºåˆ†ç±»ï¼ˆæ–¹æ¡ˆç¬¬ 4 èŠ‚ç¬¬ 6 æ¡ï¼‰
+;; ÄäÃû¿éÀ´Ô´·ÖÀà£¨·½°¸µÚ 4 ½ÚµÚ 6 Ìõ£©
 (defun OCS:classifyBlockName (name / n)
   (setq n (strcase name))
   (cond
@@ -1287,12 +1287,12 @@
 )
 
 (defun OCS:scanBlockContents (res doc blk bname bhandle / ents count i e label)
-  (setq ents blk) ; Block æœ¬èº«å°±æ˜¯å®ä½“é›†åˆ
-  (setq label (strcat "æ‰«æå›¾å— " bname " [" bhandle "]"))
+  (setq ents blk) ; Block ±¾Éí¾ÍÊÇÊµÌå¼¯ºÏ
+  (setq label (strcat "É¨ÃèÍ¼¿é " bname " [" bhandle "]"))
   (OCS:setStage label)
   (setq count (OCS:requireProp ents 'Count) i 1)
   (while (<= i count)
-    (OCS:setStage (strcat label "ï¼Œå®ä½“ç´¢å¼• " (itoa (1- i))))
+    (OCS:setStage (strcat label "£¬ÊµÌåË÷Òı " (itoa (1- i))))
     (setq e (OCS:safeItem ents i))
     (if e (setq res (OCS:visitEntity res doc e (list "block" bname bhandle))))
     (setq i (1+ i))
@@ -1300,7 +1300,7 @@
   res
 )
 
-;; å®ä½“è®¿é—®ï¼ˆå»é‡æŒ‰å¥æŸ„ï¼‰
+;; ÊµÌå·ÃÎÊ£¨È¥ÖØ°´¾ä±ú£©
 (defun OCS:visitEntity (res doc e ctx / typ handle seen)
   (setq typ (OCS:safeProp e 'ObjectName))
   (if (not typ)
@@ -1314,7 +1314,7 @@
       (if (not seen)
         (progn
           (setq res (OCS:markSeen res handle))
-          (OCS:setStage (strcat "æ‰«æå®ä½“ " typ " [" handle "] " (OCS:ctxStr ctx)))
+          (OCS:setStage (strcat "É¨ÃèÊµÌå " typ " [" handle "] " (OCS:ctxStr ctx)))
           (setq res (OCS:handleEntity res doc e typ ctx handle))
         )
       )
@@ -1326,13 +1326,13 @@
 (defun OCS:ctxStr (ctx)
   (if (null ctx) "-"
     (if (= (car ctx) "block")
-      (strcat "å—:" (cadr ctx))
-      (strcat "ç©ºé—´:" (cadr ctx))
+      (strcat "¿é:" (cadr ctx))
+      (strcat "¿Õ¼ä:" (cadr ctx))
     )
   )
 )
 
-;; è®°å½•å¤„ç†
+;; ¼ÇÂ¼´¦Àí
 (defun OCS:seenP (res h)
   (and h (vl-position h (OCS:getVal res "seen" nil)))
 )
@@ -1343,7 +1343,7 @@
   )
 )
 
-;; æŒ‰å¯¹è±¡ç±»å‹åˆ†å‘
+;; °´¶ÔÏóÀàĞÍ·Ö·¢
 (defun OCS:handleEntity (res doc e typ ctx handle / cls)
   (setq cls (if *OCS:CheckOnly* "other" (OCS:mapClass typ)))
   (OCS:trace "ENTITY" (list "handle" handle "type" typ "class" cls "context" ctx "layer" (OCS:safeProp e 'Layer)))
@@ -1358,9 +1358,9 @@
     ((equal cls "table")    (OCS:collectTable res doc e ctx handle typ))
     ((equal cls "tolerance")(OCS:collectTolerance res doc e ctx handle typ))
     ((equal cls "blockref") (OCS:collectBlockRef res doc e ctx handle typ))
-    ((equal cls "attribute-dest") res) ; ç”± blockref å¤„ç†
+    ((equal cls "attribute-dest") res) ; ÓÉ blockref ´¦Àí
     (T
-     ;; ä¸“ä¸š/ä»£ç†å¯¹è±¡ï¼šè®°å½•ä¸ºæœªè¦†ç›–
+     ;; ×¨Òµ/´úÀí¶ÔÏó£º¼ÇÂ¼ÎªÎ´¸²¸Ç
      (if (OCS:isUnknownClass typ)
        (progn
          (if (and *OCS:CheckOnly* (OCS:tchKind typ))
@@ -1391,7 +1391,7 @@
               "ACDBRASTERIMAGE" "ACDBWIPEOUT" "ACDBOLE2FRAME" "ACDBPDFREFERENCE")))
 )
 
-;; ç±»å‹ â†’ åˆ†ç±»ï¼ˆDXF/ObjectName æ˜ å°„ï¼‰
+;; ÀàĞÍ ¡ú ·ÖÀà£¨DXF/ObjectName Ó³Éä£©
 (defun OCS:mapClass (typ / clsName)
   (setq clsName (OCS:lower typ))
   (cond
@@ -1400,13 +1400,13 @@
     ((or (= clsName "acad_attribute") (= clsName "acdbattribute"))  "attrib")
     ((or (= clsName "acad_attributereference") (= clsName "acdbattributereference")) "attrib")
     ((or (= clsName "acad_attributedefinition") (= clsName "acdbattributedefinition")) "attdef")
-    ;; æ—¥æœŸï¼š2026-10-13ã€‚ç±»åå«å…³é”®å­—ä¸èƒ½è¯æ˜æ”¯æŒåŸç”Ÿæ¥å£ï¼Œå¤©æ­£æ ‡æ³¨ä¼šè¯¯æŠ¥ TextOverrideã€‚
+    ;; ÈÕÆÚ£º2026-10-13¡£ÀàÃûº¬¹Ø¼ü×Ö²»ÄÜÖ¤Ã÷Ö§³ÖÔ­Éú½Ó¿Ú£¬ÌìÕı±ê×¢»áÎó±¨ TextOverride¡£
     ((member clsName (list "acdbaligneddimension" "acdbrotateddimension"
        "acdb2lineangulardimension" "acdb3pointangulardimension"
        "acdbdiametricdimension" "acdbradialdimension" "acdbradialdimensionlarge"
        "acdbarcdimension" "acdbordinatedimension" "acdbdimension"
        "acad_dimension")) "dim")
-    ;; ä¸“ä¸šå¯¹è±¡åç§°å« Leader ä¸ä»£è¡¨å…·å¤‡æ™®é€šå¼•çº¿æ¥å£ï¼Œå¿…é¡»åŒ¹é…åŸç”Ÿç±»åã€‚
+    ;; ×¨Òµ¶ÔÏóÃû³Æº¬ Leader ²»´ú±í¾ß±¸ÆÕÍ¨ÒıÏß½Ó¿Ú£¬±ØĞëÆ¥ÅäÔ­ÉúÀàÃû¡£
     ((member clsName (list "acdbmleader" "acad_mleader"))      "mleader")
     ((member clsName (list "acdbleader" "acad_leader"))       "leader")
     ((member clsName (list "acdbtable" "acad_table"))         "table")
@@ -1417,7 +1417,7 @@
 )
 
 ;;; ---------------------------------------------------------------------
-;;; å„å®¿ä¸»â€œè¯»â€ï¼šæ”¶é›†è¿›è®¡åˆ’ï¼ˆåªè¯»é˜¶æ®µï¼‰
+;;; ¸÷ËŞÖ÷¡°¶Á¡±£ºÊÕ¼¯½ø¼Æ»®£¨Ö»¶Á½×¶Î£©
 ;;; ---------------------------------------------------------------------
 
 (defun OCS:collectTextHost (res doc e ctx handle typ)
@@ -1459,10 +1459,10 @@
     (list "kind" "tolerance" "obj" e "handle" handle "ctx" ctx "type" typ))
 )
 
-;; å—å¼•ç”¨ï¼šé¢å¤–å¤„ç†å±æ€§å®ä¾‹ï¼ˆGetAttributes / GetConstantAttributesï¼‰
+;; ¿éÒıÓÃ£º¶îÍâ´¦ÀíÊôĞÔÊµÀı£¨GetAttributes / GetConstantAttributes£©
 (defun OCS:collectBlockRef (res doc e ctx handle typ / blk name has attrs a meth label)
   (setq name (OCS:requireProp e 'Name))
-  (setq label (strcat "è¯»å–å—å¼•ç”¨ " name " [" handle "]"))
+  (setq label (strcat "¶ÁÈ¡¿éÒıÓÃ " name " [" handle "]"))
   (OCS:setStage label)
   (setq blk (OCS:mustCall 'vla-Item (list (OCS:requireProp doc 'Blocks) name)))
   (if (not (or (OCS:boolProp blk 'IsXRef) (OCS:strContains name "|")))
@@ -1479,7 +1479,7 @@
 )
 
 ;;; =====================================================================
-;;; å®‰å…¨ COM è®¿é—®
+;;; °²È« COM ·ÃÎÊ
 ;;; =====================================================================
 
 (defun OCS:safeProp (obj prop / r)
@@ -1507,24 +1507,24 @@
   )
 )
 
-;; ç©º SAFEARRAY æ˜¯åˆæ³•è¿”å›å€¼ï¼Œä½†ç›´æ¥è½¬åˆ—è¡¨å¯æŠ¥ ActiveX æ— æ•ˆç´¢å¼•ã€‚
-;; ä»…åœ¨æˆåŠŸè¯»å–å„ç»´è¾¹ç•Œååˆ¤ç©ºï¼›çœŸå®è¯»å–é”™è¯¯ä¸å¾—ä¼ªè£…æˆæ²¡æœ‰å±æ€§ã€‚
+;; ¿Õ SAFEARRAY ÊÇºÏ·¨·µ»ØÖµ£¬µ«Ö±½Ó×ªÁĞ±í¿É±¨ ActiveX ÎŞĞ§Ë÷Òı¡£
+;; ½öÔÚ³É¹¦¶ÁÈ¡¸÷Î¬±ß½çºóÅĞ¿Õ£»ÕæÊµ¶ÁÈ¡´íÎó²»µÃÎ±×°³ÉÃ»ÓĞÊôĞÔ¡£
 (defun OCS:safeArrayToList (value / dims dim lo hi empty)
   (setq dims (OCS:mustCall 'vlax-safearray-get-dim (list value)))
   (if (or (not (numberp dims)) (< dims 1) (/= dims (fix dims)))
-    (OCS:fail "SAFEARRAY ç»´æ•°æ— æ•ˆ"))
+    (OCS:fail "SAFEARRAY Î¬ÊıÎŞĞ§"))
   (setq dim 1 empty nil)
   (while (<= dim dims)
     (setq lo (OCS:mustCall 'vlax-safearray-get-l-bound (list value dim))
           hi (OCS:mustCall 'vlax-safearray-get-u-bound (list value dim)))
     (if (or (not (numberp lo)) (not (numberp hi)))
-      (OCS:fail "SAFEARRAY ä¸Šä¸‹ç•Œæ— æ•ˆ"))
+      (OCS:fail "SAFEARRAY ÉÏÏÂ½çÎŞĞ§"))
     (if (< hi lo) (setq empty T))
     (setq dim (1+ dim)))
   (if empty nil (OCS:mustCall 'vlax-safearray->list (list value)))
 )
 
-;; Variant/SafeArray è§£åŒ…ï¼ˆ64 ä½ ObjectID ä¸è½¬ 32 ä½æ•´æ•°ï¼‰
+;; Variant/SafeArray ½â°ü£¨64 Î» ObjectID ²»×ª 32 Î»ÕûÊı£©
 (defun OCS:variantToList (v / r)
   (cond
     ((null v) nil)
@@ -1536,14 +1536,14 @@
 )
 
 ;;; =====================================================================
-;;; ä¿®æ”¹è®¡åˆ’ OCS:BuildPlan
+;;; ĞŞ¸Ä¼Æ»® OCS:BuildPlan
 ;;; =====================================================================
 
 (defun OCS:BuildPlan ( / plan styles hosts targets host data new scan partial item)
   (setq styles (OCS:CollectStyles) hosts (OCS:CollectHosts) targets nil)
   (if (OCS:hasError hosts) (OCS:fail (OCS:fmt (OCS:problemsOf hosts))))
   (foreach host (OCS:assocd "hosts" hosts nil)
-    (OCS:setStage (strcat "è¯»å–å®¿ä¸» " (OCS:assocd "type" host "?") " ["
+    (OCS:setStage (strcat "¶ÁÈ¡ËŞÖ÷ " (OCS:assocd "type" host "?") " ["
                          (OCS:assocd "handle" host "?") "] " (OCS:ctxStr (OCS:assocd "ctx" host nil))))
     (setq data (OCS:ReadHost host))
     (if (OCS:assocd "error" data nil) (OCS:fail (OCS:assocd "error" data "")))
@@ -1555,12 +1555,12 @@
           (progn
             (setq scan (OCS:NormalizeFontRuns (OCS:assocd "text" data "") (OCS:fontTarget)))
             (if (OCS:assocd "issues" scan nil)
-              (OCS:fail (strcat "å†…å®¹è§£æå¤±è´¥ï¼š" (OCS:fmt (OCS:assocd "issues" scan nil)))))
+              (OCS:fail (strcat "ÄÚÈİ½âÎöÊ§°Ü£º" (OCS:fmt (OCS:assocd "issues" scan nil)))))
             (setq new (OCS:putPair data "newText" (OCS:assocd "text" scan "")))
             (setq new (OCS:putPair new "changes" (OCS:assocd "changes" scan 0)))))
         (if (> (OCS:assocd "changes" new 0) 0)
           (if (OCS:assocd "protected" data nil)
-            (setq partial (append partial (list "å«å­—æ®µçš„å®¿ä¸»ä¿ç•™åŸå§‹å­—æ®µå…³è”ï¼Œæœªæ”¹å±€éƒ¨å­—ä½“")))
+            (setq partial (append partial (list "º¬×Ö¶ÎµÄËŞÖ÷±£ÁôÔ­Ê¼×Ö¶Î¹ØÁª£¬Î´¸Ä¾Ö²¿×ÖÌå")))
             (progn
               (setq new (OCS:putPair new "before" (OCS:hostSnapshot (OCS:assocd "obj" host nil))))
               (setq new (OCS:putPair new "host" host))
@@ -1574,33 +1574,33 @@
 )
 
 ;;; =====================================================================
-;;; åº”ç”¨æ ·å¼ä¿®æ”¹ OCS:ApplyStyle
+;;; Ó¦ÓÃÑùÊ½ĞŞ¸Ä OCS:ApplyStyle
 ;;; =====================================================================
 
 (defun OCS:ApplyStyle (doc st / name ent obj font before after result bold italic expected state)
   (setq name (OCS:assocd "name" st "") ent (tblobjname "STYLE" name))
   (if (not ent)
-    (list "ok" nil "name" name "error" "STYLE è®°å½•æœªæ‰¾åˆ°")
+    (list "ok" nil "name" name "error" "STYLE ¼ÇÂ¼Î´ÕÒµ½")
     (progn
       (setq obj (vlax-ename->vla-object ent) font (OCS:getStyleFont obj)
             bold (OCS:assocd "bold" font :vlax-false) italic (OCS:assocd "italic" font :vlax-false)
             before (OCS:styleSnapshot ent))
       (setq result (OCS:writeSongFont obj (OCS:assocd "font" *OCS:Plan* nil) bold italic))
       (if (not (OCS:assocd "ok" result nil))
-        (list "ok" nil "name" name "error" (OCS:assocd "error" result "å®‹ä½“å†™å…¥å¤±è´¥"))
+        (list "ok" nil "name" name "error" (OCS:assocd "error" result "ËÎÌåĞ´ÈëÊ§°Ü"))
         (progn
           (setq expected (OCS:assocd "state" result nil))
           (setq result (OCS:checkBigFontEmpty ent name))
           (if (OCS:errp result)
-            (list "ok" nil "name" name "error" (strcat "å¤§å­—ä½“æ¸…ç©ºå¤±è´¥ï¼š" (OCS:errmsg result)))
+            (list "ok" nil "name" name "error" (strcat "´ó×ÖÌåÇå¿ÕÊ§°Ü£º" (OCS:errmsg result)))
             (progn
               (setq after (OCS:styleSnapshot (tblobjname "STYLE" name)))
               (setq state (OCS:fontState obj "style-after-check"))
               (cond
                 ((not (OCS:fontStateStable expected state))
-                 (list "ok" nil "name" name "error" "æ ·å¼åªè¯»å¤æ ¸åå®‹ä½“ç»‘å®šæˆ–ç²—æ–œä½“ä¸åŒ¹é…"))
+                 (list "ok" nil "name" name "error" "ÑùÊ½Ö»¶Á¸´ºËºóËÎÌå°ó¶¨»ò´ÖĞ±Ìå²»Æ¥Åä"))
                 ((not (OCS:styleReadbackOk before after))
-                 (list "ok" nil "name" name "error" "æ ·å¼è¯»å›æ ¡éªŒå¤±è´¥ï¼ˆéå­—ä½“å‚æ•°è¢«æ”¹å˜ï¼‰"))
+                 (list "ok" nil "name" name "error" "ÑùÊ½¶Á»ØĞ£ÑéÊ§°Ü£¨·Ç×ÖÌå²ÎÊı±»¸Ä±ä£©"))
                 (T (list "ok" T "name" name "before" before "after" after "fontExpected" state)))))))))
 )
 
@@ -1629,7 +1629,7 @@
   (if (OCS:consp f) (car f) f)
 )
 
-;; æ ·å¼éå­—ä½“å‚æ•°å¿«ç…§ï¼ˆ40/41/50/70/71 + æœªçŸ¥ç»„ç è®¡æ•°ï¼‰
+;; ÑùÊ½·Ç×ÖÌå²ÎÊı¿ìÕÕ£¨40/41/50/70/71 + Î´Öª×éÂë¼ÆÊı£©
 (defun OCS:styleSnapshot (ent / e out)
   (if (not ent) nil
     (progn
@@ -1669,16 +1669,16 @@
   ok
 )
 
-;; æ—¥æœŸï¼š2026-10-13ã€‚åªè¯»æ£€æŸ¥åŒæ—¶è¦†ç›– DXF å’Œ COMï¼Œç¼ºå¤±ç»„ç ä¹Ÿä¸èƒ½è·³è¿‡ COMã€‚
+;; ÈÕÆÚ£º2026-10-13¡£Ö»¶Á¼ì²éÍ¬Ê±¸²¸Ç DXF ºÍ COM£¬È±Ê§×éÂëÒ²²»ÄÜÌø¹ı COM¡£
 (defun OCS:checkBigFontEmpty (ent name / dxf com)
   (setq dxf (OCS:assocd 4 (entget ent) "")
         com (OCS:requireProp (vlax-ename->vla-object ent) 'BigFontFile))
   (OCS:trace "BIGFONT_CHECK" (list "style" name "dxf4" dxf "com" com))
   (if (and (equal dxf "") (equal com "")) T
-    (cons "error" (strcat "å¤§å­—ä½“è¯»å›éç©ºæˆ–ä¸ä¸€è‡´ï¼š" (OCS:fmt (list dxf com)))))
+    (cons "error" (strcat "´ó×ÖÌå¶Á»Ø·Ç¿Õ»ò²»Ò»ÖÂ£º" (OCS:fmt (list dxf com)))))
 )
 
-;; ä»…åœ¨è®¾ç½®å®‹ä½“ä¹‹å‰è°ƒç”¨ï¼›ç©ºå€¼ä¸æ‰§è¡Œ entmodï¼Œä¿ç•™æ‰€æœ‰åº”ç”¨çš„ XDataã€‚
+;; ½öÔÚÉèÖÃËÎÌåÖ®Ç°µ÷ÓÃ£»¿ÕÖµ²»Ö´ĞĞ entmod£¬±£ÁôËùÓĞÓ¦ÓÃµÄ XData¡£
 (defun OCS:clearBigFont (ent name / e r dxf com)
   (setq e (entget ent '("*")) dxf (OCS:assocd 4 e "")
         com (OCS:requireProp (vlax-ename->vla-object ent) 'BigFontFile))
@@ -1691,10 +1691,10 @@
 )
 
 ;;; =====================================================================
-;;; å®¿ä¸»è¯»å†™ OCS:ReadHost / OCS:WriteHost
+;;; ËŞÖ÷¶ÁĞ´ OCS:ReadHost / OCS:WriteHost
 ;;; =====================================================================
 
-;; è¯»å–å®¿ä¸»å†…å®¹ä¸å¿…é¡»ä¿ç•™çš„æ•°æ® â†’ plist
+;; ¶ÁÈ¡ËŞÖ÷ÄÚÈİÓë±ØĞë±£ÁôµÄÊı¾İ ¡ú plist
 (defun OCS:ReadHost (host / kind e)
   (setq kind (OCS:assocd "kind" host nil)
         e (OCS:assocd "obj" host nil))
@@ -1719,15 +1719,15 @@
   )
 )
 
-;; TEXT/MTEXTï¼šå®Œæ•´åŸå§‹å†…å®¹
+;; TEXT/MTEXT£ºÍêÕûÔ­Ê¼ÄÚÈİ
 (defun OCS:readTextLike (host e / kind data raw)
   (setq kind (OCS:assocd "kind" host nil))
   (setq data (OCS:readContent e kind 'TextString))
   (if (= kind "text")
-    (OCS:putPair data "skip" T) ; TEXT ä¸­çš„åæ–œæ æ˜¯å­—é¢å†…å®¹ã€‚
+    (OCS:putPair data "skip" T) ; TEXT ÖĞµÄ·´Ğ±¸ÜÊÇ×ÖÃæÄÚÈİ¡£
     (progn
       (setq raw (OCS:mustCall 'vla-FieldCode (list e)))
-      (if (not (OCS:stringp raw)) (OCS:fail "FieldCode æœªè¿”å›åŸå§‹æ–‡æœ¬"))
+      (if (not (OCS:stringp raw)) (OCS:fail "FieldCode Î´·µ»ØÔ­Ê¼ÎÄ±¾"))
       (setq data (OCS:putPair data "text" raw))
       (OCS:putPair data "protected" (or (OCS:assocd "protected" data nil) (OCS:containsField raw)))))
 )
@@ -1750,11 +1750,11 @@
   (cond
     ((= content 2) (OCS:readContent e "mleader" 'TextString))
     ((or (= content 0) (= content 1)) (list "kind" "mleader" "obj" e "skip" T))
-    (T (OCS:fail "æœªçŸ¥å¤šé‡å¼•çº¿ ContentType")))
+    (T (OCS:fail "Î´Öª¶àÖØÒıÏß ContentType")))
 )
 
 (defun OCS:readLeader (host e / ann)
-  ;; æ™®é€šå¼•çº¿çš„å…³è”æ³¨é‡Šå¯¹è±¡
+  ;; ÆÕÍ¨ÒıÏßµÄ¹ØÁª×¢ÊÍ¶ÔÏó
   (setq ann (OCS:leaderAnnotation e))
   (list "kind" "leader" "obj" e "annotation" ann)
 )
@@ -1767,7 +1767,7 @@
 (defun OCS:readTable (host e / rows cols row col data cell edits partial changes)
   (setq rows (OCS:requireProp e 'Rows) cols (OCS:requireProp e 'Columns))
   (if (or (not (numberp rows)) (not (numberp cols)) (< rows 0) (< cols 0))
-    (OCS:fail "è¡¨æ ¼è¡Œåˆ—æ•°æ— æ•ˆ"))
+    (OCS:fail "±í¸ñĞĞÁĞÊıÎŞĞ§"))
   (setq row 0 edits nil partial nil changes 0)
   (while (< row rows)
     (setq col 0)
@@ -1787,7 +1787,7 @@
   (OCS:readContent e "tolerance" 'TextString)
 )
 
-;;; å†™å›å®¿ä¸»
+;;; Ğ´»ØËŞÖ÷
 (defun OCS:WriteHost (host data / kind e)
   (setq kind (OCS:assocd "kind" data (OCS:assocd "kind" host nil))
         e (OCS:assocd "obj" data (OCS:assocd "obj" host nil)))
@@ -1806,14 +1806,14 @@
      (OCS:writeTable e data))
     ((equal kind "tolerance")
      (OCS:writeTolerance e data))
-    (T (list "ok" nil "error" "æœªçŸ¥å®¿ä¸»ç±»å‹"))
+    (T (list "ok" nil "error" "Î´ÖªËŞÖ÷ÀàĞÍ"))
   )
 )
 
 (defun OCS:writeTextLike (e data / txt r before)
   (setq txt (OCS:assocd "text" data nil))
   (if (null txt)
-    (list "ok" nil "error" "æ— å†…å®¹")
+    (list "ok" nil "error" "ÎŞÄÚÈİ")
     (progn
       (setq before (OCS:assocd "before" data (OCS:hostSnapshot e)))
       (setq r (OCS:writeCall 'vla-put-TextString (list e txt)))
@@ -1828,7 +1828,7 @@
 (defun OCS:writeAttr (e data / txt r before mt w r2)
   (setq txt (OCS:assocd "text" data nil))
   (if (null txt)
-    (list "ok" nil "error" "æ— å†…å®¹")
+    (list "ok" nil "error" "ÎŞÄÚÈİ")
     (progn
       (setq before (OCS:assocd "before" data (OCS:hostSnapshot e)))
       (setq mt (OCS:safeProp e 'MTextAttribute))
@@ -1838,10 +1838,10 @@
           (if (vl-catch-all-error-p r)
             (setq r (cons "error" (vl-catch-all-error-message r)))
             (progn
-              ;; å¤šè¡Œå±æ€§ï¼šæŒ‰å¯ç”¨æ¥å£æ›´æ–°æ˜¾ç¤º
+              ;; ¶àĞĞÊôĞÔ£º°´¿ÉÓÃ½Ó¿Ú¸üĞÂÏÔÊ¾
               (setq r2 (vl-catch-all-apply 'vla-UpdateMTextAttribute (list e)))
               (if (vl-catch-all-error-p r2)
-                (setq r (cons "error" (strcat "UpdateMTextAttribute å¤±è´¥ï¼š" (vl-catch-all-error-message r2))))
+                (setq r (cons "error" (strcat "UpdateMTextAttribute Ê§°Ü£º" (vl-catch-all-error-message r2))))
               )
             )
           )
@@ -1864,7 +1864,7 @@
 (defun OCS:writeDim (e data / txt r before)
   (setq txt (OCS:assocd "text" data nil))
   (if (null txt)
-    (list "ok" nil "error" "æ— å†…å®¹")
+    (list "ok" nil "error" "ÎŞÄÚÈİ")
     (progn
       (setq before (OCS:assocd "before" data (OCS:hostSnapshot e)))
       (setq r (OCS:writeCall 'vla-put-TextOverride (list e txt)))
@@ -1879,7 +1879,7 @@
 (defun OCS:writeMLeader (e data / txt r before)
   (setq txt (OCS:assocd "text" data nil))
   (if (null txt)
-    ;; å—å†…å®¹ï¼šå—å†…æ–‡å­—ç”±å—å®šä¹‰è½¬æ¢è¦†ç›–ï¼Œæ— éœ€æ”¹å†™
+    ;; ¿éÄÚÈİ£º¿éÄÚÎÄ×ÖÓÉ¿é¶¨Òå×ª»»¸²¸Ç£¬ÎŞĞè¸ÄĞ´
     (list "ok" T "skip" T)
     (progn
       (setq before (OCS:assocd "before" data (OCS:hostSnapshot e)))
@@ -1893,7 +1893,7 @@
 )
 
 (defun OCS:writeLeader (e data / ann r txt before)
-  ;; å…³è”æ³¨é‡Šå¯¹è±¡å•ç‹¬å¤„ç†ï¼ˆå¯èƒ½ä¸º TEXT/MTEXT/å—ï¼‰
+  ;; ¹ØÁª×¢ÊÍ¶ÔÏóµ¥¶À´¦Àí£¨¿ÉÄÜÎª TEXT/MTEXT/¿é£©
   (setq ann (OCS:assocd "annotation" data nil))
   (if (null ann)
     (list "ok" T "skip" T)
@@ -1929,10 +1929,10 @@
   )
 )
 
-;; è¡¨æ ¼ï¼šä¿ç•™æ•°æ®è¯­ä¹‰ï¼ˆæ–¹æ¡ˆç¬¬ 6ã€8 èŠ‚ï¼‰
-;; - ä¸´æ—¶æŠ‘åˆ¶å†ç”Ÿï¼Œç»“æŸæ—¶æ¢å¤
-;; - æšä¸¾è¡Œåˆ—ä¸å†…å®¹é¡¹ï¼ˆä¸å‡å®šåªæœ‰ 0 é¡¹ï¼‰
-;; - å­—æ®µ/å…¬å¼/æ•°æ®é“¾æ¥ä¸ä»¥æ˜¾ç¤ºå€¼å›å†™ï¼›ä»…æ™®é€šæ–‡æœ¬å‚ä¸å­—ä½“æŒ‡ä»¤æ›¿æ¢
+;; ±í¸ñ£º±£ÁôÊı¾İÓïÒå£¨·½°¸µÚ 6¡¢8 ½Ú£©
+;; - ÁÙÊ±ÒÖÖÆÔÙÉú£¬½áÊøÊ±»Ö¸´
+;; - Ã¶¾ÙĞĞÁĞÓëÄÚÈİÏî£¨²»¼Ù¶¨Ö»ÓĞ 0 Ïî£©
+;; - ×Ö¶Î/¹«Ê½/Êı¾İÁ´½Ó²»ÒÔÏÔÊ¾Öµ»ØĞ´£»½öÆÕÍ¨ÎÄ±¾²ÎÓë×ÖÌåÖ¸ÁîÌæ»»
 (defun OCS:writeTable (e data / r restore prev item)
   (setq prev (OCS:assocd "suppressed" data :vlax-false))
   (setq item (list "table" T "obj" e "value" prev))
@@ -1946,12 +1946,12 @@
     ((vl-catch-all-error-p r) (list "ok" nil "error" (OCS:errorText r)))
     ((or (vl-catch-all-error-p restore)
          (not (equal prev (OCS:requireProp e 'RegenerateTableSuppressed))))
-     (list "ok" nil "error" "è¡¨æ ¼å†ç”ŸçŠ¶æ€æ¢å¤å¤±è´¥"))
+     (list "ok" nil "error" "±í¸ñÔÙÉú×´Ì¬»Ö¸´Ê§°Ü"))
     ((not (equal (OCS:assocd "layout" data nil)
                  (OCS:tableLayout e (OCS:assocd "rows" data 0) (OCS:assocd "cols" data 0)) 1e-9))
-     (list "ok" nil "error" "è¡¨æ ¼è¡Œé«˜ã€åˆ—å®½æˆ–åˆå¹¶å…³ç³»å˜åŒ–"))
+     (list "ok" nil "error" "±í¸ñĞĞ¸ß¡¢ÁĞ¿í»òºÏ²¢¹ØÏµ±ä»¯"))
     ((not (equal (OCS:assocd "before" data nil) (OCS:hostSnapshot e) 1e-9))
-     (list "ok" nil "error" "è¡¨æ ¼éå­—ä½“å‚æ•°å˜åŒ–"))
+     (list "ok" nil "error" "±í¸ñ·Ç×ÖÌå²ÎÊı±ä»¯"))
     (T r))
 )
 
@@ -1964,12 +1964,12 @@
     (if (OCS:errp r) (OCS:fail (OCS:errmsg r)))
     (if (not (equal (OCS:assocd "meta" edit nil)
          (OCS:tableMeta e (OCS:assocd "row" edit 0) (OCS:assocd "col" edit 0) (OCS:assocd "content" edit 0)) 1e-9))
-      (OCS:fail "è¡¨æ ¼å•å…ƒæ ¼éå­—ä½“æ ¼å¼å˜åŒ–"))
+      (OCS:fail "±í¸ñµ¥Ôª¸ñ·Ç×ÖÌå¸ñÊ½±ä»¯"))
     (setq count (1+ count)))
   (list "ok" T "contents" count)
 )
 
-;; tableGetText è¿”å› (cons :error (list :code .. :msg ..))
+;; tableGetText ·µ»Ø (cons :error (list :code .. :msg ..))
 (defun OCS:errmsgList (r / lst)
   (setq lst (OCS:errmsg r))
   (if (listp lst) lst (list "msg" lst))
@@ -1983,7 +1983,7 @@
   (setq r (OCS:writeCall 'vla-SetTextString (list e row col content txt)))
   (cond ((vl-catch-all-error-p r) (cons "error" (vl-catch-all-error-message r)))
         ((not (equal txt (OCS:mustCall 'vla-GetTextString (list e row col content))))
-         (cons "error" "è¡¨æ ¼æ–‡å­—è¯»å›ä¸ä¸€è‡´"))
+         (cons "error" "±í¸ñÎÄ×Ö¶Á»Ø²»Ò»ÖÂ"))
         (T T))
 )
 
@@ -1996,7 +1996,7 @@
     (list "family" "SimSun" "charSet" 134 "pitchFamily" 22 "appendParams" T))
 )
 
-;; å®¿ä¸»å¿«ç…§ï¼ˆå†™åæ ¡éªŒï¼šéå­—ä½“å­—æ®µå¿…é¡»ä¸€è‡´ï¼‰
+;; ËŞÖ÷¿ìÕÕ£¨Ğ´ºóĞ£Ñé£º·Ç×ÖÌå×Ö¶Î±ØĞëÒ»ÖÂ£©
 (defun OCS:hostSnapshot (e / out prop value)
   (setq out nil)
   (foreach prop (list 'Height 'Width 'Rotation 'Layer 'Color 'StyleName 'TagString
@@ -2014,20 +2014,20 @@
   (setq after (OCS:hostSnapshot e) ok (equal before after 1e-9))
   (setq prop (OCS:assocd "property" expect 'TextString))
   (if (not (equal (OCS:assocd "text" expect nil) (OCS:requireProp e prop))) (setq ok nil))
-  (if ok (list "ok" T) (list "ok" nil "error" "æ–‡å­—æˆ–éå­—ä½“å‚æ•°è¯»å›ä¸ä¸€è‡´"))
+  (if ok (list "ok" T) (list "ok" nil "error" "ÎÄ×Ö»ò·Ç×ÖÌå²ÎÊı¶Á»Ø²»Ò»ÖÂ"))
 )
 
 ;;; =====================================================================
-;;; å›¾å±‚ä¸´æ—¶è§£é”ï¼ˆæ–¹æ¡ˆç¬¬ 7 èŠ‚ï¼‰
-;;; ä»…ä¸´æ—¶è§£é”ç¡®æœ‰éœ€è¦çš„æœ¬å›¾å›¾å±‚ï¼Œå®Œæˆ/å¼‚å¸¸æ—¶æ¢å¤ï¼›
-;;; å…³é—­ã€å†»ç»“çŠ¶æ€ä¿æŒä¸åŠ¨ï¼›å¤–å‚å›¾å±‚ä¿æŒåŸçŠ¶ã€‚
+;;; Í¼²ãÁÙÊ±½âËø£¨·½°¸µÚ 7 ½Ú£©
+;;; ½öÁÙÊ±½âËøÈ·ÓĞĞèÒªµÄ±¾Í¼Í¼²ã£¬Íê³É/Òì³£Ê±»Ö¸´£»
+;;; ¹Ø±Õ¡¢¶³½á×´Ì¬±£³Ö²»¶¯£»Íâ²ÎÍ¼²ã±£³ÖÔ­×´¡£
 ;;; =====================================================================
 
 (defun OCS:lockLayersNeeded ( / doc layers target name lay seen)
   (setq doc (OCS:activeDoc) layers (vla-get-Layers doc) seen nil)
   (foreach target (OCS:assocd "targets" *OCS:Plan* nil)
     (setq name (OCS:requireProp (OCS:assocd "obj" target nil) 'Layer))
-    (if (OCS:isXrefLayer name) (OCS:fail "æ‹’ç»ä¿®æ”¹å¤–å‚å›¾å±‚ä¸Šçš„å®¿ä¸»"))
+    (if (OCS:isXrefLayer name) (OCS:fail "¾Ü¾øĞŞ¸ÄÍâ²ÎÍ¼²ãÉÏµÄËŞÖ÷"))
     (if (not (member name seen))
       (progn
         (setq seen (cons name seen) lay (OCS:mustCall 'vla-Item (list layers name)))
@@ -2047,7 +2047,7 @@
         (setq obj (OCS:assocd "obj" item nil))
         (setq r (OCS:writeCall 'vla-put-Lock (list obj :vlax-false)))
         (if (or (vl-catch-all-error-p r) (OCS:boolProp obj 'Lock))
-          (OCS:fail "æ— æ³•ä¸´æ—¶è§£é”ç›®æ ‡æ–‡å­—å›¾å±‚")))))
+          (OCS:fail "ÎŞ·¨ÁÙÊ±½âËøÄ¿±êÎÄ×ÖÍ¼²ã")))))
 )
 
 (defun OCS:restoreTempLayers ( / item)
@@ -2059,12 +2059,12 @@
 )
 
 ;;; =====================================================================
-;;; æŠ¥å‘Šæ„é€ è¾…åŠ©
+;;; ±¨¸æ¹¹Ôì¸¨Öú
 ;;; =====================================================================
 
 (defun OCS:makeReport (status)
-  ;; æ‰å¹³ plist (K V K V ...)ï¼Œå…¨é¡¹ç›®ç»Ÿä¸€ï¼›getVal/assocd/putPair/reportSet å·²æ”¹ä¸ºæ‰å¹³å®ç°
-  (list "status" (if status status "è¿›è¡Œä¸­")
+  ;; ±âÆ½ plist (K V K V ...)£¬È«ÏîÄ¿Í³Ò»£»getVal/assocd/putPair/reportSet ÒÑ¸ÄÎª±âÆ½ÊµÏÖ
+  (list "status" (if status status "½øĞĞÖĞ")
         "errors" 0
         "errorDetail" nil
         "uncovered" 0
@@ -2099,7 +2099,7 @@
   )
 )
 
-;; ç”¨æ–°å€¼æ›¿æ¢ plist ä¸­å·²å­˜åœ¨çš„é”®ï¼ˆä¸äº§ç”Ÿé‡å¤é”®ï¼‰
+;; ÓÃĞÂÖµÌæ»» plist ÖĞÒÑ´æÔÚµÄ¼ü£¨²»²úÉúÖØ¸´¼ü£©
 (defun OCS:reportSet (report pairs / pair)
   (foreach pair pairs
     (setq report (OCS:putPair report (car pair) (cdr pair))))
@@ -2114,7 +2114,7 @@
       (setq out (append out (list (caddr item))))
     )
   )
-  ;; å­—ä½“è§£æä¸­çš„é—®é¢˜
+  ;; ×ÖÌå½âÎöÖĞµÄÎÊÌâ
   (foreach item (OCS:getVal res "font" nil)
     (if (and (OCS:consp item) (equal (car item) "problem")
              (OCS:consp (cdr item)) (equal (cadr item) "error"))
@@ -2125,17 +2125,17 @@
 )
 
 ;;; =====================================================================
-;;; å†ç”Ÿä¸è¯»å› OCS:VerifyDrawing
+;;; ÔÙÉúÓë¶Á»Ø OCS:VerifyDrawing
 ;;; =====================================================================
 
 (defun OCS:VerifyDrawing ( / doc r)
   (setq doc (OCS:activeDoc))
   (if (not doc)
-    (list "ok" nil "error" "æ— æ³•è·å–æ´»åŠ¨æ–‡æ¡£")
+    (list "ok" nil "error" "ÎŞ·¨»ñÈ¡»î¶¯ÎÄµµ")
     (progn
       (setq r (vl-catch-all-apply 'vla-Regen (list doc 1))) ; acAllViewports
       (if (vl-catch-all-error-p r)
-        (list "ok" nil "error" (strcat "å†ç”Ÿå¤±è´¥ï¼š" (vl-catch-all-error-message r)))
+        (list "ok" nil "error" (strcat "ÔÙÉúÊ§°Ü£º" (vl-catch-all-error-message r)))
         (progn
           (setq r (OCS:readbackStyles))
           (if (OCS:assocd "ok" r nil) (OCS:readbackHosts) r))
@@ -2144,7 +2144,7 @@
   )
 )
 
-;; æ ·å¼è¯»å›ï¼šå­—ä½“æ—ä¸ºå®‹ä½“ã€å¤§å­—ä½“ä¸ºç©ºã€åŸå‚æ•°ä¸€è‡´
+;; ÑùÊ½¶Á»Ø£º×ÖÌå×åÎªËÎÌå¡¢´ó×ÖÌåÎª¿Õ¡¢Ô­²ÎÊıÒ»ÖÂ
 (defun OCS:readbackStyles ( / ok details st ent e expected)
   (setq ok T details nil)
   (foreach st (OCS:assocd "styles" *OCS:Plan* nil)
@@ -2181,9 +2181,9 @@
 )
 
 ;;; =====================================================================
-;;; å›æ»š OCS:Rollbackï¼ˆä»…å›æ»šæœ¬æ¬¡æ“ä½œï¼‰
-;;; å›æ»šåªä½œç”¨äºæœ¬æ¬¡å‘½ä»¤å»ºç«‹çš„ Undo åˆ†ç»„ï¼šç»“æŸåˆ†ç»„åæ‰§è¡Œä¸€æ¬¡æ’¤é”€ï¼Œ
-;;; ç»ä¸æ— æ¡ä»¶ UNDO Back æ’¤é”€ç”¨æˆ·ä¸Šä¸€æ¡å‘½ä»¤ã€‚
+;;; »Ø¹ö OCS:Rollback£¨½ö»Ø¹ö±¾´Î²Ù×÷£©
+;;; »Ø¹öÖ»×÷ÓÃÓÚ±¾´ÎÃüÁî½¨Á¢µÄ Undo ·Ö×é£º½áÊø·Ö×éºóÖ´ĞĞÒ»´Î³·Ïú£¬
+;;; ¾ø²»ÎŞÌõ¼ş UNDO Back ³·ÏúÓÃ»§ÉÏÒ»ÌõÃüÁî¡£
 ;;; =====================================================================
 
 (defun OCS:Rollback ( / r ok changed)
@@ -2191,7 +2191,7 @@
   (setq changed (and *OCS:UndoMark* *OCS:Wrote*))
   (setq ok (OCS:restoreTempState))
   (if (not (OCS:endUndoGroup))
-    nil ; æœªèƒ½å…³é—­æœ¬æ¬¡åˆ†ç»„æ—¶ï¼Œç»ä¸å‘ç”¨æˆ·å†å²å‘å‡º Uã€‚
+    nil ; Î´ÄÜ¹Ø±Õ±¾´Î·Ö×éÊ±£¬¾ø²»ÏòÓÃ»§ÀúÊ··¢³ö U¡£
     (progn
       (if changed
         (if *OCS:UndoAttempted* (setq ok nil)
@@ -2206,7 +2206,7 @@
       ok))
 )
 
-;; å›æ»šåè¯»å›ï¼šæœ¬æ¬¡è®¡åˆ’ä¸­çš„æ ·å¼ä¸å¾—æ®‹ç•™ç©ºå¤§å­—ä½“ä¹‹å¤–çš„è½¬æ¢ç—•è¿¹
+;; »Ø¹öºó¶Á»Ø£º±¾´Î¼Æ»®ÖĞµÄÑùÊ½²»µÃ²ĞÁô¿Õ´ó×ÖÌåÖ®ÍâµÄ×ª»»ºÛ¼£
 (defun OCS:rollbackReadbackOk ( / ok st ent e target host data edit)
   (setq ok T)
   (foreach st (OCS:assocd "styles" *OCS:Plan* nil)
@@ -2262,47 +2262,47 @@
 )
 
 ;;; =====================================================================
-;;; æŠ¥å‘Š OCS:Report
+;;; ±¨¸æ OCS:Report
 ;;; =====================================================================
 
 (defun OCS:Report (report / f d)
   (setq *OCS:LastReport* report)
   (setq *OCS:Report* report)
-  ;; ä¸­æ–‡å‘½ä»¤è¡Œæ‘˜è¦
+  ;; ÖĞÎÄÃüÁîĞĞÕªÒª
   (princ "\n")
-  (princ (strcat "\n==== ä¸€é”®ç»Ÿä¸€å®‹ä½“ï¼ˆYJSTï¼‰===="))
-  (princ (strcat "\nçŠ¶æ€ï¼š" (OCS:assocd "status" report "?")))
-  (princ (strcat "\nå›¾çº¸ï¼š" (OCS:assocd "dwg" report "?")))
-  (princ (strcat "\nCAD ç‰ˆæœ¬ï¼š" (OCS:assocd "cadver" report "?")))
-  (princ (strcat "\nç›®æ ‡å­—ä½“æ—ï¼š" (OCS:assocd "family" report "SimSun")))
-  (princ (strcat "\næ‰«ææ–‡å­—æ ·å¼ï¼š" (itoa (OCS:assocd "stylesScanned" report 0))
-                 "ã€€ä¿®æ”¹ï¼š" (itoa (OCS:assocd "stylesModified" report 0))
-                 "ã€€å¤–å‚ä¾èµ–è·³è¿‡ï¼š" (itoa (OCS:assocd "stylesXref" report 0))
-                 "ã€€å½¢æ–‡ä»¶è·³è¿‡ï¼š" (itoa (OCS:assocd "stylesShape" report 0))))
-  (princ (strcat "\næ‰«ææ–‡å­—å®¿ä¸»ï¼š" (itoa (OCS:assocd "hostsScanned" report 0))
-                 "ã€€ä¿®æ”¹å­—ä½“æ®µï¼š" (itoa (OCS:assocd "fontRunsChanged" report 0))
-                 "ã€€å±æ€§å®ä¾‹ï¼š" (itoa (OCS:assocd "attribs" report 0))
-                 "ã€€è¡¨æ ¼å†…å®¹é¡¹ï¼š" (itoa (OCS:assocd "tableContents" report 0))))
-  (princ (strcat "\næ‰«æå—å®šä¹‰ï¼š" (itoa (OCS:assocd "blocks" report 0))
-                 "ã€€å¤–å‚å—è·³è¿‡ï¼š" (itoa (OCS:assocd "xrefBlocks" report 0))
-                 "ã€€åŒ¿åæ˜¾ç¤ºå—ï¼š" (itoa (OCS:assocd "displayBlocks" report 0))))
-  (princ (strcat "\nä¸“ä¸šå¯¹è±¡æœªè¦†ç›–ï¼š" (itoa (OCS:assocd "uncovered" report 0))
-                 "ã€€é”™è¯¯ï¼š" (itoa (OCS:assocd "errors" report 0))
-                 "ã€€æ¢å¤å¤±è´¥ï¼š" (itoa (OCS:assocd "recoverFailed" report 0))))
+  (princ (strcat "\n==== Ò»¼üÍ³Ò»ËÎÌå£¨YJST£©===="))
+  (princ (strcat "\n×´Ì¬£º" (OCS:assocd "status" report "?")))
+  (princ (strcat "\nÍ¼Ö½£º" (OCS:assocd "dwg" report "?")))
+  (princ (strcat "\nCAD °æ±¾£º" (OCS:assocd "cadver" report "?")))
+  (princ (strcat "\nÄ¿±ê×ÖÌå×å£º" (OCS:assocd "family" report "SimSun")))
+  (princ (strcat "\nÉ¨ÃèÎÄ×ÖÑùÊ½£º" (itoa (OCS:assocd "stylesScanned" report 0))
+                 "¡¡ĞŞ¸Ä£º" (itoa (OCS:assocd "stylesModified" report 0))
+                 "¡¡Íâ²ÎÒÀÀµÌø¹ı£º" (itoa (OCS:assocd "stylesXref" report 0))
+                 "¡¡ĞÎÎÄ¼şÌø¹ı£º" (itoa (OCS:assocd "stylesShape" report 0))))
+  (princ (strcat "\nÉ¨ÃèÎÄ×ÖËŞÖ÷£º" (itoa (OCS:assocd "hostsScanned" report 0))
+                 "¡¡ĞŞ¸Ä×ÖÌå¶Î£º" (itoa (OCS:assocd "fontRunsChanged" report 0))
+                 "¡¡ÊôĞÔÊµÀı£º" (itoa (OCS:assocd "attribs" report 0))
+                 "¡¡±í¸ñÄÚÈİÏî£º" (itoa (OCS:assocd "tableContents" report 0))))
+  (princ (strcat "\nÉ¨Ãè¿é¶¨Òå£º" (itoa (OCS:assocd "blocks" report 0))
+                 "¡¡Íâ²Î¿éÌø¹ı£º" (itoa (OCS:assocd "xrefBlocks" report 0))
+                 "¡¡ÄäÃûÏÔÊ¾¿é£º" (itoa (OCS:assocd "displayBlocks" report 0))))
+  (princ (strcat "\n×¨Òµ¶ÔÏóÎ´¸²¸Ç£º" (itoa (OCS:assocd "uncovered" report 0))
+                 "¡¡´íÎó£º" (itoa (OCS:assocd "errors" report 0))
+                 "¡¡»Ö¸´Ê§°Ü£º" (itoa (OCS:assocd "recoverFailed" report 0))))
   (if (OCS:assocd "tchChecked" report nil)
-    (princ (strcat "\nå¤©æ­£å…¬å¼€å­—ä½“æ ¸éªŒï¼šé€šè¿‡ " (itoa (OCS:assocd "tchPassed" report 0))
-      "ã€€ä¸ä¸€è‡´ " (itoa (OCS:assocd "tchMismatch" report 0))
-      "ã€€æ— æ³•æ ¸éªŒ " (itoa (OCS:assocd "tchUnknown" report 0))
-      "ï¼ˆä»…å…¬å¼€æ ·å¼ä¸å¯è¯»å†…å®¹ï¼‰")))
+    (princ (strcat "\nÌìÕı¹«¿ª×ÖÌåºËÑé£ºÍ¨¹ı " (itoa (OCS:assocd "tchPassed" report 0))
+      "¡¡²»Ò»ÖÂ " (itoa (OCS:assocd "tchMismatch" report 0))
+      "¡¡ÎŞ·¨ºËÑé " (itoa (OCS:assocd "tchUnknown" report 0))
+      "£¨½ö¹«¿ªÑùÊ½Óë¿É¶ÁÄÚÈİ£©")))
   (if (OCS:assocd "errorDetail" report nil)
     (progn
-      (princ "\né”™è¯¯æ˜ç»†ï¼š")
+      (princ "\n´íÎóÃ÷Ï¸£º")
       (foreach d (OCS:assocd "errorDetail" report nil)
         (princ (strcat "\n  " (OCS:fmt d))))
     )
   )
-  (princ "\nå¤©æ­£å­—ä½“æ ¸æŸ¥æœªæ‰§è¡Œï¼›éœ€è¦æ—¶è¾“å…¥ YJSTCHECKã€‚æœªè¦†ç›–æ˜ç»†ä»…ä¿ç•™åœ¨æ—¥å¿—ä¸­ã€‚")
-  (princ (strcat "\nè¯¦ç»†è®°å½•ï¼š*OCS:LastReport*"))
+  (princ "\nÌìÕı×ÖÌåºË²éÎ´Ö´ĞĞ£»ĞèÒªÊ±ÊäÈë YJSTCHECK¡£Î´¸²¸ÇÃ÷Ï¸½ö±£ÁôÔÚÈÕÖ¾ÖĞ¡£")
+  (princ (strcat "\nÏêÏ¸¼ÇÂ¼£º*OCS:LastReport*"))
   (princ)
   report
 )
@@ -2323,13 +2323,13 @@
 )
 
 ;;; =====================================================================
-;;; ç”¨æˆ·å‘½ä»¤ c:YJSTï¼šæ–¹æ¡ˆç¬¬ 8 èŠ‚æµç¨‹
+;;; ÓÃ»§ÃüÁî c:YJST£º·½°¸µÚ 8 ½ÚÁ÷³Ì
 ;;; =====================================================================
 
-;;; è¯Šæ–­å‘½ä»¤ c:OCS_TESTï¼šé€é¡¹è·‘é¢„æ£€æ­¥éª¤ï¼Œç²¾ç¡®å®šä½å“ªä¸€æ­¥æŒ‚äº†
+;;; Õï¶ÏÃüÁî c:OCS_TEST£ºÖğÏîÅÜÔ¤¼ì²½Öè£¬¾«È·¶¨Î»ÄÄÒ»²½¹ÒÁË
 (defun c:OCS_TEST ( / res acadObj undoctl doc ro font probs okv)
-  (princ "\n==== OCS é¢„æ£€åˆ†æ­¥è¯Šæ–­ ====")
-  ;; å¤åˆ» OCS:Preflight æ¯ä¸€æ­¥ï¼Œé€æ­¥æ‰“å°
+  (princ "\n==== OCS Ô¤¼ì·Ö²½Õï¶Ï ====")
+  ;; ¸´¿Ì OCS:Preflight Ã¿Ò»²½£¬Öğ²½´òÓ¡
   (setq res (list "ok" nil))
   (princ (strcat "\n[1] ACADVER = " (getvar "ACADVER")))
   (princ (strcat "\n[2] PRODUCT  = " (getvar "PRODUCT")))
@@ -2337,14 +2337,14 @@
   (princ (strcat "\n[4] PLATFORM = " (getvar "PLATFORM")))
   (setq acadObj (vl-catch-all-apply 'vlax-get-acad-object nil))
   (if (vl-catch-all-error-p acadObj)
-    (princ "\n[5] vlax-get-acad-object = ERROR: Visual LISP/ActiveX ä¸å¯ç”¨")
+    (princ "\n[5] vlax-get-acad-object = ERROR: Visual LISP/ActiveX ²»¿ÉÓÃ")
     (princ "\n[5] vlax-get-acad-object = OK")
   )
   (setq undoctl (getvar "UNDOCTL"))
   (princ (strcat "\n[6] UNDOCTL = " (itoa undoctl)))
   (if (= 0 (logand undoctl 1))
-    (princ "\n[7] UNDO æ£€æŸ¥ = å¤±è´¥ï¼ˆæ’¤é”€ä¸å¯ç”¨ï¼‰")
-    (princ "\n[7] UNDO æ£€æŸ¥ = OK")
+    (princ "\n[7] UNDO ¼ì²é = Ê§°Ü£¨³·Ïú²»¿ÉÓÃ£©")
+    (princ "\n[7] UNDO ¼ì²é = OK")
   )
   (setq doc (vl-catch-all-apply 'vla-get-ActiveDocument (list acadObj)))
   (if (vl-catch-all-error-p doc)
@@ -2353,29 +2353,29 @@
       (princ "\n[8] ActiveDocument = OK")
       (setq ro (vl-catch-all-apply 'vla-get-ReadOnly (list doc)))
       (if (vl-catch-all-error-p ro)
-        (princ "\n[9] ReadOnly = ERRORï¼ˆæ¥å£å¯èƒ½ä¸å­˜åœ¨ï¼‰")
-        (princ (strcat "\n[9] ReadOnly = " (if ro "TRUE(åªè¯»)" "FALSE(å¯å†™)")))
+        (princ "\n[9] ReadOnly = ERROR£¨½Ó¿Ú¿ÉÄÜ²»´æÔÚ£©")
+        (princ (strcat "\n[9] ReadOnly = " (if ro "TRUE(Ö»¶Á)" "FALSE(¿ÉĞ´)")))
       )
     )
   )
-  ;; å­—ä½“è§£æ
+  ;; ×ÖÌå½âÎö
   (setq font (vl-catch-all-apply 'OCS:ResolveSongFont nil))
   (if (vl-catch-all-error-p font)
     (princ (strcat "\n[10] ResolveSongFont = ERROR: " (vl-catch-all-error-message font)))
     (princ (strcat "\n[10] ResolveSongFont = " (vl-prin1-to-string font)))
   )
-  ;; Blocks æ¥å£
+  ;; Blocks ½Ó¿Ú
   (if (vl-catch-all-error-p doc)
-    (princ "\n[11] GetBlocks = è·³è¿‡ï¼ˆæ— æ–‡æ¡£ï¼‰")
+    (princ "\n[11] GetBlocks = Ìø¹ı£¨ÎŞÎÄµµ£©")
     (progn
       (setq okv (vl-catch-all-apply 'vlax-method-applicable-p (list doc "GetBlocks")))
       (if (vl-catch-all-error-p okv)
-        (princ "\n[11a] vlax-method-applicable-p(å­—ç¬¦ä¸²) = ERROR")
+        (princ "\n[11a] vlax-method-applicable-p(×Ö·û´®) = ERROR")
         (princ (strcat "\n[11a] applicable-p \"GetBlocks\" = " (if okv "T" "NIL")))
       )
       (setq okv (vl-catch-all-apply 'vlax-method-applicable-p (list doc 'GetBlocks)))
       (if (vl-catch-all-error-p okv)
-        (princ "\n[11b] vlax-method-applicable-p(ç¬¦å·) = ERROR")
+        (princ "\n[11b] vlax-method-applicable-p(·ûºÅ) = ERROR")
         (princ (strcat "\n[11b] applicable-p 'GetBlocks = " (if okv "T" "NIL")))
       )
       (setq okv (vl-catch-all-apply 'vla-get-Blocks (list doc)))
@@ -2392,15 +2392,15 @@
       )
     )
   )
-  (princ "\n==== è¯Šæ–­ç»“æŸï¼›æŠŠä»¥ä¸Šè¾“å‡ºå‘ç»™å¼€å‘ ====")
+  (princ "\n==== Õï¶Ï½áÊø£»°ÑÒÔÉÏÊä³ö·¢¸ø¿ª·¢ ====")
   (princ)
 )
 
-;; æ—¥æœŸï¼š2026-10-13ã€‚æœ€åä¸€è¡Œæ˜¾ç¤ºæ‰§è¡Œç»“æœï¼Œä¿ç•™éƒ¨åˆ†å®Œæˆä¸å›æ»šçš„çœŸå®çŠ¶æ€ã€‚
+;; ÈÕÆÚ£º2026-10-13¡£×îºóÒ»ĞĞÏÔÊ¾Ö´ĞĞ½á¹û£¬±£Áô²¿·ÖÍê³ÉÓë»Ø¹öµÄÕæÊµ×´Ì¬¡£
 (defun OCS:elapsedSeconds (start finish / delta)
   (if (and (numberp start) (numberp finish))
     (progn
-      ;; ä½¿ç”¨å®æ•°å‡æ³•é¿å… 32 ä½æ•´æ•°æº¢å‡ºï¼Œæ”¯æŒ MILLISECS ä¸€æ¬¡å›ç»•ã€‚
+      ;; Ê¹ÓÃÊµÊı¼õ·¨±ÜÃâ 32 Î»ÕûÊıÒç³ö£¬Ö§³Ö MILLISECS Ò»´Î»ØÈÆ¡£
       (setq delta (- (+ 0.0 finish) start))
       (if (< delta 0.0) (setq delta (+ delta 4294967296.0)))
       (/ delta 1000.0))
@@ -2409,7 +2409,7 @@
 
 (defun OCS:timerStart ()
   (setq *OCS:ClockStart* (OCS:logVar "MILLISECS")
-        *OCS:PhaseStart* *OCS:ClockStart* *OCS:PhaseName* "åˆå§‹åŒ–"
+        *OCS:PhaseStart* *OCS:ClockStart* *OCS:PhaseName* "³õÊ¼»¯"
         *OCS:PhaseTimes* nil)
 )
 
@@ -2430,44 +2430,44 @@
   (setq report (OCS:putPair report "phaseTimes" (reverse *OCS:PhaseTimes*)))
   (OCS:trace "RUN_TIMING" (list "elapsedSeconds" seconds "phaseTimes" (reverse *OCS:PhaseTimes*)))
   (princ (if (numberp seconds)
-    (strcat "\næ€»è€—æ—¶ï¼š" (rtos seconds 2 2) " ç§’ã€‚")
-    "\næ€»è€—æ—¶ï¼šå½“å‰ CAD æœªæä¾›å¯ç”¨è®¡æ—¶å€¼ã€‚"))
-  (princ "\nbyå¼ è£•é”‹-20261013")
+    (strcat "\n×ÜºÄÊ±£º" (rtos seconds 2 2) " Ãë¡£")
+    "\n×ÜºÄÊ±£ºµ±Ç° CAD Î´Ìá¹©¿ÉÓÃ¼ÆÊ±Öµ¡£"))
+  (princ "\nbyÕÅÔ£·æ-20261013")
   report
 )
 
 (defun OCS:finishMessage (report / status uncovered)
-  (setq status (OCS:assocd "status" report "ç»“æœæœªçŸ¥")
+  (setq status (OCS:assocd "status" report "½á¹ûÎ´Öª")
         uncovered (OCS:assocd "uncovered" report 0))
   (cond
     ((or (> (OCS:assocd "errors" report 0) 0)
          (> (OCS:assocd "recoverFailed" report 0) 0)
-         (not (member status (list "å·²å®Œæˆ" "æ— éœ€ä¿®æ”¹" "éƒ¨åˆ†å®Œæˆ"))))
-     (strcat "\n==== YJST æ‰§è¡Œå¤±è´¥ï¼š" status "ï¼Œè¯·æŸ¥çœ‹ä¸Šæ–¹é”™è¯¯æ˜ç»†å’Œæ—¥å¿—ã€‚ ===="))
-    ((or (= status "éƒ¨åˆ†å®Œæˆ") (> uncovered 0))
-     (strcat "\n==== YJST æ‰§è¡ŒæˆåŠŸï¼ˆéƒ¨åˆ†å®Œæˆï¼‰ï¼šä»æœ‰ " (itoa uncovered)
-             " ä¸ªä¸“ä¸šå¯¹è±¡æœªè¦†ç›–ï¼Œè¯¦æƒ…è§æ—¥å¿—ï¼›å¯è¾“å…¥ YJSTCHECK æ ¸æŸ¥ã€‚ ===="))
-    ((= status "æ— éœ€ä¿®æ”¹") "\n==== YJST æ‰§è¡ŒæˆåŠŸï¼šæ— éœ€ä¿®æ”¹ã€‚ ====")
-    (T "\n==== YJST æ‰§è¡ŒæˆåŠŸã€‚ ====")))
+         (not (member status (list "ÒÑÍê³É" "ÎŞĞèĞŞ¸Ä" "²¿·ÖÍê³É"))))
+     (strcat "\n==== YJST Ö´ĞĞÊ§°Ü£º" status "£¬Çë²é¿´ÉÏ·½´íÎóÃ÷Ï¸ºÍÈÕÖ¾¡£ ===="))
+    ((or (= status "²¿·ÖÍê³É") (> uncovered 0))
+     (strcat "\n==== YJST Ö´ĞĞ³É¹¦£¨²¿·ÖÍê³É£©£ºÈÔÓĞ " (itoa uncovered)
+             " ¸ö×¨Òµ¶ÔÏóÎ´¸²¸Ç£¬ÏêÇé¼ûÈÕÖ¾£»¿ÉÊäÈë YJSTCHECK ºË²é¡£ ===="))
+    ((= status "ÎŞĞèĞŞ¸Ä") "\n==== YJST Ö´ĞĞ³É¹¦£ºÎŞĞèĞŞ¸Ä¡£ ====")
+    (T "\n==== YJST Ö´ĞĞ³É¹¦¡£ ====")))
 
 (defun c:YJST ( / r report)
   (cond
-    (*OCS:Running* (princ "\nYJST æ‰§è¡Œå¤±è´¥ï¼šä¸Šä¸€æ¬¡è¿è¡Œå°šæœªç»“æŸï¼Œæœ¬æ¬¡æœªå¯åŠ¨ã€‚"))
-    (*OCS:UndoMark* (princ "\nYJST æ‰§è¡Œå¤±è´¥ï¼šä¸Šæ¬¡æ’¤é”€åˆ†ç»„æœªèƒ½å…³é—­ï¼Œæœ¬æ¬¡æœªå¯åŠ¨ï¼Œè¯·å…ˆæ£€æŸ¥æ¢å¤å¤±è´¥æ˜ç»†ã€‚"))
+    (*OCS:Running* (princ "\nYJST Ö´ĞĞÊ§°Ü£ºÉÏÒ»´ÎÔËĞĞÉĞÎ´½áÊø£¬±¾´ÎÎ´Æô¶¯¡£"))
+    (*OCS:UndoMark* (princ "\nYJST Ö´ĞĞÊ§°Ü£ºÉÏ´Î³·Ïú·Ö×éÎ´ÄÜ¹Ø±Õ£¬±¾´ÎÎ´Æô¶¯£¬ÇëÏÈ¼ì²é»Ö¸´Ê§°ÜÃ÷Ï¸¡£"))
     (T
       (OCS:timerStart)
       (setq *OCS:Running* T *OCS:Plan* nil *OCS:TempState* nil *OCS:Wrote* nil
             *OCS:UndoAttempted* nil *OCS:FailureMessage* nil *OCS:ProbeStyle* nil)
-      (princ (strcat "\nYJST v" *OCS:Version* " å¼€å§‹æ‰§è¡Œã€‚"))
+      (princ (strcat "\nYJST v" *OCS:Version* " ¿ªÊ¼Ö´ĞĞ¡£"))
       (OCS:logStart)
       (setq r (vl-catch-all-apply 'OCS:mainFlow nil))
       (if (vl-catch-all-error-p r)
         (progn
-          (setq report (OCS:appendError (OCS:runStats (OCS:makeReport "é¢„æ£€å¤±è´¥") nil nil)
+          (setq report (OCS:appendError (OCS:runStats (OCS:makeReport "Ô¤¼ìÊ§°Ü") nil nil)
                                        *OCS:Stage* (OCS:errorText r)))
           (if *OCS:UndoMark* (setq report (OCS:recoverReport report))))
         (setq report r))
-      (OCS:timerPhase "ç»“æœè¾“å‡º")
+      (OCS:timerPhase "½á¹ûÊä³ö")
       (setq report (OCS:putPair report "logPath" *OCS:LogPath*))
       (setq *OCS:LastReport* report)
       (OCS:trace "RUN_RESULT" report)
@@ -2483,27 +2483,27 @@
 )
 
 (defun OCS:mainFlow ( / pre plan)
-  (OCS:timerPhase "ç¯å¢ƒä¸å­—ä½“é¢„æ£€")
-  (OCS:setStage "ç¯å¢ƒä¸å­—ä½“é¢„æ£€")
-  (princ "\n[1/3] æ£€æŸ¥ç¯å¢ƒä¸å®‹ä½“å­—ä½“...")
+  (OCS:timerPhase "»·¾³Óë×ÖÌåÔ¤¼ì")
+  (OCS:setStage "»·¾³Óë×ÖÌåÔ¤¼ì")
+  (princ "\n[1/3] ¼ì²é»·¾³ÓëËÎÌå×ÖÌå...")
   (setq pre (OCS:Preflight))
   (if (not (OCS:assocd "ok" pre nil))
-    (OCS:appendErrors (OCS:makeReport "é¢„æ£€å¤±è´¥") (OCS:problemsOf pre))
+    (OCS:appendErrors (OCS:makeReport "Ô¤¼ìÊ§°Ü") (OCS:problemsOf pre))
     (progn
-      (OCS:timerPhase "æ‰«æä¸ç”Ÿæˆè®¡åˆ’")
-      (OCS:setStage "æ‰«æä¸ç”Ÿæˆè®¡åˆ’")
-      (princ "\n[2/3] è¯»å–åŸå§‹å†…å®¹å¹¶ç”Ÿæˆä¿®æ”¹è®¡åˆ’...")
+      (OCS:timerPhase "É¨ÃèÓëÉú³É¼Æ»®")
+      (OCS:setStage "É¨ÃèÓëÉú³É¼Æ»®")
+      (princ "\n[2/3] ¶ÁÈ¡Ô­Ê¼ÄÚÈİ²¢Éú³ÉĞŞ¸Ä¼Æ»®...")
       (setq plan (OCS:BuildPlan))
       (setq *OCS:Plan* (OCS:putPair plan "font" (OCS:assocd "font" pre nil)))
       (OCS:trace "PLAN_READY" (list "styles" (length (OCS:assocd "styles" plan nil))
         "hosts" (length (OCS:assocd "hosts" plan nil)) "targets" (length (OCS:assocd "targets" plan nil))
         "uncovered" (OCS:assocd "unknown" (OCS:assocd "stats" plan nil) 0)))
       (if (and (OCS:hasPlannedWrites) (not (OCS:beginUndoGroup)))
-        (OCS:appendError (OCS:makeReport "é¢„æ£€å¤±è´¥") "UNDO" "æ— æ³•å»ºç«‹æ’¤é”€åˆ†ç»„ï¼Œæœªå†™å…¥ä¸šåŠ¡æ•°æ®")
+        (OCS:appendError (OCS:makeReport "Ô¤¼ìÊ§°Ü") "UNDO" "ÎŞ·¨½¨Á¢³·Ïú·Ö×é£¬Î´Ğ´ÈëÒµÎñÊı¾İ")
         (progn
-          (OCS:timerPhase "æ›´æ–°å­—ä½“ä¸æ ¡éªŒ")
-          (OCS:setStage "å†™å…¥ä¸æ ¡éªŒ")
-          (princ "\n[3/3] æ›´æ–°å­—ä½“å¹¶è¯»å›æ ¡éªŒ...")
+          (OCS:timerPhase "¸üĞÂ×ÖÌåÓëĞ£Ñé")
+          (OCS:setStage "Ğ´ÈëÓëĞ£Ñé")
+          (princ "\n[3/3] ¸üĞÂ×ÖÌå²¢¶Á»ØĞ£Ñé...")
           (OCS:executeWrites)))))
 )
 
@@ -2519,18 +2519,18 @@
   )
 )
 
-;; æ‰§è¡Œå†™å…¥ä¸æ£€æŸ¥ï¼ˆå«å›æ»šè·¯å¾„ï¼‰
+;; Ö´ĞĞĞ´ÈëÓë¼ì²é£¨º¬»Ø¹öÂ·¾¶£©
 (defun OCS:executeWrites ( / report stylesRes hostsRes verifyRes probe)
-  (setq report (OCS:makeReport "è¿›è¡Œä¸­"))
+  (setq report (OCS:makeReport "½øĞĞÖĞ"))
   (if (OCS:hasPlannedWrites)
     (progn
-      (OCS:setStage "åˆ†ç»„å†…å­—ä½“è¯•å†™")
+      (OCS:setStage "·Ö×éÄÚ×ÖÌåÊÔĞ´")
       (setq probe (OCS:verifyFontWrite (OCS:assocd "font" *OCS:Plan* nil)))
       (if (OCS:hasError probe) (OCS:fail (OCS:fmt (OCS:problemsOf probe))))
       (setq *OCS:Plan* (OCS:putPair *OCS:Plan* "font" probe))))
   (OCS:lockLayersNeeded)
   (OCS:unlockTempLayers)
-  (OCS:setStage "å†™å…¥æ ·å¼")
+  (OCS:setStage "Ğ´ÈëÑùÊ½")
   (setq stylesRes (OCS:applyAllStyles))
   (if (OCS:assocd "error" stylesRes nil)
     (setq report (OCS:appendError report "STYLE" (OCS:assocd "error" stylesRes "")))
@@ -2538,70 +2538,70 @@
   (if (OCS:assocd "error" hostsRes nil)
     (setq report (OCS:appendError report "HOST" (OCS:assocd "error" hostsRes ""))))
   (setq report (OCS:runStats report stylesRes hostsRes))
-  (OCS:setStage "æ¢å¤ä¸´æ—¶çŠ¶æ€")
+  (OCS:setStage "»Ö¸´ÁÙÊ±×´Ì¬")
   (if (not (OCS:restoreTempState))
-    (setq report (OCS:appendError report "RESTORE" "ä¸´æ—¶çŠ¶æ€æ¢å¤å¤±è´¥")))
+    (setq report (OCS:appendError report "RESTORE" "ÁÙÊ±×´Ì¬»Ö¸´Ê§°Ü")))
   (if (= (OCS:assocd "errors" report 0) 0)
     (progn
-      (OCS:timerPhase "å†ç”Ÿä¸è¯»å›æ ¡éªŒ")
-      (OCS:setStage "å†ç”Ÿä¸æ ¡éªŒ")
+      (OCS:timerPhase "ÔÙÉúÓë¶Á»ØĞ£Ñé")
+      (OCS:setStage "ÔÙÉúÓëĞ£Ñé")
       (OCS:TestFault "regen-check")
       (setq verifyRes (OCS:VerifyDrawing))
       (if (not (OCS:assocd "ok" verifyRes nil))
-        (setq report (OCS:appendError report "VERIFY" (OCS:assocd "error" verifyRes "è¯»å›å¤±è´¥"))))))
+        (setq report (OCS:appendError report "VERIFY" (OCS:assocd "error" verifyRes "¶Á»ØÊ§°Ü"))))))
   (if (> (OCS:assocd "errors" report 0) 0)
     (OCS:recoverReport report)
     (if (not (OCS:endUndoGroup))
-      (OCS:recoverReport (OCS:appendError report "UNDO" "å…³é—­æ’¤é”€åˆ†ç»„å¤±è´¥"))
+      (OCS:recoverReport (OCS:appendError report "UNDO" "¹Ø±Õ³·Ïú·Ö×éÊ§°Ü"))
       (progn
-        ;; æ—¥æœŸï¼š2026-10-13ã€‚é¢å¤–å¤©æ­£æ ¸æŸ¥ç”± YJSTCHECK æŒ‰éœ€æ‰§è¡Œï¼Œè½¬æ¢è¯»å›ä¸å›æ»šæ ¡éªŒä»ä¿ç•™ã€‚
+        ;; ÈÕÆÚ£º2026-10-13¡£¶îÍâÌìÕıºË²éÓÉ YJSTCHECK °´ĞèÖ´ĞĞ£¬×ª»»¶Á»ØÓë»Ø¹öĞ£ÑéÈÔ±£Áô¡£
         (OCS:putPair report "status"
-          (cond ((> (OCS:assocd "uncovered" report 0) 0) "éƒ¨åˆ†å®Œæˆ")
+          (cond ((> (OCS:assocd "uncovered" report 0) 0) "²¿·ÖÍê³É")
                 ((and (= (OCS:assocd "stylesModified" report 0) 0)
-                      (= (OCS:assocd "fontRunsChanged" report 0) 0)) "æ— éœ€ä¿®æ”¹")
-                (T "å·²å®Œæˆ"))))))
+                      (= (OCS:assocd "fontRunsChanged" report 0) 0)) "ÎŞĞèĞŞ¸Ä")
+                (T "ÒÑÍê³É"))))))
 )
 
-;;; æ—¥æœŸï¼š2026-10-13ã€‚å¤©æ­£å…¬å¼€å­—ä½“åªè¯»æ ¸éªŒï¼›æœªçŸ¥ç»“æ„ä¸æ¨æ–­é€šè¿‡ã€‚
+;;; ÈÕÆÚ£º2026-10-13¡£ÌìÕı¹«¿ª×ÖÌåÖ»¶ÁºËÑé£»Î´Öª½á¹¹²»ÍÆ¶ÏÍ¨¹ı¡£
 (defun OCS:checkFlow ( / stats report)
-  ;; é‡æ–°æšä¸¾å½“å‰æ–‡æ¡£ï¼Œä¸èƒ½å¤ç”¨ä¸Šæ¬¡ YJST çš„å¯¹è±¡å¼•ç”¨æˆ–è½¬æ¢å‰çŠ¶æ€ã€‚
+  ;; ÖØĞÂÃ¶¾Ùµ±Ç°ÎÄµµ£¬²»ÄÜ¸´ÓÃÉÏ´Î YJST µÄ¶ÔÏóÒıÓÃ»ò×ª»»Ç°×´Ì¬¡£
   (setq stats (OCS:CollectHosts))
   (if (OCS:hasError stats) (OCS:fail (OCS:fmt (OCS:problemsOf stats))))
   (setq *OCS:Plan* (list "stats" stats))
-  (setq report (OCS:verifyTchReport (OCS:runStats (OCS:makeReport "æ ¸æŸ¥å®Œæˆ") nil nil)))
+  (setq report (OCS:verifyTchReport (OCS:runStats (OCS:makeReport "ºË²éÍê³É") nil nil)))
   (if (or (> (OCS:assocd "tchMismatch" report 0) 0)
           (> (OCS:assocd "tchUnknown" report 0) 0))
-    (OCS:putPair report "status" "æ ¸æŸ¥å®Œæˆï¼Œå­˜åœ¨ä¸ä¸€è‡´æˆ–æ— æ³•æ ¸éªŒé¡¹")
+    (OCS:putPair report "status" "ºË²éÍê³É£¬´æÔÚ²»Ò»ÖÂ»òÎŞ·¨ºËÑéÏî")
     report)
 )
 
 (defun c:YJSTCHECK ( / r report *OCS:CheckOnly* *OCS:Plan* *OCS:FailureMessage*)
   (cond
-    (*OCS:Running* (princ "\nYJSTCHECK æœªå¯åŠ¨ï¼šä¸Šä¸€æ¬¡è¿è¡Œå°šæœªç»“æŸã€‚"))
-    (*OCS:UndoMark* (princ "\nYJSTCHECK æœªå¯åŠ¨ï¼šè¯·å…ˆå¤„ç†ä¸Šæ¬¡æ¢å¤å¤±è´¥ã€‚"))
+    (*OCS:Running* (princ "\nYJSTCHECK Î´Æô¶¯£ºÉÏÒ»´ÎÔËĞĞÉĞÎ´½áÊø¡£"))
+    (*OCS:UndoMark* (princ "\nYJSTCHECK Î´Æô¶¯£ºÇëÏÈ´¦ÀíÉÏ´Î»Ö¸´Ê§°Ü¡£"))
     (T
       (OCS:timerStart)
       (setq *OCS:Running* T *OCS:CheckOnly* T)
-      (princ (strcat "\nYJSTCHECK v" *OCS:Version* " å¼€å§‹åªè¯»æ ¸æŸ¥å½“å‰å›¾çº¸çš„å¤©æ­£å…¬å¼€å­—ä½“..."))
+      (princ (strcat "\nYJSTCHECK v" *OCS:Version* " ¿ªÊ¼Ö»¶ÁºË²éµ±Ç°Í¼Ö½µÄÌìÕı¹«¿ª×ÖÌå..."))
       (OCS:logStart)
       (OCS:trace "COMMAND" "YJSTCHECK")
-      (OCS:timerPhase "å¤©æ­£å…¬å¼€å­—ä½“æ ¸æŸ¥")
+      (OCS:timerPhase "ÌìÕı¹«¿ª×ÖÌåºË²é")
       (setq r (vl-catch-all-apply 'OCS:checkFlow nil))
       (setq report (if (vl-catch-all-error-p r)
-        (OCS:appendError (OCS:makeReport "æ ¸æŸ¥å¤±è´¥") *OCS:Stage* (OCS:errorText r)) r))
-      (OCS:timerPhase "ç»“æœè¾“å‡º")
+        (OCS:appendError (OCS:makeReport "ºË²éÊ§°Ü") *OCS:Stage* (OCS:errorText r)) r))
+      (OCS:timerPhase "½á¹ûÊä³ö")
       (setq report (OCS:putPair report "logPath" *OCS:LogPath*)
             *OCS:LastCheckReport* report)
       (OCS:trace "RUN_RESULT" report)
-      (princ (strcat "\nå¤©æ­£å…¬å¼€å­—ä½“æ ¸æŸ¥ï¼šé€šè¿‡ " (itoa (OCS:assocd "tchPassed" report 0))
-        "ã€€ä¸ä¸€è‡´ " (itoa (OCS:assocd "tchMismatch" report 0))
-        "ã€€æ— æ³•æ ¸éªŒ " (itoa (OCS:assocd "tchUnknown" report 0))
-        "ã€€é”™è¯¯ " (itoa (OCS:assocd "errors" report 0))))
-      (princ "\nä»…æ ¸æŸ¥å…¬å¼€æ ·å¼ä¸å¯è¯»å†…å®¹ï¼›æœªè¦†ç›–åŠæ ¸æŸ¥æ˜ç»†è§æ—¥å¿—æˆ– *OCS:LastCheckReport*ã€‚")
+      (princ (strcat "\nÌìÕı¹«¿ª×ÖÌåºË²é£ºÍ¨¹ı " (itoa (OCS:assocd "tchPassed" report 0))
+        "¡¡²»Ò»ÖÂ " (itoa (OCS:assocd "tchMismatch" report 0))
+        "¡¡ÎŞ·¨ºËÑé " (itoa (OCS:assocd "tchUnknown" report 0))
+        "¡¡´íÎó " (itoa (OCS:assocd "errors" report 0))))
+      (princ "\n½öºË²é¹«¿ªÑùÊ½Óë¿É¶ÁÄÚÈİ£»Î´¸²¸Ç¼°ºË²éÃ÷Ï¸¼ûÈÕÖ¾»ò *OCS:LastCheckReport*¡£")
       (c:YJSTLOG)
-      (princ (strcat "\n==== YJSTCHECK " (OCS:assocd "status" report "æ ¸æŸ¥å¤±è´¥") " ==== "))
+      (princ (strcat "\n==== YJSTCHECK " (OCS:assocd "status" report "ºË²éÊ§°Ü") " ==== "))
       (setq report (OCS:timerFinish report) *OCS:LastCheckReport* report)
-      (OCS:trace "RUN_END" (OCS:assocd "status" report "æ ¸æŸ¥å¤±è´¥"))
+      (OCS:trace "RUN_END" (OCS:assocd "status" report "ºË²éÊ§°Ü"))
       (setq *OCS:TraceActive* nil *OCS:Running* nil)))
   (princ)
 )
@@ -2615,7 +2615,7 @@
         (T nil))
 )
 
-;; åªå–æŒ‡å®šå­ç±»å†…çš„å­—æ®µï¼Œä¸æŠŠå…¶ä»–å­ç±»å’Œ XData æ··å…¥å†…å®¹æˆ–æ ·å¼ã€‚
+;; Ö»È¡Ö¸¶¨×ÓÀàÄÚµÄ×Ö¶Î£¬²»°ÑÆäËû×ÓÀàºÍ XData »ìÈëÄÚÈİ»òÑùÊ½¡£
 (defun OCS:tchSection (data section / active out p)
   (setq active nil out nil)
   (foreach p data
@@ -2636,9 +2636,9 @@
         kind (OCS:tchKind (OCS:assocd "type" item ""))
         refs nil texts nil reason nil status "pass" names nil)
   (if (= kind "TCH_DIMENSION2")
-    (list "status" "unknown" "reason" "å¤©æ­£æ ‡æ³¨æœªé€‚é…å¯å®Œæ•´æ ¸éªŒçš„å…¬å¼€å­—ä½“ç»“æ„ï¼Œæœªè°ƒç”¨ TextOverride")
+    (list "status" "unknown" "reason" "ÌìÕı±ê×¢Î´ÊÊÅä¿ÉÍêÕûºËÑéµÄ¹«¿ª×ÖÌå½á¹¹£¬Î´µ÷ÓÃ TextOverride")
     (if (or (not data) (not (equal (OCS:assocd 0 data "") kind)))
-    (list "status" "unknown" "reason" "entget æœªè¿”å›åŒ¹é…çš„å¤©æ­£å…¬å¼€è®°å½•")
+    (list "status" "unknown" "reason" "entget Î´·µ»ØÆ¥ÅäµÄÌìÕı¹«¿ª¼ÇÂ¼")
     (progn
       (cond
         ((= kind "TCH_DRAWINGNAME")
@@ -2656,32 +2656,32 @@
          (setq val (OCS:tchOne section 7))
          (setq refs (list (if (and (OCS:stringp val) (/= val "")) (tblobjname "STYLE" val) nil)))
          (if (and (= kind "TCH_MTEXT") (not (OCS:tchSection data "TDbMText")))
-           (setq reason "ç¼ºå°‘ TDbMText å­ç±»æ•°æ®" status "unknown"))))
+           (setq reason "È±ÉÙ TDbMText ×ÓÀàÊı¾İ" status "unknown"))))
       (foreach code codes
         (setq val (OCS:tchOne section code))
         (if (not (OCS:stringp val))
-          (setq reason "æ–‡å­—å­—æ®µç¼ºå¤±æˆ–é‡å¤" status "unknown")
+          (setq reason "ÎÄ×Ö×Ö¶ÎÈ±Ê§»òÖØ¸´" status "unknown")
           (setq texts (cons val texts))))
-      ;; æœªçŸ¥åˆ†æ®µå†…å®¹ä¸åªæ£€æŸ¥ç¬¬ä¸€æ®µï¼›å­—æ®µè¡¨è¾¾å¼ä¹Ÿä¸çŒœæµ‹æ˜¾ç¤ºå­—ä½“ã€‚
-      (if (assoc 3 section) (setq reason "å­˜åœ¨å°šæœªé€‚é…çš„åˆ†æ®µæ–‡å­—" status "unknown"))
+      ;; Î´Öª·Ö¶ÎÄÚÈİ²»Ö»¼ì²éµÚÒ»¶Î£»×Ö¶Î±í´ïÊ½Ò²²»²Â²âÏÔÊ¾×ÖÌå¡£
+      (if (assoc 3 section) (setq reason "´æÔÚÉĞÎ´ÊÊÅäµÄ·Ö¶ÎÎÄ×Ö" status "unknown"))
       (foreach val texts
         (if (OCS:containsField val)
-          (setq reason "å«å­—æ®µè¡¨è¾¾å¼ï¼Œæ— æ³•å®Œæ•´æ ¸éªŒ" status "unknown")
+          (setq reason "º¬×Ö¶Î±í´ïÊ½£¬ÎŞ·¨ÍêÕûºËÑé" status "unknown")
           (progn
             (setq scan (OCS:NormalizeFontRuns val (OCS:fontTarget)))
             (cond ((OCS:assocd "issues" scan nil)
-                   (setq reason "æ–‡å­—æ ¼å¼æ— æ³•å®Œæ•´è§£æ" status "unknown"))
+                   (setq reason "ÎÄ×Ö¸ñÊ½ÎŞ·¨ÍêÕû½âÎö" status "unknown"))
                   ((and (> (OCS:assocd "changes" scan 0) 0) (/= status "unknown"))
-                   (setq reason "å¯è¯»æ–‡å­—å«éå®‹ä½“å±€éƒ¨å­—ä½“è¦†ç›–" status "mismatch"))))))
+                   (setq reason "¿É¶ÁÎÄ×Öº¬·ÇËÎÌå¾Ö²¿×ÖÌå¸²¸Ç" status "mismatch"))))))
       (foreach ent refs
         (setq st (if ent (entget ent) nil))
         (if (not (equal (OCS:assocd 0 st "") "STYLE"))
-          (setq reason "æ ·å¼å¼•ç”¨ç¼ºå¤±æˆ–æœªæŒ‡å‘ STYLE" status "unknown")
+          (setq reason "ÑùÊ½ÒıÓÃÈ±Ê§»òÎ´Ö¸Ïò STYLE" status "unknown")
           (progn
             (setq names (cons (OCS:assocd 2 st "?") names))
             (if (and (not (OCS:styleIsTarget ent)) (/= status "unknown"))
-              (setq reason "å¼•ç”¨æ ·å¼ä¸æ˜¯ç›®æ ‡å®‹ä½“æˆ–å¤§å­—ä½“éç©º" status "mismatch")))))
-      (list "status" status "reason" (if reason reason "å…¬å¼€æ ·å¼å¼•ç”¨ä¸å¯è¯»å†…å®¹ç¬¦åˆå®‹ä½“è¦æ±‚")
+              (setq reason "ÒıÓÃÑùÊ½²»ÊÇÄ¿±êËÎÌå»ò´ó×ÖÌå·Ç¿Õ" status "mismatch")))))
+      (list "status" status "reason" (if reason reason "¹«¿ªÑùÊ½ÒıÓÃÓë¿É¶ÁÄÚÈİ·ûºÏËÎÌåÒªÇó")
             "styles" (reverse names)))))
 )
 
@@ -2689,7 +2689,7 @@
   (setq candidates (OCS:assocd "tchCandidates" (OCS:assocd "stats" *OCS:Plan* nil) nil)
         passed 0 mismatch 0 unknown 0 details nil issues nil handles nil)
   (foreach item candidates
-    (OCS:setStage (strcat "å¤©æ­£å…¬å¼€å­—ä½“æ ¸éªŒ [" (OCS:assocd "handle" item "?") "]"))
+    (OCS:setStage (strcat "ÌìÕı¹«¿ª×ÖÌåºËÑé [" (OCS:assocd "handle" item "?") "]"))
     (setq saved *OCS:FailureMessage*)
     (setq r (vl-catch-all-apply 'OCS:checkTchObject (list item)))
     (setq *OCS:FailureMessage* saved)
@@ -2722,7 +2722,7 @@
 (defun OCS:applyAllStyles ( / modified err r st ent updated)
   (setq modified 0 err nil updated nil)
   (foreach st (OCS:assocd "styles" *OCS:Plan* nil)
-    (OCS:setStage (strcat "å†™å…¥æ ·å¼ " (OCS:assocd "name" st "?")))
+    (OCS:setStage (strcat "Ğ´ÈëÑùÊ½ " (OCS:assocd "name" st "?")))
     (setq ent (tblobjname "STYLE" (OCS:assocd "name" st "")))
     (if (and (not err) (not (and ent (OCS:styleIsTarget ent))))
       (progn
@@ -2732,11 +2732,11 @@
           (progn
             (setq modified (1+ modified))
             (setq st (OCS:putPair st "fontExpected" (OCS:assocd "fontExpected" r nil))))
-          (setq err (OCS:assocd "error" r "æœªçŸ¥é”™è¯¯"))
+          (setq err (OCS:assocd "error" r "Î´Öª´íÎó"))
         )
       )
     )
-    ;; æœªä¿®æ”¹çš„ç›®æ ‡æ ·å¼ä¹Ÿè®°å½•æœ¬è½®åŸºçº¿ï¼Œé˜²æ­¢å®¿ä¸»å†™å…¥/å†ç”Ÿæ”¹å˜å­—ä½“è¡¨ç¤ºæˆ–ç²—æ–œä½“ã€‚
+    ;; Î´ĞŞ¸ÄµÄÄ¿±êÑùÊ½Ò²¼ÇÂ¼±¾ÂÖ»ùÏß£¬·ÀÖ¹ËŞÖ÷Ğ´Èë/ÔÙÉú¸Ä±ä×ÖÌå±íÊ¾»ò´ÖĞ±Ìå¡£
     (if (and (not err) ent (not (OCS:assocd "fontExpected" st nil)))
       (setq st (OCS:putPair st "fontExpected" (OCS:fontState (vlax-ename->vla-object ent) "style-unchanged"))))
     (setq updated (cons st updated))
@@ -2751,7 +2751,7 @@
     (if (not err)
       (progn
         (setq host (OCS:assocd "host" target nil))
-        (OCS:setStage (strcat "å†™å…¥å®¿ä¸» " (OCS:assocd "handle" host "?")))
+        (OCS:setStage (strcat "Ğ´ÈëËŞÖ÷ " (OCS:assocd "handle" host "?")))
         (OCS:TestFault "content-write")
         (setq data target)
         (if (/= (OCS:assocd "kind" data "") "table")
@@ -2761,24 +2761,24 @@
           (progn
             (setq changes (+ changes (OCS:assocd "changes" target 0)))
             (setq tableContents (+ tableContents (OCS:assocd "contents" r 0))))
-          (setq err (strcat (OCS:assocd "handle" host "?") ": " (OCS:assocd "error" r "å†™å…¥å¤±è´¥")))))))
+          (setq err (strcat (OCS:assocd "handle" host "?") ": " (OCS:assocd "error" r "Ğ´ÈëÊ§°Ü")))))))
   (list "changes" changes "tableContents" tableContents "error" err)
 )
 
 ;;; ----------------------------------------------------------------------
-;;; æ•…éšœæ³¨å…¥ï¼ˆä»…æµ‹è¯•å…¥å£ï¼Œæ­£å¸¸è¿è¡Œä¸å—å½±å“ï¼‰
+;;; ¹ÊÕÏ×¢Èë£¨½ö²âÊÔÈë¿Ú£¬Õı³£ÔËĞĞ²»ÊÜÓ°Ïì£©
 ;;; ----------------------------------------------------------------------
 (defun OCS:TestFault (point)
   (if (and *OCS:FaultPoint* (= *OCS:FaultPoint* point))
     (progn
       (setq *OCS:FaultPoint* nil)
-      (OCS:fail (strcat "OCS æ•…éšœæ³¨å…¥ï¼š" point))
+      (OCS:fail (strcat "OCS ¹ÊÕÏ×¢Èë£º" point))
     )
   )
 )
 
 ;;; ----------------------------------------------------------------------
-;;; è‡ªæ£€å…¥å£ï¼ˆçº¯å‡½æ•°éƒ¨åˆ†ï¼Œä¸ä¾èµ– CAD ç¯å¢ƒï¼‰ï¼šOCS:SelfTest
+;;; ×Ô¼ìÈë¿Ú£¨´¿º¯Êı²¿·Ö£¬²»ÒÀÀµ CAD »·¾³£©£ºOCS:SelfTest
 ;;; ----------------------------------------------------------------------
 (defun OCS:SelfTest ( / cases pass fail c in n out r want wantN)
   (setq cases (OCS:selfTestCases) pass 0 fail 0)
@@ -2797,14 +2797,14 @@
       )
     )
   )
-  (princ (strcat "\nOCS:SelfTest é€šè¿‡ " (itoa pass) " / å¤±è´¥ " (itoa fail)))
-  ;; æ³¨æ„ï¼šç»“å°¾ä¸èƒ½å†™ (setq fail)ï¼šç›®æ ‡å¼•æ“è¯»å…¥å™¨ä¸æ¥å—å•å‚æ•° setqï¼ˆå®æµ‹è¯­æ³•é”™è¯¯ï¼‰ï¼Œ
-  ;; è£¸ç¬¦å·ä½œä¸ºæœ€åè¡¨è¾¾å¼è¿”å›å€¼ï¼Œè¯­ä¹‰ç›¸åŒã€‚
+  (princ (strcat "\nOCS:SelfTest Í¨¹ı " (itoa pass) " / Ê§°Ü " (itoa fail)))
+  ;; ×¢Òâ£º½áÎ²²»ÄÜĞ´ (setq fail)£ºÄ¿±êÒıÇæ¶ÁÈëÆ÷²»½ÓÊÜµ¥²ÎÊı setq£¨Êµ²âÓï·¨´íÎó£©£¬
+  ;; Âã·ûºÅ×÷Îª×îºó±í´ïÊ½·µ»ØÖµ£¬ÓïÒåÏàÍ¬¡£
   fail
 )
 
 (defun OCS:selfTestCases ( / long1 acc n)
-  ;; ä¸ tests/font-format-cases.json ä¸€ä¸€å¯¹åº”ï¼š
+  ;; Óë tests/font-format-cases.json Ò»Ò»¶ÔÓ¦£º
   ;; C01-plain-inherit, C02-font-arial-bold-italic, C03-height-nested-fonts,
   ;; C04-paragraph-codes, C05-stack-diameter-tolerance, C06-field-code-protected,
   ;; C07-escaped-backslash-brace, C08-long-mixed-text, C09-already-simsun,
@@ -2813,58 +2813,58 @@
   (setq long1 "")
   (setq n 0)
   (while (< n 60)
-    (setq long1 (strcat long1 "è‹±æ–‡ ABC ä¸ä¸­æ–‡ å®‹ä½“æµ‹è¯•"))
+    (setq long1 (strcat long1 "Ó¢ÎÄ ABC ÓëÖĞÎÄ ËÎÌå²âÊÔ"))
     (setq n (1+ n))
   )
   (list
     ;; C01
-    (list "æœ¬é¡µç»Ÿä¸€ä½¿ç”¨é»‘ä½“ï¼Œå­—é«˜ 3.5ã€‚" "æœ¬é¡µç»Ÿä¸€ä½¿ç”¨é»‘ä½“ï¼Œå­—é«˜ 3.5ã€‚" 0)
+    (list "±¾Ò³Í³Ò»Ê¹ÓÃºÚÌå£¬×Ö¸ß 3.5¡£" "±¾Ò³Í³Ò»Ê¹ÓÃºÚÌå£¬×Ö¸ß 3.5¡£" 0)
     ;; C02
-    (list "{\\fArial|b1|i0;æ ‡é¢˜æ­£æ–‡}" "{\\fSimSun|b1|i0|c134|pf22;æ ‡é¢˜æ­£æ–‡}" 1)
+    (list "{\\fArial|b1|i0;±êÌâÕıÎÄ}" "{\\fSimSun|b1|i0|c134|pf22;±êÌâÕıÎÄ}" 1)
     ;; C03
-    (list "{\\H0.7x;\\fSimHei|b0|i1;è¯´æ˜æ®µè½}" "{\\H0.7x;\\fSimSun|b0|i1|c134|pf22;è¯´æ˜æ®µè½}" 1)
+    (list "{\\H0.7x;\\fSimHei|b0|i1;ËµÃ÷¶ÎÂä}" "{\\H0.7x;\\fSimSun|b0|i1|c134|pf22;ËµÃ÷¶ÎÂä}" 1)
     ;; C04
-    (list "\\pl1;ç¬¬ä¸€æ®µ\\Pç¬¬äºŒæ®µ\\fTimes New Roman;ç¬¬ä¸‰æ®µ"
-          "\\pl1;ç¬¬ä¸€æ®µ\\Pç¬¬äºŒæ®µ\\fSimSun|c134|pf22;ç¬¬ä¸‰æ®µ" 1)
+    (list "\\pl1;µÚÒ»¶Î\\PµÚ¶ş¶Î\\fTimes New Roman;µÚÈı¶Î"
+          "\\pl1;µÚÒ»¶Î\\PµÚ¶ş¶Î\\fSimSun|c134|pf22;µÚÈı¶Î" 1)
     ;; C05
-    (list "%%c12 \\fISOCPEUR;\\S1/2; å®Œ"
-          "%%c12 \\fSimSun|c134|pf22;\\S1/2; å®Œ" 1)
-    ;; C06 å­—æ®µä¿æŠ¤ï¼ˆç¤ºä¾‹å­—æ®µå†…å®¹ï¼Œ\f ä½äº %<...>% å†…ï¼‰
-    (list "å€¼ %<\\f\\H0.5x;\\C1;\\f% \\pr \"0.00\";.Measured|%fml \\f+1; >%ç»“æŸ"
-          "å€¼ %<\\f\\H0.5x;\\C1;\\f% \\pr \"0.00\";.Measured|%fml \\f+1; >%ç»“æŸ" 0)
-    ;; C07 è½¬ä¹‰
-    (list "è·¯å¾„ C:\\temp\\{å›¾} ä¸ \\fArial ä¸å˜"
-          "è·¯å¾„ C:\\temp\\{å›¾} ä¸ \\fArial ä¸å˜" 0)
-    ;; C08 é•¿æ–‡æœ¬ï¼ˆåº”æ— ä¿®æ”¹ï¼Œå®Œæ•´å¾€è¿”ï¼‰
+    (list "%%c12 \\fISOCPEUR;\\S1/2; Íê"
+          "%%c12 \\fSimSun|c134|pf22;\\S1/2; Íê" 1)
+    ;; C06 ×Ö¶Î±£»¤£¨Ê¾Àı×Ö¶ÎÄÚÈİ£¬\f Î»ÓÚ %<...>% ÄÚ£©
+    (list "Öµ %<\\f\\H0.5x;\\C1;\\f% \\pr \"0.00\";.Measured|%fml \\f+1; >%½áÊø"
+          "Öµ %<\\f\\H0.5x;\\C1;\\f% \\pr \"0.00\";.Measured|%fml \\f+1; >%½áÊø" 0)
+    ;; C07 ×ªÒå
+    (list "Â·¾¶ C:\\temp\\{Í¼} Óë \\fArial ²»±ä"
+          "Â·¾¶ C:\\temp\\{Í¼} Óë \\fArial ²»±ä" 0)
+    ;; C08 ³¤ÎÄ±¾£¨Ó¦ÎŞĞŞ¸Ä£¬ÍêÕûÍù·µ£©
     (list long1 long1 0)
-    ;; C09 å·²æ˜¯å®‹ä½“
-    (list "{\\fSimSun|b0|i0|c134|pf22;å·²ç»Ÿä¸€}" "{\\fSimSun|b0|i0|c134|pf22;å·²ç»Ÿä¸€}" 0)
-    ;; C10 ä¸å®Œæ•´æŒ‡ä»¤ â†’ ä¸ä¿®æ”¹åŸæ–‡ï¼ˆé”™è¯¯ç”± :issues æŠ¥å‘Šï¼‰
-    (list "å‰é¢{\\fArial" "å‰é¢{\\fArial" 0)
-    ;; C11 åµŒå¥—ä¸¤ä¸ªå­—ä½“
-    (list "{\\fArial|b1|i0;æ ‡é¢˜}\\P{\\H0.7x;\\fSimHei|b0|i1;è¯´æ˜}"
-          "{\\fSimSun|b1|i0|c134|pf22;æ ‡é¢˜}\\P{\\H0.7x;\\fSimSun|b0|i1|c134|pf22;è¯´æ˜}" 2)
-    ;; C12 é¢œè‰²ä¸å­—è·ä¿æŒ
-    (list "\\C3;\\fCourier New;å›ºå®š\\fSimSun;å­—å®½\\Q5;å°¾"
-          "\\C3;\\fSimSun|c134|pf22;å›ºå®š\\fSimSun;å­—å®½\\Q5;å°¾" 1)
-    ;; C13 å¹‚ç­‰
-    (list "{\\fSimSun|b1|i0|c134|pf22;å¹‚ç­‰}" "{\\fSimSun|b1|i0|c134|pf22;å¹‚ç­‰}" 0)
-    ;; C14 æ­£æ–‡ä¸­çš„å­—ä½“åä¸æ”¹
-    (list "æœ¬é¡µç»Ÿä¸€ä½¿ç”¨é»‘ä½“ä¸ Arial å­—ä½“åè¯´æ˜"
-          "æœ¬é¡µç»Ÿä¸€ä½¿ç”¨é»‘ä½“ä¸ Arial å­—ä½“åè¯´æ˜" 0)
-    ;; C15 å­—æ®µåµŒå¥—åœ¨æ ¼å¼ä½œç”¨åŸŸå†…
-    (list "{\\fArial|b1;i;å‰ %<\\\\AcVar \\f\\\\H;>%å}"
-          "{\\fSimSun|b1|c134|pf22;i;å‰ %<\\\\AcVar \\f\\\\H;>%å}" 1)
+    ;; C09 ÒÑÊÇËÎÌå
+    (list "{\\fSimSun|b0|i0|c134|pf22;ÒÑÍ³Ò»}" "{\\fSimSun|b0|i0|c134|pf22;ÒÑÍ³Ò»}" 0)
+    ;; C10 ²»ÍêÕûÖ¸Áî ¡ú ²»ĞŞ¸ÄÔ­ÎÄ£¨´íÎóÓÉ :issues ±¨¸æ£©
+    (list "Ç°Ãæ{\\fArial" "Ç°Ãæ{\\fArial" 0)
+    ;; C11 Ç¶Ì×Á½¸ö×ÖÌå
+    (list "{\\fArial|b1|i0;±êÌâ}\\P{\\H0.7x;\\fSimHei|b0|i1;ËµÃ÷}"
+          "{\\fSimSun|b1|i0|c134|pf22;±êÌâ}\\P{\\H0.7x;\\fSimSun|b0|i1|c134|pf22;ËµÃ÷}" 2)
+    ;; C12 ÑÕÉ«Óë×Ö¾à±£³Ö
+    (list "\\C3;\\fCourier New;¹Ì¶¨\\fSimSun;×Ö¿í\\Q5;Î²"
+          "\\C3;\\fSimSun|c134|pf22;¹Ì¶¨\\fSimSun;×Ö¿í\\Q5;Î²" 1)
+    ;; C13 ÃİµÈ
+    (list "{\\fSimSun|b1|i0|c134|pf22;ÃİµÈ}" "{\\fSimSun|b1|i0|c134|pf22;ÃİµÈ}" 0)
+    ;; C14 ÕıÎÄÖĞµÄ×ÖÌåÃû²»¸Ä
+    (list "±¾Ò³Í³Ò»Ê¹ÓÃºÚÌåÓë Arial ×ÖÌåÃûËµÃ÷"
+          "±¾Ò³Í³Ò»Ê¹ÓÃºÚÌåÓë Arial ×ÖÌåÃûËµÃ÷" 0)
+    ;; C15 ×Ö¶ÎÇ¶Ì×ÔÚ¸ñÊ½×÷ÓÃÓòÄÚ
+    (list "{\\fArial|b1;i;Ç° %<\\\\AcVar \\f\\\\H;>%ºó}"
+          "{\\fSimSun|b1|c134|pf22;i;Ç° %<\\\\AcVar \\f\\\\H;>%ºó}" 1)
   )
 )
 
 ;;; =====================================================================
 
-;;; å¿…éœ€æ•°æ®è¯»å–å¤±è´¥æ—¶åœæ­¢ï¼Œä¸æŠŠå¼‚å¸¸å½“ä½œç©ºå€¼ã€‚
+;;; ±ØĞèÊı¾İ¶ÁÈ¡Ê§°ÜÊ±Í£Ö¹£¬²»°ÑÒì³£µ±×÷¿ÕÖµ¡£
 (defun OCS:mustCall (fn args / r)
   (setq r (OCS:tracedCall fn args))
   (if (vl-catch-all-error-p r)
-    (OCS:fail (strcat (vl-symbol-name fn) "ï¼š" (vl-catch-all-error-message r))))
+    (OCS:fail (strcat (vl-symbol-name fn) "£º" (vl-catch-all-error-message r))))
   r
 )
 (defun OCS:requireProp (obj prop)
@@ -2873,11 +2873,11 @@
 (defun OCS:boolProp (obj prop / value)
   (setq value (OCS:requireProp obj prop))
   (cond ((equal value :vlax-true) T) ((equal value :vlax-false) nil)
-        (T (OCS:fail (strcat "æ— æ•ˆçš„å¸ƒå°”å±æ€§ï¼š" (vl-symbol-name prop)))))
+        (T (OCS:fail (strcat "ÎŞĞ§µÄ²¼¶ûÊôĞÔ£º" (vl-symbol-name prop)))))
 )
 (defun OCS:readContent (obj kind prop / text)
   (setq text (OCS:requireProp obj prop))
-  (if (not (OCS:stringp text)) (OCS:fail "æ–‡å­—å±æ€§æœªè¿”å›å­—ç¬¦ä¸²"))
+  (if (not (OCS:stringp text)) (OCS:fail "ÎÄ×ÖÊôĞÔÎ´·µ»Ø×Ö·û´®"))
   (list "obj" obj "kind" kind "text" text "property" prop
         "protected" (or (OCS:containsField text) (OCS:hasFieldDictionary obj)))
 )
@@ -2896,7 +2896,7 @@
 )
 (defun OCS:tableLayout (e rows cols / row col out)
   (if (or (/= rows (OCS:requireProp e 'Rows)) (/= cols (OCS:requireProp e 'Columns)))
-    (OCS:fail "è¡¨æ ¼è¡Œåˆ—æ•°å˜åŒ–"))
+    (OCS:fail "±í¸ñĞĞÁĞÊı±ä»¯"))
   (setq row 0 col 0 out (list rows cols))
   (while (< row rows)
     (setq out (append out (list (vla-GetRowHeight e row))) col 0)
@@ -2920,17 +2920,17 @@
       (setq msg (strcase (vl-catch-all-error-message r)))
       (or (OCS:strContains msg "8002000B") (OCS:strContains msg "INVALID INDEX")
           (OCS:strContains msg "INDEX OUT OF RANGE") (OCS:strContains msg "INVALID INPUT")
-          (OCS:strContains msg "æ— æ•ˆç´¢å¼•") (OCS:strContains msg "æ— æ•ˆçš„ç´¢å¼•")
-          (OCS:strContains msg "ç´¢å¼•è¶…å‡ºèŒƒå›´") (OCS:strContains msg "è¾“å…¥æ— æ•ˆ"))))
+          (OCS:strContains msg "ÎŞĞ§Ë÷Òı") (OCS:strContains msg "ÎŞĞ§µÄË÷Òı")
+          (OCS:strContains msg "Ë÷Òı³¬³ö·¶Î§") (OCS:strContains msg "ÊäÈëÎŞĞ§"))))
 )
 (defun OCS:tableEndP (e row col content r / check)
-  ;; æ–‡æœ¬è¯»å–å¤±è´¥ä¸æ˜¯ç»ˆç‚¹ã€‚è‡³å°‘å·²è¯»åˆ°ä¸€ä¸ªå†…å®¹ï¼Œä¸”ç‹¬ç«‹ç´¢å¼•è®¿é—®ä¹Ÿå¿…é¡»ç¡®è®¤è¶Šç•Œã€‚
+  ;; ÎÄ±¾¶ÁÈ¡Ê§°Ü²»ÊÇÖÕµã¡£ÖÁÉÙÒÑ¶Áµ½Ò»¸öÄÚÈİ£¬ÇÒ¶ÀÁ¢Ë÷Òı·ÃÎÊÒ²±ØĞëÈ·ÈÏÔ½½ç¡£
   (and (> content 0) (OCS:indexErrorP r)
        (OCS:indexErrorP (vl-catch-all-apply 'vla-GetTextStyle2 (list e row col content)))
        (OCS:indexErrorP (vl-catch-all-apply 'vla-GetFieldId2 (list e row col content))))
 )
 (defun OCS:tableReadCell (e row col / state typ merge label edits partial n done raw new fid formula changes edit)
-  (setq label (strcat "å•å…ƒæ ¼[" (itoa row) "," (itoa col) "]")
+  (setq label (strcat "µ¥Ôª¸ñ[" (itoa row) "," (itoa col) "]")
         edits nil partial nil changes 0)
   (OCS:trace "TABLE_CELL" (list row col))
   (setq merge (OCS:tableMerge e row col))
@@ -2941,7 +2941,7 @@
       (cond
         ((equal (OCS:mustCall 'vla-IsEmpty (list e row col)) :vlax-true) nil)
         ((or (/= 0 (logand state 31)) (/= typ 1))
-         (setq partial (list (strcat label "ï¼šé“¾æ¥ã€é”å®šã€å­—æ®µæˆ–å—å†…å®¹ä¿æŒåŸçŠ¶"))))
+         (setq partial (list (strcat label "£ºÁ´½Ó¡¢Ëø¶¨¡¢×Ö¶Î»ò¿éÄÚÈİ±£³ÖÔ­×´"))))
         (T
           (setq n 0 done nil)
           (while (and (not done) (< n 1024))
@@ -2949,23 +2949,23 @@
             (if (vl-catch-all-error-p raw)
               (if (OCS:tableEndP e row col n raw)
                 (setq done T)
-                (OCS:fail (strcat label " å†…å®¹é¡¹ " (itoa n) " è¯»å–å¤±è´¥ï¼š" (vl-catch-all-error-message raw))))
+                (OCS:fail (strcat label " ÄÚÈİÏî " (itoa n) " ¶ÁÈ¡Ê§°Ü£º" (vl-catch-all-error-message raw))))
               (progn
-                (if (not (OCS:stringp raw)) (OCS:fail (strcat label " æœªè¿”å›å­—ç¬¦ä¸²")))
+                (if (not (OCS:stringp raw)) (OCS:fail (strcat label " Î´·µ»Ø×Ö·û´®")))
                 (setq fid (OCS:mustCall 'vla-GetFieldId2 (list e row col n)))
                 (setq formula (OCS:mustCall 'vla-GetHasFormula (list e row col n)))
                 (if (or (/= fid 0) (equal formula :vlax-true) (OCS:containsField raw))
-                  (setq partial (cons (strcat label "ï¼šå­—æ®µæˆ–å…¬å¼å†…å®¹ä¿æŒåŸçŠ¶") partial))
+                  (setq partial (cons (strcat label "£º×Ö¶Î»ò¹«Ê½ÄÚÈİ±£³ÖÔ­×´") partial))
                   (progn
                     (setq new (OCS:NormalizeFontRuns raw (OCS:fontTarget)))
-                    (if (OCS:assocd "issues" new nil) (OCS:fail (strcat label " å­—ä½“æ ¼å¼ä¸å®Œæ•´")))
+                    (if (OCS:assocd "issues" new nil) (OCS:fail (strcat label " ×ÖÌå¸ñÊ½²»ÍêÕû")))
                     (if (> (OCS:assocd "changes" new 0) 0)
                       (progn
                         (setq edit (list "row" row "col" col "content" n "before" raw
                           "after" (OCS:assocd "text" new raw) "meta" (OCS:tableMeta e row col n)))
                         (setq edits (cons edit edits) changes (+ changes (OCS:assocd "changes" new 0)))))))
                 (setq n (1+ n)))))
-          (if (not done) (OCS:fail (strcat label " å†…å®¹é¡¹è¾¾åˆ° 1024 ä¸Šé™ï¼Œåœæ­¢ä»¥å…æ¼æ”¹")))))))
+          (if (not done) (OCS:fail (strcat label " ÄÚÈİÏî´ïµ½ 1024 ÉÏÏŞ£¬Í£Ö¹ÒÔÃâÂ©¸Ä")))))))
   (list "edits" (reverse edits) "partial" partial "changes" changes)
 )
 
@@ -2979,7 +2979,7 @@
   (setq cleanup (vl-catch-all-apply 'OCS:deleteStyleIfExists (list name)))
   (if (vl-catch-all-error-p r) (setq r (OCS:addProblem res "error" (OCS:errorText r))))
   (if (or (vl-catch-all-error-p cleanup) (tblobjname "STYLE" name))
-    (setq r (OCS:addProblem r "error" "ä¸´æ—¶å­—ä½“æ ·å¼æ¸…ç†å¤±è´¥"))
+    (setq r (OCS:addProblem r "error" "ÁÙÊ±×ÖÌåÑùÊ½ÇåÀíÊ§°Ü"))
     (setq *OCS:ProbeStyle* nil))
   r
 )
@@ -2994,11 +2994,11 @@
   (setq r (vl-catch-all-apply 'OCS:Rollback nil))
   (OCS:trace "RECOVERY_RESULT" (if (vl-catch-all-error-p r) (vl-catch-all-error-message r) r))
   (if (and (not (vl-catch-all-error-p r)) r)
-    (OCS:putPair report "status" "å¤±è´¥å·²å›æ»š")
+    (OCS:putPair report "status" "Ê§°ÜÒÑ»Ø¹ö")
     (progn
       (setq report (OCS:putPair report "recoverFailed" 1))
-      (setq report (OCS:appendError report "RECOVERY" "è‡ªåŠ¨æ¢å¤æœªé€šè¿‡æ ¡éªŒï¼Œè¯·æ£€æŸ¥åŸå›¾ä¸æ’¤é”€è®°å½•"))
-      (OCS:putPair report "status" "æ¢å¤å¤±è´¥")))
+      (setq report (OCS:appendError report "RECOVERY" "×Ô¶¯»Ö¸´Î´Í¨¹ıĞ£Ñé£¬Çë¼ì²éÔ­Í¼Óë³·Ïú¼ÇÂ¼"))
+      (OCS:putPair report "status" "»Ö¸´Ê§°Ü")))
 )
 (defun OCS:runStats (report styles hosts / stats key)
   (setq stats (OCS:assocd "stats" *OCS:Plan* nil))
@@ -3016,11 +3016,11 @@
           (cons "uncoveredDetail" (OCS:assocd "skipped" stats nil))))
 )
 
-;;; åŠ è½½æç¤ºï¼ˆé˜²å¾¡å¼ï¼šç‰ˆæœ¬å·å–ä¸åˆ°æ—¶ä¸è§¦å‘ strcat ç±»å‹é”™è¯¯ï¼‰
+;;; ¼ÓÔØÌáÊ¾£¨·ÀÓùÊ½£º°æ±¾ºÅÈ¡²»µ½Ê±²»´¥·¢ strcat ÀàĞÍ´íÎó£©
 ;;; =====================================================================
 
 
-;; æ—¥æœŸï¼š2026-10-13ã€‚åªè¯»æ‰©å±•å­—å…¸ï¼Œä¸èƒ½è°ƒç”¨ä¼šåˆ›å»ºå­—å…¸çš„ GetExtensionDictionaryã€‚
+;; ÈÕÆÚ£º2026-10-13¡£Ö»¶ÁÀ©Õ¹×Öµä£¬²»ÄÜµ÷ÓÃ»á´´½¨×ÖµäµÄ GetExtensionDictionary¡£
 (defun OCS:hasFieldDictionary (obj / e ext)
   (setq e (entget (vlax-vla-object->ename obj)) ext (OCS:assocd 360 e nil))
   (and ext (dictsearch ext "ACAD_FIELD"))
@@ -3030,7 +3030,7 @@
   (foreach pair e
     (if (= (car pair) -3)
       (foreach app (cdr pair)
-        ;; ACAD ä¸­çš„å­—ä½“å/å­—ä½“ä½ç”± SetFont ç»´æŠ¤ï¼Œå…¶ä½™åº”ç”¨æ‰©å±•æ•°æ®åŸæ ·æ¯”è¾ƒã€‚
+        ;; ACAD ÖĞµÄ×ÖÌåÃû/×ÖÌåÎ»ÓÉ SetFont Î¬»¤£¬ÆäÓàÓ¦ÓÃÀ©Õ¹Êı¾İÔ­Ñù±È½Ï¡£
         (if (/= (strcase (car app)) "ACAD") (setq out (cons app out))))))
   (reverse out)
 )
@@ -3058,12 +3058,12 @@
           (setq ok nil)))
       (if (not (equal (OCS:assocd "newText" target "")
             (OCS:assocd "text" (OCS:ReadHost (OCS:assocd "host" target nil)) ""))) (setq ok nil))))
-  (list "ok" ok "error" (if ok nil "å†ç”Ÿåæ–‡å­—å†…å®¹æˆ–éå­—ä½“å‚æ•°ä¸è®¡åˆ’ä¸ä¸€è‡´"))
+  (list "ok" ok "error" (if ok nil "ÔÙÉúºóÎÄ×ÖÄÚÈİ»ò·Ç×ÖÌå²ÎÊıÓë¼Æ»®²»Ò»ÖÂ"))
 )
 
 (if (and (boundp '*OCS:Version*) *OCS:Version*)
-(princ (strcat "\nä¸€é”®ç»Ÿä¸€å®‹ä½“ï¼ˆYJSTï¼‰v" *OCS:Version*
-                 " å·²åŠ è½½ã€‚YJST è½¬æ¢ï¼ŒYJSTCHECK æ ¸æŸ¥ï¼ŒYJSTLOG æŸ¥çœ‹æ—¥å¿—è·¯å¾„ã€‚"))
-  (princ "\nä¸€é”®ç»Ÿä¸€å®‹ä½“ï¼ˆYJSTï¼‰å·²åŠ è½½ã€‚è¾“å…¥ YJST æ‰§è¡Œã€‚")
+(princ (strcat "\nÒ»¼üÍ³Ò»ËÎÌå£¨YJST£©v" *OCS:Version*
+                 " ÒÑ¼ÓÔØ¡£YJST ×ª»»£¬YJSTCHECK ºË²é£¬YJSTLOG ²é¿´ÈÕÖ¾Â·¾¶¡£"))
+  (princ "\nÒ»¼üÍ³Ò»ËÎÌå£¨YJST£©ÒÑ¼ÓÔØ¡£ÊäÈë YJST Ö´ĞĞ¡£")
 )
 (princ)

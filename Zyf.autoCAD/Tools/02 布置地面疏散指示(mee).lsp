@@ -1,4 +1,4 @@
-;2021.06.08 å¼ è£•é”‹
+;2021.06.08 ÕÅÔ£·æ
 (defun c:mee()
 (command "measure" PAUSE  "B" "f" "y" "3000" )
 )

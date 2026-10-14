@@ -83,25 +83,7 @@
     </None>
 
   </ItemGroup>
-  <!-- 源码保持 UTF-8，AutoCAD 2020 加载的输出文件使用 GB2312。 -->
-  <UsingTask TaskName="EncodeSimsunLisp" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
-    <ParameterGroup>
-      <SourceFile ParameterType="System.String" Required="true" />
-      <OutputFile ParameterType="System.String" Required="true" />
-    </ParameterGroup>
-    <Task>
-      <Code Type="Fragment" Language="cs"><![CDATA[
-        var text = System.IO.File.ReadAllText(SourceFile, System.Text.Encoding.UTF8);
-        var encoding = System.Text.Encoding.GetEncoding(936,
-            System.Text.EncoderFallback.ExceptionFallback,
-            System.Text.DecoderFallback.ExceptionFallback);
-        System.IO.File.WriteAllText(OutputFile, text, encoding);
-      ]]></Code>
-    </Task>
-  </UsingTask>
-  <Target Name="EncodeSimsunForAutoCAD" AfterTargets="CopyFilesToOutputDirectory" BeforeTargets="PostBuildEvent">
-    <EncodeSimsunLisp SourceFile="$(ProjectDir)Tools\13 一键统一宋体(yjst).lsp" OutputFile="$(TargetDir)Tools\13 一键统一宋体(yjst).lsp" />
-  </Target>
+  <!-- Tools 下的 LSP 源文件已采用 GB2312，构建时按原始字节复制。 -->
 	<Target Name="CopyApplication" AfterTargets="PostBuildEvent" Condition="'$(DeployToAutoCAD)' == 'true'">
 		<ItemGroup>
 			<SourceFiles Include="$(ProjectDir)$(OutDir)/**/*.*"></SourceFiles>
