@@ -1,13 +1,20 @@
+;;; 修复版独立命令：加载仅注册，输入 YJSTFIX 执行。
+;;; 日期：2026-10-14
+(if (or (and (boundp '*OCS:Running*) *OCS:Running*)
+            (and (boundp '*OCS:UndoMark*) *OCS:UndoMark*))
+  (progn
+    (princ "\n存在未结束操作或未关闭撤销分组。本次未加载修复代码，请先处理原恢复状态。")
+    (exit)))
 ;;; =====================================================================
 ;;; one-click-simsun.lsp
 ;;; 一键统一宋体（YJST）：将当前图纸文字字体统一为宋体（SimSun）
 ;;;
-;;; 日期：2026-10-13
+;;; 日期：2026-10-14
 ;;; 状态：实现完成，待原生 AutoCAD 验收（见 docs/AutoCAD验收记录.md）
 ;;; 编码：开发源码 UTF-8（无 BOM）；CAD 加载请使用 output/gb2312/ 交付文件
 ;;;
 ;;; 依据：docs/AutoLISP一键统一宋体实施方案.md
-;;; 命令：APPLOAD 加载本文件后执行 YJST
+;;; 命令：APPLOAD 加载本文件后执行 YJSTFIX
 ;;; 约定：所有函数使用 OCS: 前缀（用户命令为 c:YJST）
 ;;;
 ;;; 只改变字体定义与文字内容中的有效字体切换指令；
@@ -72,7 +79,10 @@
 ;;   (setq res (OCS:addProblem res "error" "Blocks 集合接口不可用")))
 
 ;;; ------------------------- 全局状态 -------------------------
-(setq *OCS:Version*      "0.2.10")
+(setq *OCS:Version*      "0.2.13")
+(setq *OCS:DiagnosticsVersion* "2026-10-14-font-verify-v5")
+(setq *OCS:TableContentCounts* nil)
+(setq *OCS:ScanContext* nil)
 (setq *OCS:CollectReverse* nil)
 (setq *OCS:ClockStart* nil *OCS:PhaseStart* nil *OCS:PhaseName* nil *OCS:PhaseTimes* nil)
 (setq *OCS:CheckOnly* nil *OCS:LastCheckReport* nil)
@@ -143,7 +153,10 @@
   ;; 日期：2026-10-13。普通读取每 64 条落盘；失败、恢复、阶段边界和结束立即落盘。
   (if (or (>= *OCS:LogPendingCount* 64)
           (member event (list "RUN_BEGIN" "RUN_RESULT" "RUN_END" "RUN_TIMING" "PHASE_TIME"
-            "CALL_ERROR" "ERROR" "REPORT_ERROR" "ROLLBACK_BEGIN" "ROLLBACK_END" "RECOVERY_RESULT")))
+            "CALL_ERROR" "ERROR" "REPORT_ERROR" "ROLLBACK_BEGIN" "ROLLBACK_END" "RECOVERY_RESULT"
+            "BLOCKREF_DIAG_BEGIN" "BLOCKREF_DIAG_END" "BLOCKREF_DIAG_ERROR"
+            "BLOCKREF_DIAG_PROBE_BEGIN" "BLOCKREF_DIAG_PROBE" "BLOCKREF_DIAG_DXF_BEGIN" "BLOCKREF_DIAG_DXF"
+            "BLOCKREF_SKIPPED")))
     (OCS:logFlush))
   nil
 )
@@ -190,7 +203,8 @@
             (setq result (vl-catch-all-apply 'close (list fd)))
             (if (not (vl-catch-all-error-p result)) (setq *OCS:LogPath* path)))))))
   (if (not *OCS:LogPath*) (setq *OCS:LogError* "日志目录不可写，仅保留最近 40 条内存记录"))
-  (OCS:trace "RUN_BEGIN" (list "version" *OCS:Version* "date" day "cdate" stamp "encoding" *OCS:LogEncoding*))
+  (OCS:trace "RUN_BEGIN" (list "version" *OCS:Version* "date" day "cdate" stamp "encoding" *OCS:LogEncoding*
+    "diagnostics" *OCS:DiagnosticsVersion*))
   (foreach name (list "ACADVER" "PRODUCT" "PLATFORM" "LISPSYS" "DWGPREFIX" "DWGNAME" "DWGTITLED" "UNDOCTL")
     (setq value (OCS:logVar name))
     (OCS:trace "ENV" (list name value)))
@@ -1214,7 +1228,7 @@
 (defun OCS:CollectHosts ( / res doc blocks count i blk key *OCS:CollectReverse*)
   (setq *OCS:CollectReverse* T)
   (setq res (list "blocks" 0 "xrefBlocks" 0 "displayBlocks" 0
-                  "entities" 0 "attribs" 0 "unknown" 0
+                  "entities" 0 "attribs" 0 "unknown" 0 "nonTextExcluded" 0
                   "blockList" nil "skipped" nil))
   (setq doc (OCS:activeDoc))
   (if (not doc)
@@ -1286,12 +1300,13 @@
   )
 )
 
-(defun OCS:scanBlockContents (res doc blk bname bhandle / ents count i e label)
+(defun OCS:scanBlockContents (res doc blk bname bhandle / ents count i e label *OCS:ScanContext*)
   (setq ents blk) ; Block 本身就是实体集合
   (setq label (strcat "扫描图块 " bname " [" bhandle "]"))
   (OCS:setStage label)
   (setq count (OCS:requireProp ents 'Count) i 1)
   (while (<= i count)
+    (setq *OCS:ScanContext* (list "block" bname "blockHandle" bhandle "index" (1- i) "count" count))
     (OCS:setStage (strcat label "，实体索引 " (itoa (1- i))))
     (setq e (OCS:safeItem ents i))
     (if e (setq res (OCS:visitEntity res doc e (list "block" bname bhandle))))
@@ -1348,6 +1363,9 @@
   (setq cls (if *OCS:CheckOnly* "other" (OCS:mapClass typ)))
   (OCS:trace "ENTITY" (list "handle" handle "type" typ "class" cls "context" ctx "layer" (OCS:safeProp e 'Layer)))
   (cond
+    ((OCS:fontlessProClassP typ)
+     (OCS:trace "NON_TEXT_EXCLUDED" (list "handle" handle "type" typ "reason" "用户确认桥架及配件无文字"))
+     (OCS:putPair res "nonTextExcluded" (1+ (OCS:getVal res "nonTextExcluded" 0))))
     ((equal cls "text")     (OCS:collectTextHost res doc e ctx handle typ))
     ((equal cls "mtext")    (OCS:collectTextHost res doc e ctx handle typ))
     ((equal cls "attrib")   (OCS:collectAttrib res doc e ctx handle typ))
@@ -1381,8 +1399,13 @@
   (not (OCS:knownClass typ))
 )
 
+(defun OCS:fontlessProClassP (typ)
+  ;; 日期：2026-10-14。用户明确确认这两类没有文字；不扩展到其他天正对象。
+  (member (strcase typ) (list "TDBECABLETRY" "TDBEFITTING" "TCH_CABLETRY" "TCH_EFITTING"))
+)
+
 (defun OCS:knownClass (typ)
-  (or (/= (OCS:mapClass typ) "other")
+  (or (OCS:fontlessProClassP typ) (/= (OCS:mapClass typ) "other")
       (member (strcase typ)
         (list "ACDBLINE" "ACDBARC" "ACDBCIRCLE" "ACDBELLIPSE" "ACDBSPLINE"
               "ACDBPOLYLINE" "ACDB2DPOLYLINE" "ACDB3DPOLYLINE" "ACDBPOINT"
@@ -1460,8 +1483,24 @@
 )
 
 ;; 块引用：额外处理属性实例（GetAttributes / GetConstantAttributes）
-(defun OCS:collectBlockRef (res doc e ctx handle typ / blk name has attrs a meth label)
-  (setq name (OCS:requireProp e 'Name))
+(defun OCS:collectBlockRef (res doc e ctx handle typ / ent data reason)
+  ;; 日期：2026-10-14。原图 D5 可解析句柄但 entget 返回 nil，导出 DXF 中没有该实体。
+  ;; 只对明确空结果跳过；接口异常仍由 mustCall 保留原始错误并停止写入。
+  (setq ent (OCS:mustCall 'handent (list handle)))
+  (if ent (setq data (OCS:mustCall 'entget (list ent))))
+  (if data
+    (OCS:collectReadableBlockRef res doc e ctx handle typ)
+    (progn
+      (setq reason (if ent "ENTGET_RETURNED_NIL" "HANDLE_NOT_RESOLVED"))
+      (OCS:trace "BLOCKREF_SKIPPED" (list "handle" handle "type" typ "context" ctx
+        "scan" *OCS:ScanContext* "reason" reason "activeXProbes" "disabled"))
+      (setq res (OCS:putPair res "unknown" (1+ (OCS:getVal res "unknown" 0))))
+      (OCS:lstAppend res "skipped" (list "UNREADABLE_BLOCK_REFERENCE" handle
+        (strcat typ "@" (OCS:ctxStr ctx) ":" reason)))))
+)
+
+(defun OCS:collectReadableBlockRef (res doc e ctx handle typ / blk name has attrs a meth label)
+  (setq name (OCS:blockRefName e ctx handle typ))
   (setq label (strcat "读取块引用 " name " [" handle "]"))
   (OCS:setStage label)
   (setq blk (OCS:mustCall 'vla-Item (list (OCS:requireProp doc 'Blocks) name)))
@@ -1476,6 +1515,77 @@
     )
   )
   res
+)
+
+;;; 日期：2026-10-14。块名称读取失败时仅补充只读证据，保留原始错误及停止写入行为。
+(defun OCS:blockRefName (e ctx handle typ / result message diag)
+  (setq result (OCS:tracedCall 'vla-get-Name (list e)))
+  (if (vl-catch-all-error-p result)
+    (progn
+      (setq message (strcat "vla-get-Name：" (vl-catch-all-error-message result)))
+      (if *OCS:TraceActive*
+        (progn
+          (setq diag (vl-catch-all-apply 'OCS:blockRefDiagnostic (list e ctx handle typ message)))
+          (if (vl-catch-all-error-p diag)
+            (OCS:trace "BLOCKREF_DIAG_ERROR" (list "handle" handle "originalError" message
+              "diagnosticError" (vl-catch-all-error-message diag))))))
+      (OCS:fail message)))
+  result
+)
+
+;; 每项探测独立捕获异常；nil 与接口错误分别记录，诊断不会调用必需数据读取包装。
+(defun OCS:diagProbe (label fn args / result)
+  (OCS:trace "BLOCKREF_DIAG_PROBE_BEGIN" (list "probe" label "function" (vl-symbol-name fn)))
+  (setq result (vl-catch-all-apply fn args))
+  (if (vl-catch-all-error-p result)
+    (progn
+      (OCS:trace "BLOCKREF_DIAG_PROBE" (list "probe" label "function" (vl-symbol-name fn)
+        "status" "error" "error" (vl-catch-all-error-message result)))
+      nil)
+    (progn
+      (OCS:trace "BLOCKREF_DIAG_PROBE" (list "probe" label "function" (vl-symbol-name fn)
+        "status" (if (null result) "nil" "ok")
+        "value" (cond ((equal (type result) 'VLA-OBJECT) "<VLA-OBJECT>")
+                      ((equal (type result) 'ENAME) "<ENAME>") (T result))))
+      result))
+)
+
+;; 保留身份、所属关系、块名和子类标记；不展开几何、文字内容或整张图纸。
+(defun OCS:diagDxfSummary (data / rows pair)
+  (foreach pair data
+    (if (member (car pair) (list 0 2 5 8 66 67 70 100 102 330 340 350 360 410))
+      (setq rows (cons (list (car pair)
+        (if (equal (type (cdr pair)) 'ENAME) "<ENAME>" (vl-prin1-to-string (cdr pair)))) rows))))
+  (reverse rows)
+)
+
+(defun OCS:diagEntityData (label ent / data result)
+  (if ent
+    (progn
+      (OCS:trace "BLOCKREF_DIAG_DXF_BEGIN" (list "probe" label "function" "entget"))
+      (setq result (vl-catch-all-apply 'entget (list ent)))
+      (if (vl-catch-all-error-p result)
+        (OCS:trace "BLOCKREF_DIAG_DXF" (list "probe" label "status" "error"
+          "error" (vl-catch-all-error-message result)))
+        (progn
+          (setq data result)
+          (OCS:trace "BLOCKREF_DIAG_DXF" (list "probe" label "status" (if data "ok" "nil")
+            "pairCount" (length data) "fields" (OCS:diagDxfSummary data))))))
+    (OCS:trace "BLOCKREF_DIAG_DXF" (list "probe" label "status" "unavailable")))
+  data
+)
+
+(defun OCS:blockRefDiagnostic (e ctx handle typ message / viaHandle data)
+  (OCS:trace "BLOCKREF_DIAG_BEGIN" (list "diagnostics" *OCS:DiagnosticsVersion*
+    "handle" handle "type" typ "context" ctx "scan" *OCS:ScanContext* "originalError" message
+    "mode" "DXF_ONLY" "activeXProbes" "disabled"))
+  ;; 日期：2026-10-14。原生 CAD 闪退反馈后撤除对象重建、属性复探及所属记录遍历。
+  (setq viaHandle (OCS:diagProbe "entity.byHandle" 'handent (list handle)))
+  (setq data (OCS:diagEntityData "entity.byHandle" viaHandle))
+  (OCS:trace "BLOCKREF_DIAG_IDENTITY" (list "handleResolved" (if viaHandle T nil)
+    "dxfReadable" (if data T nil) "dxfHandle" (OCS:assocd 5 data nil) "dxfBlockName" (OCS:assocd 2 data nil)))
+  (OCS:trace "BLOCKREF_DIAG_END" (list "handle" handle "originalError" message "readOnly" T))
+  nil
 )
 
 ;;; =====================================================================
@@ -1539,8 +1649,8 @@
 ;;; 修改计划 OCS:BuildPlan
 ;;; =====================================================================
 
-(defun OCS:BuildPlan ( / plan styles hosts targets host data new scan partial item)
-  (setq styles (OCS:CollectStyles) hosts (OCS:CollectHosts) targets nil)
+(defun OCS:BuildPlan ( / plan styles hosts targets host data new scan partial item protectedCells)
+  (setq styles (OCS:CollectStyles) hosts (OCS:CollectHosts) targets nil protectedCells nil)
   (if (OCS:hasError hosts) (OCS:fail (OCS:fmt (OCS:problemsOf hosts))))
   (foreach host (OCS:assocd "hosts" hosts nil)
     (OCS:setStage (strcat "读取宿主 " (OCS:assocd "type" host "?") " ["
@@ -1548,6 +1658,9 @@
     (setq data (OCS:ReadHost host))
     (if (OCS:assocd "error" data nil) (OCS:fail (OCS:assocd "error" data "")))
     (setq partial (OCS:assocd "partial" data nil))
+    (foreach item (OCS:assocd "protectedCells" data nil)
+      (setq item (OCS:putPair item "handle" (OCS:assocd "handle" host "?")))
+      (setq protectedCells (cons item protectedCells)))
     (if (not (OCS:assocd "skip" data nil))
       (progn
         (if (= (OCS:assocd "kind" data "") "table")
@@ -1570,7 +1683,7 @@
       (setq hosts (OCS:lstAppend hosts "skipped" (list "PROTECTED_CONTENT" (OCS:assocd "handle" host "?") item)))))
   (list "styles" (OCS:assocd "normal" styles nil) "shape" (OCS:assocd "shape" styles nil)
         "xrefStyle" (OCS:assocd "xref" styles nil) "hosts" (OCS:assocd "hosts" hosts nil)
-        "stats" hosts "targets" (reverse targets))
+        "stats" hosts "targets" (reverse targets) "protectedCells" (reverse protectedCells))
 )
 
 ;;; =====================================================================
@@ -1764,22 +1877,27 @@
   r
 )
 
-(defun OCS:readTable (host e / rows cols row col data cell edits partial changes)
+(defun OCS:readTable (host e / rows cols row col data cell edits partial changes protectedCells *OCS:TableContentCounts*)
   (setq rows (OCS:requireProp e 'Rows) cols (OCS:requireProp e 'Columns))
   (if (or (not (numberp rows)) (not (numberp cols)) (< rows 0) (< cols 0))
     (OCS:fail "表格行列数无效"))
-  (setq row 0 edits nil partial nil changes 0)
+  (setq *OCS:TableContentCounts* (OCS:tableContentInfo e rows cols))
+  (setq row 0 edits nil partial nil changes 0 protectedCells nil)
   (while (< row rows)
     (setq col 0)
     (while (< col cols)
       (setq cell (OCS:tableReadCell e row col))
       (setq edits (append edits (OCS:assocd "edits" cell nil)))
       (setq partial (append partial (OCS:assocd "partial" cell nil)))
+      (if (OCS:assocd "partial" cell nil)
+        (setq protectedCells (cons (list "obj" e "row" row "col" col
+          "reasons" (OCS:assocd "partial" cell nil)) protectedCells)))
       (setq changes (+ changes (OCS:assocd "changes" cell 0)))
       (setq col (1+ col)))
     (setq row (1+ row)))
   (list "kind" "table" "obj" e "rows" rows "cols" cols "edits" edits
-        "changes" changes "partial" partial "layout" (OCS:tableLayout e rows cols)
+        "changes" changes "partial" partial "protectedCells" (reverse protectedCells)
+        "layout" (OCS:tableLayout e rows cols)
         "suppressed" (OCS:requireProp e 'RegenerateTableSuppressed))
 )
 
@@ -2072,7 +2190,8 @@
         "recoverFailed" 0
         "stylesScanned" 0 "stylesModified" 0 "stylesXref" 0 "stylesShape" 0
         "hostsScanned" 0 "fontRunsChanged" 0 "attribs" 0 "tableContents" 0
-        "blocks" 0 "xrefBlocks" 0 "displayBlocks" 0
+        "blocks" 0 "xrefBlocks" 0 "displayBlocks" 0 "nonTextExcluded" 0
+        "tableProtectedPassed" 0 "tableProtectedMismatch" 0 "tableProtectedUnknown" 0
         "dwg" (getvar "DWGPREFIX")
         "cadver" (getvar "ACADVER")
         "family" "SimSun")
@@ -2286,9 +2405,15 @@
   (princ (strcat "\n扫描块定义：" (itoa (OCS:assocd "blocks" report 0))
                  "　外参块跳过：" (itoa (OCS:assocd "xrefBlocks" report 0))
                  "　匿名显示块：" (itoa (OCS:assocd "displayBlocks" report 0))))
-  (princ (strcat "\n专业对象未覆盖：" (itoa (OCS:assocd "uncovered" report 0))
+  (princ (strcat "\n未覆盖对象：" (itoa (OCS:assocd "uncovered" report 0))
                  "　错误：" (itoa (OCS:assocd "errors" report 0))
                  "　恢复失败：" (itoa (OCS:assocd "recoverFailed" report 0))))
+  (if (> (OCS:assocd "nonTextExcluded" report 0) 0)
+    (princ (strcat "\n不涉及字体的专业对象：" (itoa (OCS:assocd "nonTextExcluded" report 0)))))
+  (if (OCS:assocd "tableProtectedChecked" report nil)
+    (princ (strcat "\n受保护单元格只读核验：通过 " (itoa (OCS:assocd "tableProtectedPassed" report 0))
+      "　不一致 " (itoa (OCS:assocd "tableProtectedMismatch" report 0))
+      "　无法核验 " (itoa (OCS:assocd "tableProtectedUnknown" report 0)))))
   (if (OCS:assocd "tchChecked" report nil)
     (princ (strcat "\n天正公开字体核验：通过 " (itoa (OCS:assocd "tchPassed" report 0))
       "　不一致 " (itoa (OCS:assocd "tchMismatch" report 0))
@@ -2446,9 +2571,18 @@
      (strcat "\n==== YJST 执行失败：" status "，请查看上方错误明细和日志。 ===="))
     ((or (= status "部分完成") (> uncovered 0))
      (strcat "\n==== YJST 执行成功（部分完成）：仍有 " (itoa uncovered)
-             " 个专业对象未覆盖，详情见日志；可输入 YJSTCHECK 核查。 ===="))
+             " 个对象未覆盖，详情见日志；可输入 YJSTCHECK 核查。 ===="))
     ((= status "无需修改") "\n==== YJST 执行成功：无需修改。 ====")
     (T "\n==== YJST 执行成功。 ====")))
+
+(defun c:YJSTFIX ()
+  ;; 日期：2026-10-14。独立命令避开工具集同名 .NET YJST 入口；被旧版覆盖时拒绝执行。
+  (if (and (equal *OCS:Version* "0.2.13")
+           (equal *OCS:DiagnosticsVersion* "2026-10-14-font-verify-v5"))
+    (c:YJST)
+    (princ "\n当前宋体脚本已被旧版覆盖。请重新 APPLOAD v0.2.13 修复文件，然后输入 YJSTFIX。"))
+  (princ)
+)
 
 (defun c:YJST ( / r report)
   (cond
@@ -2548,7 +2682,8 @@
       (OCS:TestFault "regen-check")
       (setq verifyRes (OCS:VerifyDrawing))
       (if (not (OCS:assocd "ok" verifyRes nil))
-        (setq report (OCS:appendError report "VERIFY" (OCS:assocd "error" verifyRes "读回失败"))))))
+        (setq report (OCS:appendError report "VERIFY" (OCS:assocd "error" verifyRes "读回失败")))
+        (setq report (OCS:verifyProtectedCells report)))))
   (if (> (OCS:assocd "errors" report 0) 0)
     (OCS:recoverReport report)
     (if (not (OCS:endUndoGroup))
@@ -2923,13 +3058,236 @@
           (OCS:strContains msg "无效索引") (OCS:strContains msg "无效的索引")
           (OCS:strContains msg "索引超出范围") (OCS:strContains msg "输入无效"))))
 )
-(defun OCS:tableEndP (e row col content r / check)
-  ;; 文本读取失败不是终点。至少已读到一个内容，且独立索引访问也必须确认越界。
-  (and (> content 0) (OCS:indexErrorP r)
-       (OCS:indexErrorP (vl-catch-all-apply 'vla-GetTextStyle2 (list e row col content)))
-       (OCS:indexErrorP (vl-catch-all-apply 'vla-GetFieldId2 (list e row col content))))
+;;; 日期：2026-10-14。只在验证过的 AcDbTable 2010 DXF 结构中按 CELL_VALUE 计数。
+;;; 未知布局或与 ActiveX 行列数不一致时不猜数量，保留该表的局部字体并报告未覆盖。
+(defun OCS:tableDxfCounts (data rows cols / pair active seen inCell nr nc version count counts code value)
+  (setq count 0)
+  (foreach pair data
+    (setq code (car pair) value (cdr pair))
+    (if (= code 100)
+      (progn
+        (setq active (equal value "AcDbTable"))
+        (if active (setq seen T))))
+    (if active
+      (cond
+        ((= code 171)
+         (if inCell (setq counts (cons count counts)))
+         (setq inCell T count 0))
+        ((and (not inCell) (= code 280) (null version)) (setq version value))
+        ((and (not inCell) (= code 91) (null nr)) (setq nr value))
+        ((and (not inCell) (= code 92) (null nc)) (setq nc value))
+        ((and inCell (= code 301) (equal value "CELL_VALUE")) (setq count (1+ count))))))
+  (if inCell (setq counts (cons count counts)))
+  (if (and seen (equal version 0) (equal nr rows) (equal nc cols)
+           (= (length counts) (* rows cols)))
+    (reverse counts)
+    nil)
 )
-(defun OCS:tableReadCell (e row col / state typ merge label edits partial n done raw new fid formula changes edit)
+
+(defun OCS:tableDxfCells (data / active cells cell p)
+  (foreach p data
+    (if (= (car p) 100) (setq active (equal (cdr p) "AcDbTable")))
+    (if active
+      (progn
+        (if (= (car p) 171)
+          (progn (if cell (setq cells (cons (reverse cell) cells))) (setq cell nil)))
+        (if (or cell (= (car p) 171)) (setq cell (cons p cell))))))
+  (if cell (setq cells (cons (reverse cell) cells)))
+  (reverse cells)
+)
+
+(defun OCS:tableContentInfo (e rows cols / handle ent data counts)
+  (setq handle (OCS:requireProp e 'Handle))
+  (setq ent (OCS:mustCall 'handent (list handle)))
+  (if ent (setq data (OCS:mustCall 'entget (list ent))))
+  (if data (setq counts (OCS:tableDxfCounts data rows cols)))
+  (OCS:trace "TABLE_CONTENT_COUNTS" (list "handle" handle "rows" rows "cols" cols
+    "source" "DXF_CELL_VALUE" "status" (if counts "known" "unknown") "cells" (length counts)))
+  (list "cols" cols "counts" counts "cells" (if counts (OCS:tableDxfCells data) nil))
+)
+
+(defun OCS:tableContentCounts (e rows cols)
+  (OCS:assocd "counts" (OCS:tableContentInfo e rows cols) nil)
+)
+
+(defun OCS:tableCellContentCount (e row col / info)
+  (setq info *OCS:TableContentCounts*)
+  (if (not info)
+    (setq info (OCS:tableContentInfo e (OCS:requireProp e 'Rows) (OCS:requireProp e 'Columns))))
+  (nth (+ (* row (OCS:assocd "cols" info 0)) col) (OCS:assocd "counts" info nil))
+)
+
+;;; 日期：2026-10-14。受保护内容只读核验，不求值、不替换字段、不写回内容。
+(defun OCS:verifyReadOnlyText (text / scan)
+  (setq scan (OCS:NormalizeFontRuns text (OCS:fontTarget)))
+  (cond
+    ((OCS:assocd "issues" scan nil) (list "status" "unknown" "reason" "公开文字格式无法完整解析"))
+    ((> (OCS:assocd "changes" scan 0) 0) (list "status" "mismatch" "reason" "公开文字含非宋体局部字体"))
+    (T (list "status" "pass" "reason" "公开文字未见非宋体局部字体")))
+)
+
+(defun OCS:replaceLiteral (text needle replacement / pos)
+  (while (setq pos (OCS:strFindNth text needle 1))
+    (setq text (strcat (substr text 1 (1- pos)) replacement
+      (substr text (+ pos (strlen needle))))))
+  text
+)
+
+(defun OCS:fieldLiteralText (code children / i known one two)
+  (setq i 0 known T)
+  (while (< i children)
+    (setq two (strcat "%<\\\\_FldIdx " (itoa i) ">%") one (strcat "%<\\_FldIdx " (itoa i) ">%"))
+    (if (not (or (OCS:strFindNth code two 1) (OCS:strFindNth code one 1))) (setq known nil))
+    (setq code (OCS:replaceLiteral code two ""))
+    (setq code (OCS:replaceLiteral code one ""))
+    (setq i (1+ i)))
+  (if known code nil)
+)
+
+(defun OCS:fieldCacheData (section / active out p)
+  (foreach p section
+    (if (= (car p) 7) (setq active (equal (cdr p) "ACFD_FIELD_VALUE")))
+    (if (= (car p) 98) (setq active nil))
+    (if active (setq out (cons p out))))
+  (reverse out)
+)
+
+(defun OCS:fieldFontStatus (root / pending seen ref ent data section key engine code children childCount
+                                  cache dtype status reason r p literal nodes)
+  (setq pending (list root) status "pass" nodes 0)
+  (while (and pending (= status "pass") (< nodes 128))
+    (setq ref (car pending) pending (cdr pending) nodes (1+ nodes))
+    (setq ent (if (OCS:stringp ref) (OCS:mustCall 'handent (list ref)) ref))
+    (setq data (if ent (OCS:mustCall 'entget (list ent)) nil))
+    (setq key (OCS:assocd 5 data nil) section (OCS:tchSection data "AcDbField"))
+    (cond
+      ((or (not key) (not section) (not (member (OCS:assocd 0 data "") (list "FIELD" "ACAD_FIELD"))))
+       (setq status "unknown" reason "字段引用缺失或未返回完整 AcDbField 记录"))
+      ((member key seen) (setq status "unknown" reason "字段子项重复或循环引用"))
+      (T
+       (setq seen (cons key seen) children nil code (OCS:assocd 2 section nil)
+         engine (OCS:assocd 1 section nil) childCount (OCS:assocd 90 section nil))
+       (foreach p section
+         (cond ((= (car p) 360) (setq children (cons (cdr p) children)))
+               ((= (car p) 3) (if (and (OCS:stringp code) (OCS:stringp (cdr p)))
+                                 (setq code (strcat code (cdr p))) (setq code nil)))))
+       (setq children (reverse children) cache (OCS:fieldCacheData section))
+       (cond
+         ((or (not (OCS:stringp engine)) (not (OCS:stringp code))
+              (not (numberp childCount)) (/= childCount (length children)) (> childCount 128))
+          (setq status "unknown" reason "字段代码或子项边界不完整"))
+         ((/= (OCS:assocd 95 section 0) 2)
+          (setq status "unknown" reason "字段尚未成功求值，现有显示结果不能确认"))
+         ((= (strcase engine) "_TEXT")
+          (setq literal (OCS:fieldLiteralText code childCount))
+          (if (or (= childCount 0) (not (OCS:stringp literal))
+                  (OCS:strContains literal "%<") (OCS:strContains literal ">%")
+                  (OCS:strContains literal "\\\\"))
+            (setq status "unknown" reason "文本字段包含未适配的引用结构")
+            (progn
+              (setq r (OCS:verifyReadOnlyText literal))
+              (setq status (OCS:assocd "status" r "unknown") reason (OCS:assocd "reason" r nil)))))
+         ((= (strcase engine) "ACEXPR")
+          ;; AcExpr 的 \\f 是数值格式参数，不按 MTEXT 字体指令解析表达式。
+          (setq dtype (OCS:assocd 90 cache nil))
+          (if (not (or (and (equal dtype 1) (numberp (OCS:assocd 91 cache nil)))
+                       (and (equal dtype 2) (numberp (OCS:assocd 140 cache nil)))))
+            (setq status "unknown" reason "表达式字段缺少已知的数值显示缓存")))
+         (T (setq status "unknown" reason "字段求值器尚未适配只读字体核验")))
+       (if (= status "pass")
+         (foreach p cache
+           (if (and (= status "pass") (member (car p) (list 1 9 300 301 302 303)))
+             (if (or (= (car p) 9) (= (car p) 303) (not (OCS:stringp (cdr p)))
+                     (OCS:containsField (cdr p)))
+               (setq status "unknown" reason "字段显示缓存包含未适配的分段或字段内容")
+               (progn
+                 (setq r (OCS:verifyReadOnlyText (cdr p)))
+                 (setq status (OCS:assocd "status" r "unknown") reason (OCS:assocd "reason" r nil)))))))
+       (OCS:trace "FIELD_FONT_VERIFY" (list "handle" key "engine" engine "status" status "reason" reason))
+       (if (= status "pass") (setq pending (append children pending))))))
+  (if (and pending (= status "pass")) (setq status "unknown" reason "字段子项超过核验边界"))
+  (list "status" status "reason" (if (= status "pass") "字段子项与现有公开显示结果未见非宋体字体" reason))
+)
+
+(defun OCS:checkProtectedCell (item / e row col typ state count cell p roots n name ent raw fid formula r status reason)
+  (setq e (OCS:assocd "obj" item nil) row (OCS:assocd "row" item 0) col (OCS:assocd "col" item 0))
+  (if (not *OCS:TableContentCounts*)
+    (setq *OCS:TableContentCounts* (OCS:tableContentInfo e (OCS:requireProp e 'Rows) (OCS:requireProp e 'Columns))))
+  (setq count (OCS:tableCellContentCount e row col)
+    cell (nth (+ (* row (OCS:assocd "cols" *OCS:TableContentCounts* 0)) col)
+      (OCS:assocd "cells" *OCS:TableContentCounts* nil))
+    typ (OCS:mustCall 'vla-GetContentType (list e row col))
+    state (OCS:mustCall 'vla-GetCellState (list e row col)) status "pass" n 0)
+  (foreach p cell (if (= (car p) 344) (setq roots (cons (cdr p) roots))))
+  (cond
+    ((or (not count) (= count 0)) (setq status "unknown" reason "无法确认完整内容数量"))
+    ((not (member typ (list 1 2))) (setq status "unknown" reason "块或未知单元格内容尚未适配完整字体核验"))
+    (T
+     (while (and (< n count) (= status "pass"))
+       (setq name (OCS:mustCall 'vla-GetTextStyle2 (list e row col n)))
+       (setq ent (if (and (OCS:stringp name) (/= name "")) (tblobjname "STYLE" name) nil))
+       (cond
+         ((or (not ent) (not (equal (OCS:assocd 0 (OCS:mustCall 'entget (list ent)) "") "STYLE")))
+          (setq status "unknown" reason "单元格文字样式引用缺失"))
+         ((not (OCS:styleIsTarget ent)) (setq status "mismatch" reason "单元格引用样式不是目标宋体或大字体非空")))
+       (if (= status "pass")
+         (progn
+           (setq raw (OCS:mustCall 'vla-GetTextString (list e row col n))
+             fid (OCS:mustCall 'vla-GetFieldId2 (list e row col n))
+             formula (OCS:mustCall 'vla-GetHasFormula (list e row col n)))
+           (if (or (not (OCS:stringp raw)) (not (numberp fid))
+                   (not (member formula (list :vlax-true :vlax-false))))
+             (OCS:fail "单元格只读接口返回不明确，未判定核验通过"))
+           (if (or (= typ 2) (/= fid 0) (equal formula :vlax-true) (OCS:containsField raw))
+             (if (or (/= count 1) (/= (length roots) 1))
+               (setq status "unknown" reason "字段内容缺少可唯一对应的公开字段引用")
+               (progn
+                 (setq r (OCS:fieldFontStatus (car roots)))
+                 (setq status (OCS:assocd "status" r "unknown") reason (OCS:assocd "reason" r nil)))))
+           (if (= status "pass")
+             (progn
+               (setq r (OCS:verifyReadOnlyText raw))
+               (setq status (OCS:assocd "status" r "unknown") reason (OCS:assocd "reason" r nil))))))
+       (setq n (1+ n)))))
+  (list "status" status "reason" (if (= status "pass") "宋体样式与完整公开内容核验通过，保留原关联" reason)
+    "state" state "contentType" typ "count" count)
+)
+
+(defun OCS:verifyProtectedCells (report / candidates item r saved passed mismatch unknown details resolved
+                                      entry match kept removed currentHandle key *OCS:TableContentCounts*)
+  (setq candidates (OCS:assocd "protectedCells" *OCS:Plan* nil) passed 0 mismatch 0 unknown 0 removed 0)
+  (foreach item candidates
+    (if (not (equal currentHandle (OCS:assocd "handle" item nil)))
+      (setq currentHandle (OCS:assocd "handle" item nil) *OCS:TableContentCounts* nil))
+    (setq saved *OCS:FailureMessage*)
+    (setq r (vl-catch-all-apply 'OCS:checkProtectedCell (list item)))
+    (if (vl-catch-all-error-p r) (setq r (list "status" "unknown" "reason" (OCS:errorText r))))
+    (setq *OCS:FailureMessage* saved)
+    (foreach key (list "handle" "row" "col") (setq r (OCS:putPair r key (OCS:assocd key item nil))))
+    (OCS:trace "TABLE_PROTECTED_VERIFY" r)
+    (setq details (cons r details))
+    (cond
+      ((= (OCS:assocd "status" r "") "pass")
+       (setq passed (1+ passed) resolved (cons item resolved)))
+      ((= (OCS:assocd "status" r "") "mismatch") (setq mismatch (1+ mismatch)))
+      (T (setq unknown (1+ unknown)))))
+  (foreach entry (OCS:assocd "uncoveredDetail" report nil)
+    (setq match nil)
+    (if (= (car entry) "PROTECTED_CONTENT")
+      (foreach item resolved
+        (if (and (equal (cadr entry) (OCS:assocd "handle" item nil))
+                 (member (caddr entry) (OCS:assocd "reasons" item nil))) (setq match T))))
+    (if match (setq removed (1+ removed)) (setq kept (cons entry kept))))
+  (setq report (OCS:putPair report "uncovered" (- (OCS:assocd "uncovered" report 0) removed)))
+  (setq report (OCS:putPair report "uncoveredDetail" (reverse kept)))
+  (setq report (OCS:putPair report "tableProtectedChecked" (not (null candidates))))
+  (setq report (OCS:putPair report "tableProtectedPassed" passed))
+  (setq report (OCS:putPair report "tableProtectedMismatch" mismatch))
+  (setq report (OCS:putPair report "tableProtectedUnknown" unknown))
+  (OCS:putPair report "tableProtectedDetails" (reverse details))
+)
+
+(defun OCS:tableReadCell (e row col / state typ merge label edits partial n count raw new fid formula changes edit)
   (setq label (strcat "单元格[" (itoa row) "," (itoa col) "]")
         edits nil partial nil changes 0)
   (OCS:trace "TABLE_CELL" (list row col))
@@ -2943,14 +3301,18 @@
         ((or (/= 0 (logand state 31)) (/= typ 1))
          (setq partial (list (strcat label "：链接、锁定、字段或块内容保持原状"))))
         (T
-          (setq n 0 done nil)
-          (while (and (not done) (< n 1024))
-            (setq raw (OCS:tableGetText e row col n))
-            (if (vl-catch-all-error-p raw)
-              (if (OCS:tableEndP e row col n raw)
-                (setq done T)
-                (OCS:fail (strcat label " 内容项 " (itoa n) " 读取失败：" (vl-catch-all-error-message raw))))
-              (progn
+          (setq count (OCS:tableCellContentCount e row col))
+          (if (or (null count) (= count 0))
+            (progn
+              (setq partial (list (strcat label "：无法确认完整内容数量，局部字体保持原状")))
+              (OCS:trace "TABLE_CONTENT_COUNT_UNKNOWN" (list "row" row "col" col)))
+            (progn
+              (OCS:trace "TABLE_CONTENT_COUNT" (list "row" row "col" col "count" count))
+              (setq n 0)
+              (while (< n count)
+                (setq raw (OCS:tableGetText e row col n))
+                (if (vl-catch-all-error-p raw)
+                  (OCS:fail (strcat label " 内容项 " (itoa n) " 读取失败：" (vl-catch-all-error-message raw))))
                 (if (not (OCS:stringp raw)) (OCS:fail (strcat label " 未返回字符串")))
                 (setq fid (OCS:mustCall 'vla-GetFieldId2 (list e row col n)))
                 (setq formula (OCS:mustCall 'vla-GetHasFormula (list e row col n)))
@@ -2964,8 +3326,7 @@
                         (setq edit (list "row" row "col" col "content" n "before" raw
                           "after" (OCS:assocd "text" new raw) "meta" (OCS:tableMeta e row col n)))
                         (setq edits (cons edit edits) changes (+ changes (OCS:assocd "changes" new 0)))))))
-                (setq n (1+ n)))))
-          (if (not done) (OCS:fail (strcat label " 内容项达到 1024 上限，停止以免漏改")))))))
+                (setq n (1+ n)))))))))
   (list "edits" (reverse edits) "partial" partial "changes" changes)
 )
 
@@ -3002,7 +3363,7 @@
 )
 (defun OCS:runStats (report styles hosts / stats key)
   (setq stats (OCS:assocd "stats" *OCS:Plan* nil))
-  (foreach key (list "attribs" "blocks" "xrefBlocks" "displayBlocks")
+  (foreach key (list "attribs" "blocks" "xrefBlocks" "displayBlocks" "nonTextExcluded")
     (setq report (OCS:putPair report key (OCS:assocd key stats 0))))
   (OCS:reportSet report
     (list (cons "stylesScanned" (length (OCS:assocd "styles" *OCS:Plan* nil)))
@@ -3062,8 +3423,13 @@
 )
 
 (if (and (boundp '*OCS:Version*) *OCS:Version*)
-(princ (strcat "\n一键统一宋体（YJST）v" *OCS:Version*
-                 " 已加载。YJST 转换，YJSTCHECK 核查，YJSTLOG 查看日志路径。"))
-  (princ "\n一键统一宋体（YJST）已加载。输入 YJST 执行。")
+(princ (strcat "\n一键统一宋体修复版 v" *OCS:Version*
+                 " 已加载。输入 YJSTFIX 转换，YJSTCHECK 核查，YJSTLOG 查看日志路径。"
+                 "\n诊断标识：" *OCS:DiagnosticsVersion*))
+  (princ "\n一键统一宋体修复版已加载。输入 YJSTFIX 执行。")
 )
+(princ)
+
+;;; 本文件由 build_gb2312.py 生成；加载完成后手动输入 YJSTFIX 转换当前图纸。
+(princ "\n修复版独立命令已就绪：YJSTFIX。")
 (princ)
