@@ -102,6 +102,67 @@
   )
 )
 
+(defun TZD:ComResult (value)
+  (if (vl-catch-all-error-p value)
+    (strcat "ERROR: " (vl-catch-all-error-message value))
+    value
+  )
+)
+
+; Follow XData handle links one level, without changing the referenced entity.
+(defun TZD:DumpHandles (stream title data / xdata app field handle linked count)
+  (setq xdata (cdr (assoc -3 data)) count 0)
+  (foreach app xdata
+    (foreach field (cdr app)
+      (if (and (= (car field) 1005) (eq (type (cdr field)) 'STR)
+               (< count 20))
+        (progn
+          (setq count (1+ count)
+                handle (cdr field)
+                linked (vl-catch-all-apply 'handent (list handle)))
+          (TZD:Write stream (strcat title "_handle_" (itoa count))
+            (list (car app) handle))
+          (if (vl-catch-all-error-p linked)
+            (TZD:Write stream (strcat title "_handle_error_" (itoa count))
+              (vl-catch-all-error-message linked))
+            (if linked
+              (TZD:Write stream (strcat title "_linked_entget_" (itoa count))
+                (TZD:Entget linked T))
+              (write-line "linked_handle_not_found" stream)
+            )
+          )
+        )
+      )
+    )
+  )
+)
+
+; Query public COM properties only. Writable means an exposed setter exists;
+; it does not prove that setting a Tianzheng object is safe or persistent.
+(defun TZD:DumpCom (stream title entity / obj prop available writable)
+  (setq obj (vl-catch-all-apply 'vlax-ename->vla-object (list entity)))
+  (if (vl-catch-all-error-p obj)
+    (TZD:Write stream (strcat title "_com_error") (TZD:ComResult obj))
+    (progn
+      (TZD:Write stream (strcat title "_com_object_name")
+        (TZD:ComResult
+          (vl-catch-all-apply 'vlax-get-property (list obj 'ObjectName))))
+      (foreach prop '(TextString Text Content Contents Text1 Text2 LineNum WireName)
+        (setq available (TZD:ComResult
+                          (vl-catch-all-apply 'vlax-property-available-p
+                            (list obj prop)))
+              writable (TZD:ComResult
+                         (vl-catch-all-apply 'vlax-property-available-p
+                           (list obj prop T))))
+        (TZD:Write stream
+          (strcat title "_com_" (vl-symbol-name prop))
+          (list "available" available "writable" writable))
+      )
+      (vlax-release-object obj)
+    )
+  )
+)
+
 (defun TZD:DumpEntity (stream title entity / data)
   (if (and entity (eq (type entity) 'ENAME))
     (progn
@@ -109,6 +170,8 @@
       (TZD:Write stream (strcat title "_entget_all_xdata") data)
       (TZD:DumpDictionary stream entity data)
       (TZD:DumpAttributes stream entity data)
+      (TZD:DumpHandles stream title data)
+      (TZD:DumpCom stream title entity)
     )
   )
 )
