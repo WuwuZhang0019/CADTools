@@ -246,12 +246,13 @@
   )
 )
 
-(defun c:maa (/ source-pick source-data source-text target-pick target
+(defun c:maa (/ source-pick source-data source-kind source-text target-pick target
                  target-data target-kind target-code old-text result readback write-text lines)
   (setq source-pick (nentsel "\n选择源文字: "))
   (if source-pick
     (progn
       (setq source-data (entget (car source-pick) '("*"))
+            source-kind (cdr (assoc 0 source-data))
             source-text (MAA:SourceText source-data (cadr source-pick)))
       (if (not (eq (type source-text) 'STR))
         (princ "\n源对象的文字字段尚未确认，未修改图纸。")
@@ -270,6 +271,9 @@
                 ((equal target-kind "TCH_MTEXT")
                   (princ "\n不支持此种操作"))
                 ((equal target-kind "TCH_WIREDIM2")
+                  (princ "\n不支持此种操作"))
+                ((and (equal source-kind "TCH_MULTILEADER")
+                      (equal target-kind "TCH_TEXT"))
                   (princ "\n不支持此种操作"))
                 ((not old-text)
                   (princ "\n目标没有 DXF 组码 1，未修改图纸。"))
