@@ -1,6 +1,6 @@
 ; 文字复制命令 maa
 ; 日期：2026-10-14
-; 天正目标对象只使用已探测到的公开 COM 属性；不对自定义对象调用 entmod。
+; 天正目标只在公开 COM 属性与 DXF 字段对应时写入，不对自定义对象调用 entmod。
 (vl-load-com)
 
 ; 从回路标注的 KeyOwnWireId 只读关联导线上的 linenum。
@@ -58,19 +58,54 @@
   )
 )
 
+; 统一识别 CRLF/LF 与普通 MTEXT 的 \P，避免把多行内容写入单行目标。
+(defun MAA:Lines (value / i n ch next current lines)
+  (setq i 1 n (strlen value) current "" lines nil)
+  (while (<= i n)
+    (setq ch (substr value i 1)
+          next (if (< i n) (substr value (1+ i) 1) ""))
+    (cond
+      ((equal ch (chr 13))
+        (setq lines (cons current lines) current "")
+        (if (equal next (chr 10)) (setq i (1+ i)))
+      )
+      ((equal ch (chr 10))
+        (setq lines (cons current lines) current "")
+      )
+      ((and (equal ch "\\") (equal next "P"))
+        (setq lines (cons current lines) current "" i (1+ i))
+      )
+      ((and (equal ch "\\") (equal next "\\"))
+        (setq current (strcat current ch next) i (1+ i))
+      )
+      (T (setq current (strcat current ch)))
+    )
+    (setq i (1+ i))
+  )
+  (reverse (cons current lines))
+)
+
+(defun MAA:TchMTextValue (value / lines result line)
+  (setq lines (MAA:Lines value) result (car lines))
+  (foreach line (cdr lines)
+    (setq result (strcat result (chr 13) (chr 10) line))
+  )
+  result
+)
+
 ; 普通 MTEXT 用 \P 表示换行；天正组码 1 的 CRLF 不能原样写入。
 (defun MAA:MTextValue (value / i n ch out)
   (setq i 1 n (strlen value) out "")
   (while (<= i n)
     (setq ch (substr value i 1))
     (cond
-      ((= ch (chr 13))
+      ((equal ch (chr 13))
         (setq out (strcat out "\\P"))
         (if (and (< i n) (= (substr value (1+ i) 1) (chr 10)))
           (setq i (1+ i))
         )
       )
-      ((= ch (chr 10)) (setq out (strcat out "\\P")))
+      ((equal ch (chr 10)) (setq out (strcat out "\\P")))
       (T (setq out (strcat out ch)))
     )
     (setq i (1+ i))
@@ -78,30 +113,35 @@
   out
 )
 
-; 天正单行文字只通过其公开 Text 属性写入，写后核对 COM 和 DXF。
-(defun MAA:WriteTchText (entity value / obj before result after data success)
+; COM 属性写前必须与已读 DXF 字段相同；写后核对 COM 与 DXF，失败则恢复。
+(defun MAA:WriteComText (entity prop value old-text / obj writable before result after data success)
   (setq obj (vl-catch-all-apply 'vlax-ename->vla-object (list entity)))
-  (cond
-    ((vl-catch-all-error-p obj) nil)
-    ((not (vlax-property-available-p obj 'Text T))
-      (vlax-release-object obj)
-      nil)
-    (T
-      (setq before (vl-catch-all-apply 'vlax-get-property (list obj 'Text)))
-      (if (vl-catch-all-error-p before)
-        (setq result nil)
+  (if (not (vl-catch-all-error-p obj))
+    (progn
+      (setq writable
+        (vl-catch-all-apply 'vlax-property-available-p (list obj prop T)))
+      (if (eq writable T)
         (progn
-          (setq result (vl-catch-all-apply 'vlax-put-property (list obj 'Text value)))
-          (if (not (vl-catch-all-error-p result))
+          (setq before (vl-catch-all-apply 'vlax-get-property (list obj prop)))
+          (if (equal before old-text)
             (progn
-              (vl-catch-all-apply 'vla-update (list obj))
-              (setq after (vl-catch-all-apply 'vlax-get-property (list obj 'Text))
-                    data (entget entity))
-              (if (and (equal after value)
-                       (equal (cdr (assoc 1 data)) value))
-                (setq success T)
+              (setq result
+                (vl-catch-all-apply 'vlax-put-property (list obj prop value)))
+              (if (not (vl-catch-all-error-p result))
                 (progn
-                  (vl-catch-all-apply 'vlax-put-property (list obj 'Text before))
+                  (vl-catch-all-apply 'vla-update (list obj))
+                  (setq after (vl-catch-all-apply 'vlax-get-property (list obj prop))
+                        data (vl-catch-all-apply 'entget (list entity)))
+                  (if (and (equal after value)
+                           (not (vl-catch-all-error-p data))
+                           (equal (cdr (assoc 1 data)) value))
+                    (setq success T)
+                  )
+                )
+              )
+              (if (not success)
+                (progn
+                  (vl-catch-all-apply 'vlax-put-property (list obj prop before))
                   (vl-catch-all-apply 'vla-update (list obj))
                 )
               )
@@ -110,8 +150,98 @@
         )
       )
       (vlax-release-object obj)
-      (if success T nil)
     )
+  )
+  (if success T nil)
+)
+
+; 引线的上下文字分别对应 UpText/DownText；两项都可写才修改。
+(defun MAA:WriteLeader (entity data lines / obj up down before-up before-down
+                        result after-up after-down readback success new-up new-down)
+  (if (and (<= (length lines) 2)
+           (assoc 1 data) (assoc 2 data))
+    (progn
+      (setq new-up (car lines)
+            new-down (if (cadr lines) (cadr lines) "")
+            obj (vl-catch-all-apply 'vlax-ename->vla-object (list entity)))
+      (if (not (vl-catch-all-error-p obj))
+        (progn
+          (setq up (vl-catch-all-apply 'vlax-property-available-p (list obj 'UpText T))
+                down (vl-catch-all-apply 'vlax-property-available-p (list obj 'DownText T)))
+          (if (and (eq up T) (eq down T))
+            (progn
+              (setq before-up (vl-catch-all-apply 'vlax-get-property (list obj 'UpText))
+                    before-down (vl-catch-all-apply 'vlax-get-property (list obj 'DownText)))
+              (if (and (equal before-up (cdr (assoc 1 data)))
+                       (equal before-down (cdr (assoc 2 data))))
+                (progn
+                  (setq result
+                    (vl-catch-all-apply 'vlax-put-property (list obj 'UpText new-up)))
+                  (if (not (vl-catch-all-error-p result))
+                    (setq result
+                      (vl-catch-all-apply 'vlax-put-property (list obj 'DownText new-down)))
+                  )
+                  (if (not (vl-catch-all-error-p result))
+                    (progn
+                      (vl-catch-all-apply 'vla-update (list obj))
+                      (setq after-up (vl-catch-all-apply 'vlax-get-property (list obj 'UpText))
+                            after-down (vl-catch-all-apply 'vlax-get-property (list obj 'DownText))
+                            readback (vl-catch-all-apply 'entget (list entity)))
+                      (if (and (equal after-up new-up) (equal after-down new-down)
+                               (not (vl-catch-all-error-p readback))
+                               (equal (cdr (assoc 1 readback)) new-up)
+                               (equal (cdr (assoc 2 readback)) new-down))
+                        (setq success T)
+                      )
+                    )
+                  )
+                  (if (not success)
+                    (progn
+                      (vl-catch-all-apply 'vlax-put-property (list obj 'UpText before-up))
+                      (vl-catch-all-apply 'vlax-put-property (list obj 'DownText before-down))
+                      (vl-catch-all-apply 'vla-update (list obj))
+                    )
+                  )
+                )
+              )
+            )
+          )
+          (vlax-release-object obj)
+        )
+      )
+    )
+  )
+  (if success T nil)
+)
+
+; 不猜测天正多行文字的接口：候选属性读值须与 DXF 组码 1 完全相同。
+(defun MAA:WriteTchMText (entity data value / candidates prop obj writable before chosen)
+  (setq candidates '(MText MTextContent TextContent Contents Content TextString Text)
+        obj (vl-catch-all-apply 'vlax-ename->vla-object (list entity)))
+  (if (not (vl-catch-all-error-p obj))
+    (progn
+      (foreach prop candidates
+        (if (not chosen)
+          (progn
+            (setq writable
+              (vl-catch-all-apply 'vlax-property-available-p (list obj prop T)))
+            (if (eq writable T)
+              (progn
+                (setq before (vl-catch-all-apply 'vlax-get-property (list obj prop)))
+                (if (equal before (cdr (assoc 1 data)))
+                  (setq chosen prop)
+                )
+              )
+            )
+          )
+        )
+      )
+      (vlax-release-object obj)
+    )
+  )
+  (if chosen
+    (MAA:WriteComText entity chosen value (cdr (assoc 1 data)))
+    nil
   )
 )
 
@@ -137,7 +267,7 @@
 )
 
 (defun c:maa (/ source-pick source-data source-text target-pick target
-                 target-data target-kind old-text result readback write-text)
+                 target-data target-kind old-text result readback write-text lines)
   (setq source-pick (nentsel "\n选择源文字: "))
   (if source-pick
     (progn
@@ -152,22 +282,38 @@
               (setq target (car target-pick)
                     target-data (entget target)
                     target-kind (cdr (assoc 0 target-data))
-                    old-text (assoc 1 target-data))
+                    old-text (assoc 1 target-data)
+                    lines (MAA:Lines source-text))
               (cond
-                ((not (member target-kind '("TEXT" "MTEXT" "ATTRIB" "TCH_TEXT")))
+                ((not (member target-kind '("TEXT" "MTEXT" "ATTRIB" "TCH_TEXT" "TCH_MTEXT" "TCH_MULTILEADER")))
                   (princ "\n天正或其他自定义目标尚无已验证的安全写入接口，未修改图纸。"))
                 ((not old-text)
                   (princ "\n目标没有 DXF 组码 1，未修改图纸。"))
+                ((and (equal target-kind "TCH_MULTILEADER")
+                      (not (assoc 2 target-data)))
+                  (princ "\n引线目标缺少下方文字字段，未修改图纸。"))
                 ((and (equal target-kind "MTEXT") (assoc 3 target-data))
                   (princ "\n目标多行文字含分段组码 3，暂不写入以免残留旧内容。"))
-                ((and (not (equal target-kind "MTEXT"))
-                      (or (vl-string-search "\n" source-text)
-                          (vl-string-search "\r" source-text)))
+                ((and (member target-kind '("TEXT" "ATTRIB" "TCH_TEXT"))
+                      (> (length lines) 1))
                   (princ "\n多行内容不能写入单行目标，未修改图纸。"))
                 ((equal target-kind "TCH_TEXT")
-                  (if (MAA:WriteTchText target source-text)
+                  (if (MAA:WriteComText target 'Text source-text (cdr old-text))
                     (princ "\n文字复制完成。")
-                    (princ "\n天正单行文字写入或读回校验失败，请检查目标文字。")
+                    (princ "\n天正单行文字接口不可用或读回校验失败，请检查目标文字。")
+                  )
+                )
+                ((equal target-kind "TCH_MULTILEADER")
+                  (if (MAA:WriteLeader target target-data lines)
+                    (princ "\n文字复制完成。")
+                    (princ "\n引线文字接口不可用、超过两行或读回校验失败，未确认更新。")
+                  )
+                )
+                ((equal target-kind "TCH_MTEXT")
+                  (if (MAA:WriteTchMText target target-data
+                        (MAA:TchMTextValue source-text))
+                    (princ "\n文字复制完成。")
+                    (princ "\n天正多行文字没有可核对的公开写入属性，未确认更新。")
                   )
                 )
                 (T
