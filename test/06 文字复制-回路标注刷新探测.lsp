@@ -149,5 +149,35 @@
   (princ)
 )
 
-(princ "\n已加载 TZWIREDIM1 / TZWIREDIM2，只读记录天正回路标注原生编辑前后状态。")
+; 只枚举 COM 属性和方法，结果输出在 AutoCAD 文本窗口（F2）。
+(defun c:TZWIREDIMCOM (/ picked data obj result)
+  (setq picked (nentsel "\n点选天正回路标注以枚举接口: "))
+  (if picked
+    (progn
+      (setq data (entget (car picked)))
+      (if (equal (cdr (assoc 0 data)) "TCH_WIREDIM2")
+        (progn
+          (setq obj (vl-catch-all-apply
+                      'vlax-ename->vla-object (list (car picked))))
+          (if (and obj (not (vl-catch-all-error-p obj)))
+            (progn
+              (princ "\nTCH_WIREDIM2 COM 接口如下；请从 F2 文本窗口复制完整输出。")
+              (setq result (vl-catch-all-apply 'vlax-dump-object (list obj T)))
+              (if (vl-catch-all-error-p result)
+                (princ (strcat "\n接口枚举失败: "
+                  (vl-catch-all-error-message result)))
+              )
+              (vlax-release-object obj)
+            )
+            (princ "\n无法取得对象 COM 接口。")
+          )
+        )
+        (princ "\n所选对象不是 TCH_WIREDIM2。")
+      )
+    )
+  )
+  (princ)
+)
+
+(princ "\n已加载 TZWIREDIM1 / TZWIREDIM2 / TZWIREDIMCOM，只读检查天正回路标注。")
 (princ)
