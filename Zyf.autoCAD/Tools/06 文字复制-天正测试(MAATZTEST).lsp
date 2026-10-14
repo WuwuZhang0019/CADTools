@@ -252,7 +252,7 @@
                 ((not (member target-kind '("TEXT" "MTEXT" "ATTRIB" "TCH_TEXT" "TCH_MTEXT" "TCH_MULTILEADER")))
                   (princ "\n天正或其他自定义目标尚无已验证的安全写入接口，未修改图纸。"))
                 ((equal target-kind "TCH_MTEXT")
-                  (princ "\n天正多行文字目标写入曾导致 CAD 闪退，已停止该路径；未修改图纸。"))
+                  (princ "\n不支持此种操作"))
                 ((not old-text)
                   (princ "\n目标没有 DXF 组码 1，未修改图纸。"))
                 ((and (equal target-kind "TCH_MULTILEADER")
