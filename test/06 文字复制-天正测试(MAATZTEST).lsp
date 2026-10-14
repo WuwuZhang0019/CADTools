@@ -336,5 +336,5 @@
   (princ)
 )
 
-(princ "\n测试副本已加载，输入 MAATZTEST 开始文字复制。")
+(princ "\n测试副本已加载 [MAATZTEST-GUARD-20261014]，输入 MAATZTEST 开始文字复制。")
 (princ)
