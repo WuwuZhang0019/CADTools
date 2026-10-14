@@ -79,8 +79,8 @@
 ;;   (setq res (OCS:addProblem res "error" "Blocks 集合接口不可用")))
 
 ;;; ------------------------- 全局状态 -------------------------
-(setq *OCS:Version*      "0.2.13")
-(setq *OCS:DiagnosticsVersion* "2026-10-14-font-verify-v5")
+(setq *OCS:Version*      "0.2.18")
+(setq *OCS:DiagnosticsVersion* "2026-10-14-field-font-v10")
 (setq *OCS:TableContentCounts* nil)
 (setq *OCS:ScanContext* nil)
 (setq *OCS:CollectReverse* nil)
@@ -1649,7 +1649,7 @@
 ;;; 修改计划 OCS:BuildPlan
 ;;; =====================================================================
 
-(defun OCS:BuildPlan ( / plan styles hosts targets host data new scan partial item protectedCells)
+(defun OCS:BuildPlan ( / plan styles hosts targets host data new scan partial item protectedCells fieldEdits)
   (setq styles (OCS:CollectStyles) hosts (OCS:CollectHosts) targets nil protectedCells nil)
   (if (OCS:hasError hosts) (OCS:fail (OCS:fmt (OCS:problemsOf hosts))))
   (foreach host (OCS:assocd "hosts" hosts nil)
@@ -1681,9 +1681,11 @@
     (foreach item partial
       (setq hosts (OCS:putPair hosts "unknown" (1+ (OCS:assocd "unknown" hosts 0))))
       (setq hosts (OCS:lstAppend hosts "skipped" (list "PROTECTED_CONTENT" (OCS:assocd "handle" host "?") item)))))
+  (setq fieldEdits (OCS:planFieldFontEdits (reverse protectedCells)))
   (list "styles" (OCS:assocd "normal" styles nil) "shape" (OCS:assocd "shape" styles nil)
         "xrefStyle" (OCS:assocd "xref" styles nil) "hosts" (OCS:assocd "hosts" hosts nil)
-        "stats" hosts "targets" (reverse targets) "protectedCells" (reverse protectedCells))
+        "stats" hosts "targets" (reverse targets) "protectedCells" (reverse protectedCells)
+        "fieldEdits" fieldEdits)
 )
 
 ;;; =====================================================================
@@ -2351,6 +2353,13 @@
               (OCS:tableLayout e (OCS:assocd "rows" target 0) (OCS:assocd "cols" target 0)) 1e-9)) (setq ok nil)))
       (if (not (equal (OCS:assocd "text" target "")
             (OCS:assocd "text" (OCS:ReadHost (OCS:assocd "host" target nil)) ""))) (setq ok nil))))
+  (foreach edit (OCS:assocd "fieldEdits" *OCS:Plan* nil)
+    (if (not (equal (OCS:assocd "before" edit nil)
+                    (entget (OCS:assocd "ent" edit nil))))
+      (setq ok nil))
+    (if (not (equal (OCS:assocd "childBefore" edit nil)
+                    (entget (OCS:assocd "childEnt" edit nil))))
+      (setq ok nil)))
   ok
 )
 
@@ -2402,6 +2411,8 @@
                  "　修改字体段：" (itoa (OCS:assocd "fontRunsChanged" report 0))
                  "　属性实例：" (itoa (OCS:assocd "attribs" report 0))
                  "　表格内容项：" (itoa (OCS:assocd "tableContents" report 0))))
+  (if (> (OCS:assocd "fieldFontsChanged" report 0) 0)
+    (princ (strcat "\n表格字段包装字体修改：" (itoa (OCS:assocd "fieldFontsChanged" report 0)))))
   (princ (strcat "\n扫描块定义：" (itoa (OCS:assocd "blocks" report 0))
                  "　外参块跳过：" (itoa (OCS:assocd "xrefBlocks" report 0))
                  "　匿名显示块：" (itoa (OCS:assocd "displayBlocks" report 0))))
@@ -2414,6 +2425,9 @@
     (princ (strcat "\n受保护单元格只读核验：通过 " (itoa (OCS:assocd "tableProtectedPassed" report 0))
       "　不一致 " (itoa (OCS:assocd "tableProtectedMismatch" report 0))
       "　无法核验 " (itoa (OCS:assocd "tableProtectedUnknown" report 0)))))
+  (if (> (OCS:assocd "tableDisplayMismatch" report 0) 0)
+    (princ (strcat "\n表格显示文字仍有非宋体局部字体："
+      (itoa (OCS:assocd "tableDisplayMismatch" report 0)))))
   (if (OCS:assocd "tchChecked" report nil)
     (princ (strcat "\n天正公开字体核验：通过 " (itoa (OCS:assocd "tchPassed" report 0))
       "　不一致 " (itoa (OCS:assocd "tchMismatch" report 0))
@@ -2569,6 +2583,10 @@
          (> (OCS:assocd "recoverFailed" report 0) 0)
          (not (member status (list "已完成" "无需修改" "部分完成"))))
      (strcat "\n==== YJST 执行失败：" status "，请查看上方错误明细和日志。 ===="))
+    ((or (> (OCS:assocd "tableProtectedMismatch" report 0) 0)
+         (> (OCS:assocd "tableDisplayMismatch" report 0) 0))
+     (strcat "\n==== YJST 部分完成：仍有 " (itoa uncovered)
+             " 处字体未统一，详情见日志。 ===="))
     ((or (= status "部分完成") (> uncovered 0))
      (strcat "\n==== YJST 执行成功（部分完成）：仍有 " (itoa uncovered)
              " 个对象未覆盖，详情见日志；可输入 YJSTCHECK 核查。 ===="))
@@ -2577,10 +2595,10 @@
 
 (defun c:YJSTFIX ()
   ;; 日期：2026-10-14。独立命令避开工具集同名 .NET YJST 入口；被旧版覆盖时拒绝执行。
-  (if (and (equal *OCS:Version* "0.2.13")
-           (equal *OCS:DiagnosticsVersion* "2026-10-14-font-verify-v5"))
+  (if (and (equal *OCS:Version* "0.2.18")
+           (equal *OCS:DiagnosticsVersion* "2026-10-14-field-font-v10"))
     (c:YJST)
-    (princ "\n当前宋体脚本已被旧版覆盖。请重新 APPLOAD v0.2.13 修复文件，然后输入 YJSTFIX。"))
+    (princ "\n当前宋体脚本已被旧版覆盖。请重新 APPLOAD v0.2.18 修复文件，然后输入 YJSTFIX。"))
   (princ)
 )
 
@@ -2654,7 +2672,7 @@
 )
 
 ;; 执行写入与检查（含回滚路径）
-(defun OCS:executeWrites ( / report stylesRes hostsRes verifyRes probe)
+(defun OCS:executeWrites ( / report stylesRes hostsRes verifyRes probe fieldRes)
   (setq report (OCS:makeReport "进行中"))
   (if (OCS:hasPlannedWrites)
     (progn
@@ -2668,10 +2686,16 @@
   (setq stylesRes (OCS:applyAllStyles))
   (if (OCS:assocd "error" stylesRes nil)
     (setq report (OCS:appendError report "STYLE" (OCS:assocd "error" stylesRes "")))
-    (setq hostsRes (OCS:applyAllHosts)))
+    (progn
+      (OCS:setStage "写入字段包装字体")
+      (setq fieldRes (OCS:applyFieldFontEdits))
+      (setq hostsRes (OCS:applyAllHosts))))
   (if (OCS:assocd "error" hostsRes nil)
     (setq report (OCS:appendError report "HOST" (OCS:assocd "error" hostsRes ""))))
   (setq report (OCS:runStats report stylesRes hostsRes))
+  (setq report (OCS:putPair report "fieldFontsChanged" (OCS:assocd "changed" fieldRes 0)))
+  (setq report (OCS:putPair report "fontRunsChanged"
+    (+ (OCS:assocd "fontRunsChanged" report 0) (OCS:assocd "changed" fieldRes 0))))
   (OCS:setStage "恢复临时状态")
   (if (not (OCS:restoreTempState))
     (setq report (OCS:appendError report "RESTORE" "临时状态恢复失败")))
@@ -2683,7 +2707,9 @@
       (setq verifyRes (OCS:VerifyDrawing))
       (if (not (OCS:assocd "ok" verifyRes nil))
         (setq report (OCS:appendError report "VERIFY" (OCS:assocd "error" verifyRes "读回失败")))
-        (setq report (OCS:verifyProtectedCells report)))))
+        (if (not (OCS:readbackFieldFontEdits))
+          (setq report (OCS:appendError report "FIELD" "再生后字段代码或非字体数据变化"))
+          (setq report (OCS:verifyProtectedCells report))))))
   (if (> (OCS:assocd "errors" report 0) 0)
     (OCS:recoverReport report)
     (if (not (OCS:endUndoGroup))
@@ -3209,6 +3235,181 @@
   (list "status" status "reason" (if (= status "pass") "字段子项与现有公开显示结果未见非宋体字体" reason))
 )
 
+;;; 日期：2026-10-14。仅计划单一子字段的 _text 包装层字体，不改表达式和数值缓存。
+(defun OCS:countDxfCode (data code / count pair)
+  (setq count 0)
+  (foreach pair data (if (= (car pair) code) (setq count (1+ count))))
+  count
+)
+
+(defun OCS:planFieldFontEdits (protected / out seen item table data cells cell roots p root ent raw section code scan handle cols row col fieldId childRef childEnt childBefore)
+  (setq out nil seen nil)
+  (foreach item protected
+    (setq table (OCS:assocd "obj" item nil)
+          row (OCS:assocd "row" item 0) col (OCS:assocd "col" item 0)
+          data (entget (vlax-vla-object->ename table))
+          cols (OCS:requireProp table 'Columns)
+          cells (OCS:tableDxfCells data)
+          cell (nth (+ (* row cols) col) cells)
+          roots nil)
+    (foreach p cell (if (= (car p) 344) (setq roots (cons (cdr p) roots))))
+    (if (and (= (length roots) 1)
+             (= (OCS:mustCall 'vla-GetCellState (list table row col)) 0)
+             (= (OCS:mustCall 'vla-GetContentType (list table row col)) 2)
+             (setq fieldId (OCS:mustCall 'vla-GetFieldId2 (list table row col 0)))
+             (numberp fieldId) (/= fieldId 0))
+      (progn
+        (setq root (car roots) ent (if (OCS:stringp root) (handent root) root)
+              raw (if ent (entget ent) nil) section (OCS:tchSection raw "AcDbField")
+              handle (OCS:assocd 5 raw nil) code (OCS:assocd 2 section nil)
+              childRef (OCS:assocd 360 section nil)
+              childEnt (if (OCS:stringp childRef) (handent childRef) childRef)
+              childBefore (if childEnt (entget childEnt) nil))
+        (if (and handle (not (member handle seen))
+                 (= (OCS:assocd 0 raw "") "FIELD")
+                 (= (strcase (OCS:assocd 1 section "")) "_TEXT")
+                 (= (OCS:assocd 90 section -1) 1)
+                 (= (OCS:countDxfCode section 360) 1)
+                 (member (OCS:assocd 0 childBefore nil) (list "FIELD" "ACAD_FIELD"))
+                 (OCS:stringp code) (OCS:fieldLiteralText code 1)
+                 (OCS:containsField code)
+                 (= (OCS:countDxfCode section 2) 1)
+                 (= (OCS:countDxfCode raw 2) 1)
+                 (not (assoc 3 section)))
+          (progn
+            (setq seen (cons handle seen) scan (OCS:NormalizeFontRuns code (OCS:fontTarget)))
+            (if (and (not (OCS:assocd "issues" scan nil)) (> (OCS:assocd "changes" scan 0) 0))
+              (progn
+                (OCS:trace "FIELD_FONT_PLAN" (list "handle" handle "table" (OCS:assocd "handle" item nil)
+                  "row" (OCS:assocd "row" item 0) "col" (OCS:assocd "col" item 0)))
+                (setq out (cons (list "handle" handle "ent" ent "before" raw "beforeCode" code
+                  "afterCode" (OCS:assocd "text" scan code) "table" table
+                  "tableHandle" (OCS:assocd "handle" item nil) "row" row "col" col
+                  "fieldId" fieldId "childEnt" childEnt "childBefore" childBefore
+                  "layout" (OCS:tableLayout table
+                    (OCS:requireProp table 'Rows) cols)) out)))))))))
+  (reverse out)
+)
+
+(defun OCS:fieldReplaceCode (data value / out pair)
+  (foreach pair data
+    (setq out (cons (if (= (car pair) 2) (cons 2 value) pair) out)))
+  (reverse out)
+)
+
+(defun OCS:fieldDefinition (data / section refs fragments p)
+  ;; 日期：2026-10-14。330 可属于 ACAD_REACTORS；表格关联另从单元格 344 核验。
+  (setq section (OCS:tchSection data "AcDbField") refs nil fragments nil)
+  (foreach p section
+    (cond ((= (car p) 360) (setq refs (cons p refs)))
+          ((= (car p) 3) (setq fragments (cons p fragments)))))
+  (list (assoc 0 data) (assoc 5 data)
+        (assoc 1 section) (assoc 2 section) (assoc 90 section)
+        (reverse refs) (reverse fragments))
+)
+
+(defun OCS:fieldTableLinkOk (edit / table row col cols cells cell roots p ref ent)
+  (setq table (OCS:assocd "table" edit nil)
+        row (OCS:assocd "row" edit 0) col (OCS:assocd "col" edit 0)
+        cols (OCS:requireProp table 'Columns)
+        cells (OCS:tableDxfCells (entget (vlax-vla-object->ename table)))
+        cell (nth (+ (* row cols) col) cells) roots nil)
+  (foreach p cell (if (= (car p) 344) (setq roots (cons (cdr p) roots))))
+  (if (/= (length roots) 1) nil
+    (progn
+      (setq ref (car roots) ent (if (OCS:stringp ref) (handent ref) ref))
+      (and ent
+           (equal (OCS:assocd 5 (entget ent) nil) (OCS:assocd "handle" edit nil))
+           (= (OCS:assocd "fieldId" edit 0)
+              (OCS:mustCall 'vla-GetFieldId2 (list table row col 0))))))
+)
+
+(defun OCS:fieldValueSignature (data / section cache dtype)
+  ;; 子表达式的数值及公开显示仍须与计划时一致。
+  (setq section (OCS:tchSection data "AcDbField")
+        cache (OCS:fieldCacheData section) dtype (OCS:assocd 90 cache nil))
+  (list dtype (if (equal dtype 1) (OCS:assocd 91 cache nil) (OCS:assocd 140 cache nil))
+        (OCS:assocd 300 cache nil) (OCS:assocd 301 cache nil)
+        (OCS:assocd 302 cache nil))
+)
+
+(defun OCS:firstDxfDifference (before current / index)
+  (setq index 0)
+  (while (and before current (equal (car before) (car current)))
+    (setq before (cdr before) current (cdr current) index (1+ index)))
+  (if (or before current)
+    (list "index" index "beforeCode" (if before (car (car before)) nil)
+          "currentCode" (if current (car (car current)) nil)) nil)
+)
+
+(defun OCS:applyFieldFontEdits ( / edit ent before current childCurrent after r count tables table handle updated definitionOk childOk valueOk linkOk)
+  (setq count 0 tables nil updated nil)
+  (foreach edit (OCS:assocd "fieldEdits" *OCS:Plan* nil)
+    (setq ent (OCS:assocd "ent" edit nil) before (OCS:assocd "before" edit nil)
+          current (entget ent) childCurrent (entget (OCS:assocd "childEnt" edit nil)))
+    (setq definitionOk (equal (OCS:fieldDefinition before) (OCS:fieldDefinition current))
+          childOk (equal (OCS:fieldDefinition (OCS:assocd "childBefore" edit nil))
+                         (OCS:fieldDefinition childCurrent))
+          valueOk (equal (OCS:fieldValueSignature (OCS:assocd "childBefore" edit nil))
+                         (OCS:fieldValueSignature childCurrent) 1e-9)
+          linkOk (OCS:fieldTableLinkOk edit))
+    (if (not (equal current before))
+      (OCS:trace "FIELD_PREWRITE_DRIFT" (list "handle" (OCS:assocd "handle" edit "?")
+        "firstDifference" (OCS:firstDxfDifference before current)
+        "definitionSame" definitionOk "childSame" childOk
+        "valueSame" valueOk "tableLinkSame" linkOk)))
+    (if (not (and definitionOk childOk valueOk linkOk))
+      (OCS:fail (strcat "FIELD " (OCS:assocd "handle" edit "?")
+        " 的公式、关联或显示值在写入前变化，停止修改")))
+    (setq after (OCS:fieldReplaceCode current (OCS:assocd "afterCode" edit "")))
+    (if (not (assoc -1 after)) (setq after (cons (cons -1 ent) after)))
+    (setq r (OCS:tracedCall 'entmod (list after)))
+    (if (or (vl-catch-all-error-p r) (null r))
+      (OCS:fail (strcat "FIELD " (OCS:assocd "handle" edit "?") " 字体代码写入失败")))
+    (setq *OCS:Wrote* T current (entget ent))
+    (if (not (equal (OCS:fieldDefinition current) (OCS:fieldDefinition after)))
+      (OCS:fail (strcat "FIELD " (OCS:assocd "handle" edit "?") " 写入后公式或关联变化")))
+    (setq edit (OCS:putPair edit "afterDefinition" (OCS:fieldDefinition after)))
+    (setq updated (cons edit updated))
+    (setq count (1+ count))
+    (if (not (member (OCS:assocd "tableHandle" edit nil) tables))
+      (setq tables (cons (OCS:assocd "tableHandle" edit nil) tables))))
+  (setq *OCS:Plan* (OCS:putPair *OCS:Plan* "fieldEdits" (reverse updated)))
+  (foreach handle tables
+    (setq table nil)
+    (foreach edit (OCS:assocd "fieldEdits" *OCS:Plan* nil)
+      (if (= (OCS:assocd "tableHandle" edit nil) handle)
+        (setq table (OCS:assocd "table" edit nil))))
+    ;; 日期：2026-10-14。ActiveX 必须显式传入 bForceUpdate；字段写入后强制更新显示块。
+    (setq r (OCS:tracedCall 'vla-RecomputeTableBlock (list table :vlax-true)))
+    (if (vl-catch-all-error-p r)
+      (OCS:fail (strcat "表格 " handle " 重建显示块失败：" (vl-catch-all-error-message r)))))
+  (list "changed" count)
+)
+
+(defun OCS:readbackFieldFontEdits ( / ok edit current childCurrent definitionOk childOk valueOk linkOk layoutOk)
+  (setq ok T)
+  (foreach edit (OCS:assocd "fieldEdits" *OCS:Plan* nil)
+    (setq current (entget (OCS:assocd "ent" edit nil))
+          childCurrent (entget (OCS:assocd "childEnt" edit nil))
+          definitionOk (equal (OCS:fieldDefinition current) (OCS:assocd "afterDefinition" edit nil))
+          childOk (equal (OCS:fieldDefinition (OCS:assocd "childBefore" edit nil))
+                         (OCS:fieldDefinition childCurrent))
+          valueOk (equal (OCS:fieldValueSignature (OCS:assocd "childBefore" edit nil))
+                         (OCS:fieldValueSignature childCurrent) 1e-9)
+          linkOk (OCS:fieldTableLinkOk edit)
+          layoutOk (equal (OCS:assocd "layout" edit nil)
+                          (OCS:tableLayout (OCS:assocd "table" edit nil)
+                            (OCS:requireProp (OCS:assocd "table" edit nil) 'Rows)
+                            (OCS:requireProp (OCS:assocd "table" edit nil) 'Columns)) 1e-9))
+    (OCS:trace "FIELD_FONT_READBACK" (list "handle" (OCS:assocd "handle" edit "?")
+      "definitionOk" definitionOk "childOk" childOk "valueOk" valueOk
+      "tableLinkOk" linkOk "layoutOk" layoutOk))
+    (if (not (and definitionOk childOk valueOk linkOk layoutOk))
+      (setq ok nil)))
+  ok
+)
+
 (defun OCS:checkProtectedCell (item / e row col typ state count cell p roots n name ent raw fid formula r status reason)
   (setq e (OCS:assocd "obj" item nil) row (OCS:assocd "row" item 0) col (OCS:assocd "col" item 0))
   (if (not *OCS:TableContentCounts*)
@@ -3253,9 +3454,50 @@
     "state" state "contentType" typ "count" count)
 )
 
+;;; 日期：2026-10-14。字段单元格的显示块可能保留独立的 MTEXT 局部字体。
+;;; 只读核对 TABLE 的 343 块记录引用；不改写由表格再生生成的 *T 显示缓存。
+(defun OCS:tableDisplayText (data / out pair)
+  (setq out "")
+  (foreach pair data
+    (if (= (car pair) 3) (setq out (strcat out (cdr pair)))))
+  (foreach pair data
+    (if (= (car pair) 1) (setq out (strcat out (cdr pair)))))
+  out
+)
+
+(defun OCS:tableDisplayFontCheck (obj / data name record ref blockEntry ent item text scan mismatch inspected)
+  (setq data (entget (vlax-vla-object->ename obj)) name (OCS:assocd 2 data nil)
+        ref (OCS:assocd 343 data nil))
+  (if (and (OCS:stringp name) (= (substr (strcase name) 1 2) "*T")
+           ref (setq record (tblobjname "BLOCK" name))
+           (or (equal ref record)
+               (and (OCS:stringp ref)
+                    (= (strcase (OCS:assocd 5 (entget record) "")) (strcase ref))))
+           (setq blockEntry (tblsearch "BLOCK" name)))
+    (progn
+      (setq ent (OCS:assocd -2 blockEntry nil) mismatch nil inspected 0)
+      (while ent
+        (setq item (entget ent))
+        (if (= (OCS:assocd 0 item "") "ENDBLK")
+          (setq ent nil)
+          (progn
+            (if (= (OCS:assocd 0 item "") "MTEXT")
+              (progn
+                (setq inspected (1+ inspected) text (OCS:tableDisplayText item)
+                      scan (OCS:NormalizeFontRuns text (OCS:fontTarget)))
+                (if (or (OCS:assocd "issues" scan nil)
+                        (> (OCS:assocd "changes" scan 0) 0))
+                  (setq mismatch (cons (OCS:assocd 5 item "?") mismatch)))))
+            (setq ent (entnext ent)))))
+      (list "block" name "inspected" inspected "mismatch" (reverse mismatch)))
+    nil)
+)
+
 (defun OCS:verifyProtectedCells (report / candidates item r saved passed mismatch unknown details resolved
-                                      entry match kept removed currentHandle key *OCS:TableContentCounts*)
-  (setq candidates (OCS:assocd "protectedCells" *OCS:Plan* nil) passed 0 mismatch 0 unknown 0 removed 0)
+                                      entry match kept removed currentHandle key display checked cache displayMismatch
+                                      *OCS:TableContentCounts*)
+  (setq candidates (OCS:assocd "protectedCells" *OCS:Plan* nil) passed 0 mismatch 0 unknown 0 removed 0
+        displayMismatch 0)
   (foreach item candidates
     (if (not (equal currentHandle (OCS:assocd "handle" item nil)))
       (setq currentHandle (OCS:assocd "handle" item nil) *OCS:TableContentCounts* nil))
@@ -3284,6 +3526,24 @@
   (setq report (OCS:putPair report "tableProtectedPassed" passed))
   (setq report (OCS:putPair report "tableProtectedMismatch" mismatch))
   (setq report (OCS:putPair report "tableProtectedUnknown" unknown))
+  (foreach item candidates
+    (setq key (OCS:assocd "handle" item nil))
+    (if (and key (not (member key checked)))
+      (progn
+        (setq checked (cons key checked)
+              cache (OCS:tableDisplayFontCheck (OCS:assocd "obj" item nil)))
+        (if cache
+          (progn
+            (OCS:trace "TABLE_DISPLAY_VERIFY" (list "handle" key "block"
+              (OCS:assocd "block" cache "") "mtext" (OCS:assocd "inspected" cache 0)
+              "mismatch" (OCS:assocd "mismatch" cache nil)))
+            (foreach display (OCS:assocd "mismatch" cache nil)
+              (setq displayMismatch (1+ displayMismatch))
+              (setq report (OCS:putPair report "uncovered" (1+ (OCS:assocd "uncovered" report 0))))
+              (setq report (OCS:putPair report "uncoveredDetail"
+                (append (OCS:assocd "uncoveredDetail" report nil)
+                  (list (list "TABLE_DISPLAY_FONT" key display)))))))))))
+  (setq report (OCS:putPair report "tableDisplayMismatch" displayMismatch))
   (OCS:putPair report "tableProtectedDetails" (reverse details))
 )
 
@@ -3345,7 +3605,8 @@
   r
 )
 (defun OCS:hasPlannedWrites ( / needed st ent)
-  (setq needed (not (null (OCS:assocd "targets" *OCS:Plan* nil))))
+  (setq needed (or (not (null (OCS:assocd "targets" *OCS:Plan* nil)))
+                   (not (null (OCS:assocd "fieldEdits" *OCS:Plan* nil)))))
   (foreach st (OCS:assocd "styles" *OCS:Plan* nil)
     (setq ent (tblobjname "STYLE" (OCS:assocd "name" st "")))
     (if (or (not ent) (not (OCS:styleIsTarget ent))) (setq needed T)))
