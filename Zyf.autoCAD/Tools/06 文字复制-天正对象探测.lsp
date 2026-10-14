@@ -1,9 +1,8 @@
-; Tianzheng text probe for maa
-; Date: 2026-10-14
-; Usage: APPLOAD this file, run TZTXTDBG, choose an output TXT file, then
-; select the five samples with labels 1..5. Press Enter at the label prompt to end.
-; Labels: 1/2/3 = three annotation text kinds; 4 = Tianzheng single-line;
-; 5 = Tianzheng multi-line. This command only reads drawing data.
+; 天正文字探测脚本，供 maa 改造前确认文字内容所在字段。
+; 日期：2026-10-14
+; 用法：APPLOAD 后运行 TZTXTDBG，选择日志路径，按 1 至 5 标记样本。
+; 1/2/3 为三种标注文字，4 为天正单行文字，5 为天正多行文字。
+; 本命令只读取图纸数据，不修改对象。
 
 (vl-load-com)
 
@@ -115,7 +114,7 @@
 )
 
 (defun c:TZTXTDBG (/ path stream label selection containers index)
-  (setq path (getfiled "Save Tianzheng text probe log"
+  (setq path (getfiled "保存天正文字探测日志"
                       (strcat (getvar "DWGPREFIX") "TZTXTDBG.txt")
                       "txt" 1))
   (if path
@@ -131,10 +130,10 @@
           (write-line
             "non-ASCII is escaped as \\uXXXX; legacy engine values may be codepage bytes"
             stream)
-          (while (setq label (getint "\nSample label 1..5 <Enter to finish>: "))
+          (while (setq label (getint "\n输入样本类别 1..5 <回车结束>: "))
             (if (and (>= label 1) (<= label 5))
               (progn
-                (setq selection (nentsel "\nSelect text or annotation: "))
+                (setq selection (nentsel "\n点选文字或标注: "))
                 (if selection
                   (progn
                     (write-line (strcat "=== SAMPLE " (itoa label) " ===") stream)
@@ -149,24 +148,24 @@
                       )
                     )
                     (write-line "=== END SAMPLE ===" stream)
-                    (princ (strcat "\nSample " (itoa label) " recorded."))
+                    (princ (strcat "\n样本 " (itoa label) " 已记录。"))
                   )
-                  (princ "\nNo object selected; choose a label to retry.")
+                  (princ "\n未选中对象，请重新输入类别。")
                 )
               )
-              (princ "\nUse a label from 1 to 5.")
+              (princ "\n类别请输入 1 至 5。")
             )
           )
           (close stream)
-          (princ (strcat "\nProbe log saved: " path))
+          (princ (strcat "\n探测日志已保存: " path))
         )
-        (princ "\nCould not open the selected log file.")
+        (princ "\n无法打开所选日志文件。")
       )
     )
-    (princ "\nProbe cancelled.")
+    (princ "\n已取消探测。")
   )
   (princ)
 )
 
-(princ "\nLoaded TZTXTDBG. Run it to inspect five Tianzheng text samples.")
+(princ "\n已加载 TZTXTDBG，可探测五类天正文字样本。")
 (princ)
