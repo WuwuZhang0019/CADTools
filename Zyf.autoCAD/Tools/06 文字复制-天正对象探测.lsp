@@ -147,7 +147,7 @@
       (TZD:Write stream (strcat title "_com_object_name")
         (TZD:ComResult
           (vl-catch-all-apply 'vlax-get-property (list obj 'ObjectName))))
-      (foreach prop '(TextString Text Content Contents Text1 Text2 LineNum WireName)
+      (foreach prop '(TextString Text Content Contents Text1 Text2 UpText DownText MText TextContent MTextContent LineNum WireName)
         (setq available (TZD:ComResult
                           (vl-catch-all-apply 'vlax-property-available-p
                             (list obj prop)))
@@ -157,6 +157,12 @@
         (TZD:Write stream
           (strcat title "_com_" (vl-symbol-name prop))
           (list "available" available "writable" writable))
+        (if available
+          (TZD:Write stream
+            (strcat title "_com_" (vl-symbol-name prop) "_value")
+            (TZD:ComResult
+              (vl-catch-all-apply 'vlax-get-property (list obj prop))))
+        )
       )
       (vlax-release-object obj)
     )
