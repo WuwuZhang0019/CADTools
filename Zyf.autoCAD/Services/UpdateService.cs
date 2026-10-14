@@ -41,7 +41,7 @@ namespace ZYF.autoCAD.Services
                 _hasNotifiedThisSession = true;
                 MessageBox.Show(
                     "检测到新版本可用，您可以在空闲时前往菜单栏的【关于】面板进行检查更新与升级。",
-                    "更新提醒",
+                    "张裕锋工具",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Information);
             }
