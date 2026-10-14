@@ -1,12 +1,12 @@
 ; 文字复制命令 maa
 ; 日期：2026-10-14
-; 天正多行目标禁写；引线标注按拾取的上/下行分别读取和赋值。
+; 回路标注目标只更新关联导线 linenum；天正多行目标禁写。
 (vl-load-com)
 
-; 从回路标注的 KeyOwnWireId 只读关联导线上的 linenum。
-(defun MAA:WireText (data / apps app field refs linked wire-data nums value)
-  (setq apps (cdr (assoc -3 data)) refs nil nums nil)
-  (foreach app apps
+; 回路标注的 KeyOwnWireId 只指向一条标准导线；不改天正对象本身。
+(defun MAA:WireOwner (data / app field refs linked linked-data)
+  (setq refs nil)
+  (foreach app (cdr (assoc -3 data))
     (if (equal (car app) "KeyOwnWireId")
       (foreach field (cdr app)
         (if (and (= (car field) 1005) (eq (type (cdr field)) 'STR))
@@ -20,22 +20,97 @@
       (setq linked (handent (car refs)))
       (if linked
         (progn
-          (setq wire-data (entget linked '("*")))
-          (foreach app (cdr (assoc -3 wire-data))
-            (if (equal (strcase (car app)) "LINENUM")
-              (setq nums (cons app nums))
-            )
-          )
-          (if (= (length nums) 1)
+          (setq linked-data (entget linked))
+          (if (equal (cdr (assoc 0 linked-data)) "LWPOLYLINE") linked nil)
+        )
+      )
+    )
+  )
+)
+
+; 只接受该测试图确认过的单个 (1000 . 编号) 结构。
+(defun MAA:LineNumApp (data / apps app fields)
+  (setq apps (cdr (assoc -3 data)))
+  (if (= (length apps) 1)
+    (progn
+      (setq app (car apps) fields (cdr app))
+      (if (and (equal (strcase (car app)) "LINENUM")
+               (= (length fields) 1)
+               (= (caar fields) 1000)
+               (eq (type (cdar fields)) 'STR))
+        app
+        nil
+      )
+    )
+  )
+)
+
+(defun MAA:WireText (data / wire app)
+  (setq wire (MAA:WireOwner data))
+  (if wire
+    (progn
+      (setq app (MAA:LineNumApp (entget wire '("linenum"))))
+      (if app (cdr (cadr app)) nil)
+    )
+  )
+)
+
+; 只有显示导线名称的标注才对应 linenum，其他导线标注类型拒绝写入。
+(defun MAA:WireNameOnlyP (data / app)
+  (setq app (assoc "TG_DIMWIRE_TYPE" (cdr (assoc -3 data))))
+  (if (and app
+           (equal (cdr (assoc 1000 (cdr app))) "WireNameOnly"))
+    T nil
+  )
+)
+
+; 只把 linenum 应用的 XData 交给 entmod，其它应用保持原样。
+; 写后读回；不一致时尝试恢复旧值。
+(defun MAA:WriteWireText (target data value / wire before app old-text xdata changed
+                          result after after-app restored success)
+  (setq wire (MAA:WireOwner data))
+  (if (and wire (MAA:WireNameOnlyP data) (<= (strlen value) 127))
+    (progn
+      (setq before (entget wire '("linenum"))
+            app (MAA:LineNumApp before))
+      (if app
+        (progn
+          (setq old-text (cdr (cadr app)))
+          (if (equal value old-text)
+            (setq success T)
             (progn
-              (setq value (cdr (assoc 1000 (cdr (car nums)))))
-              (if (eq (type value) 'STR) value nil)
+              (setq xdata (assoc -3 before)
+                    changed (subst (list -3 (list (car app) (cons 1000 value)))
+                                   xdata before)
+                    result (vl-catch-all-apply 'entmod (list changed)))
+              (if (and (not (vl-catch-all-error-p result)) result)
+                (progn
+                  (setq after (entget wire '("linenum"))
+                        after-app (MAA:LineNumApp after))
+                  (if (and after-app (equal (cdr (cadr after-app)) value))
+                    (setq success T)
+                  )
+                )
+              )
+              (if (not success)
+                (progn
+                  (vl-catch-all-apply 'entmod (list before))
+                  (setq restored (MAA:LineNumApp (entget wire '("linenum"))))
+                  (if (not (and restored
+                                (equal (cdr (cadr restored)) old-text)))
+                    (princ "\n回路编号恢复失败，请检查关联导线。")
+                  )
+                )
+              )
+              (vl-catch-all-apply 'entupd (list wire))
+              (vl-catch-all-apply 'entupd (list target))
             )
           )
         )
       )
     )
   )
+  (if success T nil)
 )
 
 ; 以引线基线组码 11 和文字方向组码 52 判定拾取的是上行还是下行。
@@ -102,7 +177,7 @@
     (cond
       ((equal ch (chr 13))
         (setq out (strcat out "\\P"))
-        (if (and (< i n) (= (substr value (1+ i) 1) (chr 10)))
+        (if (and (< i n) (equal (substr value (1+ i) 1) (chr 10)))
           (setq i (1+ i))
         )
       )
@@ -249,10 +324,19 @@
                     old-text (assoc 1 target-data)
                     lines (MAA:Lines source-text))
               (cond
-                ((not (member target-kind '("TEXT" "MTEXT" "ATTRIB" "TCH_TEXT" "TCH_MTEXT" "TCH_MULTILEADER")))
+                ((not (member target-kind '("TEXT" "MTEXT" "ATTRIB" "TCH_TEXT" "TCH_MTEXT" "TCH_MULTILEADER" "TCH_WIREDIM2")))
                   (princ "\n天正或其他自定义目标尚无已验证的安全写入接口，未修改图纸。"))
                 ((equal target-kind "TCH_MTEXT")
                   (princ "\n不支持此种操作"))
+                ((equal target-kind "TCH_WIREDIM2")
+                  (if (> (length lines) 1)
+                    (princ "\n多行内容不能写入回路标注，未修改图纸。")
+                    (if (MAA:WriteWireText target (entget target '("*")) source-text)
+                      (princ "\n文字复制完成。")
+                      (princ "\n回路标注没有可安全更新的 linenum 字段，未修改图纸。")
+                    )
+                  )
+                )
                 ((not old-text)
                   (princ "\n目标没有 DXF 组码 1，未修改图纸。"))
                 ((and (equal target-kind "TCH_MULTILEADER")
