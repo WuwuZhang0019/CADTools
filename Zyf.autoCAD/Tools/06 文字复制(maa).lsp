@@ -246,8 +246,22 @@
   )
 )
 
-(defun c:maa (/ source-pick source-data source-kind source-text target-pick target
-                 target-data target-kind target-code old-text result readback write-text lines)
+; redraw 3/4 只改变屏幕亮显，退出时必须恢复。
+(defun MAA:Highlight (entity mode)
+  (if entity (vl-catch-all-apply 'redraw (list entity mode)))
+)
+
+(defun c:maa (/ *error* source-pick source-entity source-data source-kind source-text
+                 target-pick target target-data target-kind target-code old-text
+                 result readback write-text lines)
+  (defun *error* (msg)
+    (MAA:Highlight source-entity 4)
+    (if (and msg
+             (not (member (strcase msg) '("FUNCTION CANCELLED" "QUIT / EXIT ABORT"))))
+      (princ (strcat "\n文字复制中断: " msg))
+    )
+    (princ)
+  )
   (setq source-pick (nentsel "\n选择源文字: "))
   (if source-pick
     (progn
@@ -257,7 +271,21 @@
       (if (not (eq (type source-text) 'STR))
         (princ "\n源对象的文字字段尚未确认，未修改图纸。")
         (progn
-          (setq target-pick (nentsel "\n选择目标文字: "))
+          (setq source-entity (car source-pick))
+          (MAA:Highlight source-entity 3)
+          (setq target-pick nil)
+          (while (not target-pick)
+            (setq target-pick (nentsel "\n选择目标文字，按 Esc 退出: "))
+            (cond
+              ((null target-pick)
+                (princ "\n未选中目标文字，请继续选择。"))
+              ((not (member (cdr (assoc 0 (entget (car target-pick))))
+                            '("TEXT" "MTEXT" "ATTRIB" "TCH_TEXT" "TCH_MTEXT"
+                              "TCH_MULTILEADER" "TCH_WIREDIM2")))
+                (princ "\n目标不是可处理的文字，请重新选择。")
+                (setq target-pick nil))
+            )
+          )
           (if target-pick
             (progn
               (setq target (car target-pick)
@@ -332,6 +360,7 @@
     )
     (princ "\n已取消源文字选择。")
   )
+  (MAA:Highlight source-entity 4)
   (princ)
 )
 
