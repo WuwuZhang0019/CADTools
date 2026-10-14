@@ -1,6 +1,7 @@
-; Test Tianzheng XGWZ command with a selected wire annotation.
+; Test whether XGWZ accepts the picked point of a wire annotation.
 ; Date: 2026-10-14
 ; Commands: TZXGWZTEST, TZXGWZCHECK. Use only in a copy of the DWG.
+; This probe passes the pick point only. Type the new text manually if prompted.
 (vl-load-com)
 
 (defun TZX:WireOwner (data / app field refs wire)
@@ -75,11 +76,13 @@
                             *TZX:Before* before)
                       (princ (strcat "\n原编号: " before "；待复制: " source-text))
                       (setq result (vl-catch-all-apply 'vl-cmdf
-                                     (list "XGWZ" target source-text)))
+                                     (list "XGWZ" (cadr target-pick))))
                       (if (vl-catch-all-error-p result)
                         (princ (strcat "\nXGWZ 调用失败: "
                           (vl-catch-all-error-message result)))
-                        (princ "\nXGWZ 已调用。请完成任何剩余提示后运行 TZXGWZCHECK。")
+                        (princ (strcat "\n已向 XGWZ 传入拾取点。若提示输入新文字，请手动输入: "
+                          source-text
+                          "；命令结束后运行 TZXGWZCHECK。若仍提示选择目标，请按 Esc 退出并告知结果。"))
                       )
                     )
                     (princ "\n目标编号不可读取或与源文字相同，未调用 XGWZ。")
