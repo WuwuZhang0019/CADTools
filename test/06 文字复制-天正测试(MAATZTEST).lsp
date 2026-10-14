@@ -1,6 +1,6 @@
 ; 天正文字复制独立测试副本；命令 MAATZTEST
 ; 日期：2026-10-14
-; 回路标注目标仅在图面确认后保留测试写入；天正多行目标禁写。
+; 回路标注目标尝试同值 Height 设置并由用户确认；天正多行目标禁写。
 (vl-load-com)
 
 ; 回路标注的 KeyOwnWireId 只指向一条标准导线；不改天正对象本身。
@@ -63,10 +63,10 @@
   )
 )
 
-; 仅独立测试命令使用：读回导线字段后调用标注公开的 Update 方法。
+; 仅独立测试命令使用：对已确认可写的 Height 设置原值，探测标注是否重建。
 ; 用户按图面实际显示确认；选择 No 或直接回车时恢复原导线字段。
 (defun MAAT:WriteWireText (target data value / wire before app old-text xdata changed
-                          result after after-app obj update-result answer restored success)
+                          result after after-app obj height attempted update-result answer restored success)
   (setq wire (MAAT:WireOwner data))
   (if (and wire (MAAT:WireNameOnlyP data) (<= (strlen value) 127))
     (progn
@@ -93,9 +93,23 @@
                                   'vlax-ename->vla-object (list target)))
                       (if (and obj (not (vl-catch-all-error-p obj)))
                         (progn
-                          (setq update-result
-                            (vl-catch-all-apply 'vla-update (list obj)))
-                          (if (not (vl-catch-all-error-p update-result))
+                          (setq height
+                            (vl-catch-all-apply 'vlax-get-property (list obj 'Height)))
+                          (if (and (not (vl-catch-all-error-p height))
+                                   (numberp height))
+                            (progn
+                              (setq attempted T)
+                              (setq update-result
+                                (vl-catch-all-apply 'vlax-put-property
+                                  (list obj 'Height height)))
+                              (if (not (vl-catch-all-error-p update-result))
+                                (setq update-result
+                                  (vl-catch-all-apply 'vla-update (list obj)))
+                              )
+                            )
+                          )
+                          (if (and attempted
+                                   (not (vl-catch-all-error-p update-result)))
                             (progn
                               (initget "Yes No")
                               (setq answer
