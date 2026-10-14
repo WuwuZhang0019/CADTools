@@ -1,6 +1,6 @@
 ; 天正文字复制独立测试副本；命令 MAATZTEST
 ; 日期：2026-10-14
-; 回路标注目标尝试同值 Height 设置并由用户确认；天正多行目标禁写。
+; 回路标注与天正多行目标禁写；可作为来源。
 (vl-load-com)
 
 ; 回路标注的 KeyOwnWireId 只指向一条标准导线；不改天正对象本身。
@@ -55,100 +55,7 @@
   )
 )
 
-(defun MAAT:WireNameOnlyP (data / app)
-  (setq app (assoc "TG_DIMWIRE_TYPE" (cdr (assoc -3 data))))
-  (if (and app
-           (equal (cdr (assoc 1000 (cdr app))) "WireNameOnly"))
-    T nil
-  )
-)
-
-; 仅独立测试命令使用：对已确认可写的 Height 设置原值，探测标注是否重建。
-; 用户按图面实际显示确认；选择 No 或直接回车时恢复原导线字段。
-(defun MAAT:WriteWireText (target data value / wire before app old-text xdata changed
-                          result after after-app obj height attempted update-result answer restored success)
-  (setq wire (MAAT:WireOwner data))
-  (if (and wire (MAAT:WireNameOnlyP data) (<= (strlen value) 127))
-    (progn
-      (setq before (entget wire '("linenum"))
-            app (MAAT:LineNumApp before))
-      (if app
-        (progn
-          (setq old-text (cdr (cadr app)))
-          (if (equal value old-text)
-            (princ "\n请选用与原回路编号不同的源文字进行刷新测试。")
-            (progn
-              (setq xdata (assoc -3 before)
-                    changed (subst (list -3 (list (car app) (cons 1000 value)))
-                                   xdata before)
-                    result (vl-catch-all-apply 'entmod (list changed)))
-              (if (and (not (vl-catch-all-error-p result)) result)
-                (progn
-                  (setq after (entget wire '("linenum"))
-                        after-app (MAAT:LineNumApp after))
-                  (if (and after-app (equal (cdr (cadr after-app)) value))
-                    (progn
-                      (vl-catch-all-apply 'entupd (list wire))
-                      (setq obj (vl-catch-all-apply
-                                  'vlax-ename->vla-object (list target)))
-                      (if (and obj (not (vl-catch-all-error-p obj)))
-                        (progn
-                          (setq height
-                            (vl-catch-all-apply 'vlax-get-property (list obj 'Height)))
-                          (if (and (not (vl-catch-all-error-p height))
-                                   (numberp height))
-                            (progn
-                              (setq attempted T)
-                              (setq update-result
-                                (vl-catch-all-apply 'vlax-put-property
-                                  (list obj 'Height height)))
-                              (if (not (vl-catch-all-error-p update-result))
-                                (setq update-result
-                                  (vl-catch-all-apply 'vla-update (list obj)))
-                              )
-                            )
-                          )
-                          (if (and attempted
-                                   (not (vl-catch-all-error-p update-result)))
-                            (progn
-                              (initget "Yes No")
-                              (setq answer
-                                (vl-catch-all-apply 'getkword
-                                  (list "\n图面回路标注是否显示新值? [Yes/No] <No>: ")))
-                              (if (equal answer "Yes") (setq success T))
-                            )
-                          )
-                        )
-                      )
-                    )
-                  )
-                )
-              )
-              (if (not success)
-                (progn
-                  (vl-catch-all-apply 'entmod (list before))
-                  (setq restored (MAAT:LineNumApp (entget wire '("linenum"))))
-                  (if (and restored (equal (cdr (cadr restored)) old-text))
-                    (princ "\n刷新测试未通过，已恢复导线原值。")
-                    (princ "\n回路编号恢复失败，请检查关联导线。")
-                  )
-                  (vl-catch-all-apply 'entupd (list wire))
-                  (if (and obj (not (vl-catch-all-error-p obj)))
-                    (vl-catch-all-apply 'vla-update (list obj))
-                  )
-                )
-              )
-              (if (and obj (not (vl-catch-all-error-p obj)))
-                (vlax-release-object obj)
-              )
-            )
-          )
-        )
-      )
-    )
-  )
-  (if success T nil)
-)
+; TCH_WIREDIM2 target writes are disabled after native display mismatch.
 
 (defun MAAT:LeaderCode (data pick / base angle point dx dy offset)
   (setq base (cdr (assoc 11 data))
@@ -364,14 +271,7 @@
                 ((equal target-kind "TCH_MTEXT")
                   (princ "\n不支持此种操作"))
                 ((equal target-kind "TCH_WIREDIM2")
-                  (if (> (length lines) 1)
-                    (princ "\n多行内容不能写入回路标注，未修改图纸。")
-                    (if (MAAT:WriteWireText target (entget target '("*")) source-text)
-                      (princ "\n测试通过：导线编号和标注显示已同步。")
-                      (princ "\n不支持此种操作")
-                    )
-                  )
-                )
+                  (princ "\n不支持此种操作"))
                 ((not old-text)
                   (princ "\n目标没有 DXF 组码 1，未修改图纸。"))
                 ((and (equal target-kind "TCH_MULTILEADER")

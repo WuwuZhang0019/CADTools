@@ -19,7 +19,7 @@
 
 ## 3. AutoLISP 代码
 
-将以下代码保存为 UTF-8 文本文件 `tzh_text_extract.lsp`。在 AutoCAD/天正中用 `APPLOAD` 加载，然后运行 `TZXDUMP` 检查单个已知标注，确认输出后运行 `TZTEXT` 扫描整张图。
+将以下代码保存为严格 GB2312、无 BOM 的 `tzh_text_extract.lsp`。在 AutoCAD/天正中用 `APPLOAD` 加载，然后运行 `TZXDUMP` 检查单个已知标注，确认输出后运行 `TZTEXT` 扫描整张图。
 
 ```lisp
 (vl-load-com)
@@ -117,7 +117,7 @@
 
 ## 5. 解析逻辑说明与限制
 
-- `entget` 的应用列表参数使用 `(("*"))` 以读取所有已注册应用的 XData；这样不需要预先猜测 XData 应用名。
+- `entget` 的应用列表参数使用 `'("*")` 以读取所有已注册应用的 XData；这样不需要预先猜测 XData 应用名。
 - `TZ:ReadLineNum` 仅处理 `1000 linenum` 后紧跟 `1000 编号` 的结构。如果 `TZXDUMP` 显示编号存放在其他组码、嵌套结构或扩展字典中，应按实际数据结构另写解析分支。
 - `TZTEXT` 扫描数据库实体，不只处理普通 `TEXT` / `MTEXT`，这可覆盖带 XData 的代理或自定义实体；但其匹配条件是 `linenum` 字段，需通过 `TZXDUMP` 验证这是目标标注的数据。
 - 若天正对象只是代理图形且编号没有保存在可读取的 XData 中，AutoLISP 可能无法直接得到原生对象属性。此时需在装有相同天正版本的环境中查询其对象接口或通过天正命令/API读取，不能用图面 OCR 或近邻文字替代属性读取并宣称完全等价。
