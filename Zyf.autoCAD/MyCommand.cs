@@ -52,6 +52,19 @@ public class MyCommand
         if (document == null) return;
         if (pendingMenuYjstDocument != null) return;
 
+        // 日期：2026-10-16。只在菜单入口确认，取消时不注册回调或投递命令。
+        System.Windows.Forms.DialogResult confirmation = System.Windows.Forms.MessageBox.Show(
+            "将把当前图纸的字体统一为宋体。\r\n\r\n" +
+            "执行完成后，未进行其他操作时，可按一次 Ctrl+Z 撤销本次修改。\r\n\r\n" +
+            "是否继续？",
+            "一键统一宋体（YJST）",
+            System.Windows.Forms.MessageBoxButtons.OKCancel,
+            System.Windows.Forms.MessageBoxIcon.Question,
+            System.Windows.Forms.MessageBoxDefaultButton.Button2);
+        if (confirmation != System.Windows.Forms.DialogResult.OK) return;
+        if (Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument != document)
+            return;
+
         pendingMenuYjstDocument = document;
         Autodesk.AutoCAD.ApplicationServices.Core.Application.Idle += DispatchMenuYjstOnIdle;
     }
