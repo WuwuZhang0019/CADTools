@@ -85,7 +85,8 @@ namespace ZYF.autoCAD
             new PopMenuItem(PTB, "11 PL线转桥架(PTB)", menu, 10);
             new PopMenuItem(DXGS, "12 自动标导线根数", menu, 11);
             new PopMenuItem(YJST, "13 一键统一宋体(YJST)", menu, 12);
-            new PopMenuItem(AboutZYFTools, "14 关于", menu, 13);
+            new PopMenuItem(EmergencyLighting, "14 应急照明", menu, 13);
+            new PopMenuItem(AboutZYFTools, "15 关于", menu, 14);
         }
 
         private MenuMacro _JSSS;
@@ -298,6 +299,20 @@ namespace ZYF.autoCAD
                     _YJST.macro.SmallImage = $@"{_root}\resource\icon\home.ico";
                 }
                 return _YJST;
+            }
+        }
+
+        private MenuMacro _EmergencyLighting;
+        public MenuMacro EmergencyLighting
+        {
+            get
+            {
+                if (_EmergencyLighting == null)
+                {
+                    _EmergencyLighting = new MenuMacro(Parent, "14 应急照明", "EmergencyLighting", "zyf_tag");
+                    _EmergencyLighting.macro.SmallImage = $@"{_root}\resource\icon\home.ico";
+                }
+                return _EmergencyLighting;
             }
         }
 

@@ -3,6 +3,9 @@
 ###############################################################################
 * text=auto
 
+# 2026-10-16: preserve the delivered runtime bytes, including GB2312 LISP/DCL.
+Zyf.autoCAD/Tools/Emergency-Lighting/** -text whitespace=cr-at-eol
+
 ###############################################################################
 # Set default behavior for command prompt diff.
 #

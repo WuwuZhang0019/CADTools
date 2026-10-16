@@ -81,6 +81,9 @@
     <None Update="Tools\FSNDataBase">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Tools\Emergency-Lighting\**\*">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
 
   </ItemGroup>
   <!-- Tools 下的 LSP 源文件已采用 GB2312，构建时按原始字节复制。 -->

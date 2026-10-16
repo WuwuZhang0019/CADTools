@@ -372,6 +372,13 @@ public class MyCommand
         document.SendStringToExecute($"(progn (load \"{lispPath}\") (C:YJST))\n", false, false, false);
     }
 
+    // 在菜单命令及其撤销分组结束后，向原目标图纸投递 LISP 入口。
+    [CommandMethod("EmergencyLighting", CommandFlags.Session | CommandFlags.NoUndoMarker)]
+    public void EmergencyLightingMenu()
+    {
+        EmergencyLightingService.QueueStart();
+    }
+
     [CommandMethod(nameof(CheckUpdate), CommandFlags.Modal)]
     public void CheckUpdate()
     {
