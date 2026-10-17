@@ -78,6 +78,9 @@
     <None Update="Tools\13 一键统一宋体(yjst).lsp">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Tools\14 缺失字体替换(zzz).lsp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Tools\FSNDataBase">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

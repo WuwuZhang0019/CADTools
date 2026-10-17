@@ -385,6 +385,36 @@ public class MyCommand
         document.SendStringToExecute($"(progn (load \"{lispPath}\") (C:YJST))\n", false, false, false);
     }
 
+    // 日期：2026-10-17。启动命令只投递 LSP，由脚本自己管理修改与撤销分组。
+    private static void RunZzzLispCommand()
+    {
+        Document document = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
+        if (document == null) return;
+
+        UpdateService.CheckAndNotifyUpdateOnCommandRun();
+        string assemblyPath = Path.GetDirectoryName(typeof(MyCommand).Assembly.Location);
+        string lispPath = Path.Combine(assemblyPath, "Tools", "14 缺失字体替换(zzz).lsp").Replace(@"\", "/");
+        if (!File.Exists(lispPath))
+        {
+            document.Editor.WriteMessage($"\n未找到缺失字体替换工具：{lispPath}");
+            return;
+        }
+
+        document.SendStringToExecute($"(progn (load \"{lispPath}\") (C:ZZZ))\n", false, false, false);
+    }
+
+    [CommandMethod(nameof(ZZZ), CommandFlags.Modal | CommandFlags.NoUndoMarker)]
+    public void ZZZ()
+    {
+        RunZzzLispCommand();
+    }
+
+    [CommandMethod("ZZZ_MENU", CommandFlags.Session | CommandFlags.NoUndoMarker)]
+    public void ZzzMenu()
+    {
+        RunZzzLispCommand();
+    }
+
     // 在菜单命令及其撤销分组结束后，向原目标图纸投递 LISP 入口。
     [CommandMethod("EmergencyLighting", CommandFlags.Session | CommandFlags.NoUndoMarker)]
     public void EmergencyLightingMenu()

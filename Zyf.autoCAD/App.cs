@@ -85,8 +85,9 @@ namespace ZYF.autoCAD
             new PopMenuItem(PTB, "11 PL线转桥架(PTB)", menu, 10);
             new PopMenuItem(DXGS, "12 自动标导线根数", menu, 11);
             new PopMenuItem(YJST, "13 一键统一宋体(YJST)", menu, 12);
-            new PopMenuItem(EmergencyLighting, "14 应急照明", menu, 13);
-            new PopMenuItem(AboutZYFTools, "15 关于", menu, 14);
+            new PopMenuItem(ZZZ, "14 缺失字体替换(ZZZ)", menu, 13);
+            new PopMenuItem(EmergencyLighting, "15 应急照明", menu, 14);
+            new PopMenuItem(AboutZYFTools, "16 关于", menu, 15);
         }
 
         private MenuMacro _JSSS;
@@ -302,6 +303,21 @@ namespace ZYF.autoCAD
             }
         }
 
+        // 日期：2026-10-17。菜单使用独立入口，每次按当前安装目录加载字体工具。
+        private MenuMacro _ZZZ;
+        public MenuMacro ZZZ
+        {
+            get
+            {
+                if (_ZZZ == null)
+                {
+                    _ZZZ = new MenuMacro(Parent, "14 缺失字体替换(ZZZ)", "ZZZ_MENU", "zyf_tag");
+                    _ZZZ.macro.SmallImage = $@"{_root}\resource\icon\home.ico";
+                }
+                return _ZZZ;
+            }
+        }
+
         private MenuMacro _EmergencyLighting;
         public MenuMacro EmergencyLighting
         {
@@ -309,7 +325,7 @@ namespace ZYF.autoCAD
             {
                 if (_EmergencyLighting == null)
                 {
-                    _EmergencyLighting = new MenuMacro(Parent, "14 应急照明", "EmergencyLighting", "zyf_tag");
+                    _EmergencyLighting = new MenuMacro(Parent, "15 应急照明", "EmergencyLighting", "zyf_tag");
                     _EmergencyLighting.macro.SmallImage = $@"{_root}\resource\icon\home.ico";
                 }
                 return _EmergencyLighting;
