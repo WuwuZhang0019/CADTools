@@ -1,5 +1,5 @@
 ;;; 修复版独立命令：加载仅注册，输入 YJSTFIX 执行。
-;;; 日期：2026-10-14
+;;; 日期：2026-10-17
 (if (or (and (boundp '*OCS:Running*) *OCS:Running*)
             (and (boundp '*OCS:UndoMark*) *OCS:UndoMark*))
   (progn
@@ -9,7 +9,7 @@
 ;;; one-click-simsun.lsp
 ;;; 一键统一宋体（YJST）：将当前图纸文字字体统一为宋体（SimSun）
 ;;;
-;;; 日期：2026-10-14
+;;; 日期：2026-10-17
 ;;; 状态：实现完成，待原生 AutoCAD 验收（见 docs/AutoCAD验收记录.md）
 ;;; 编码：开发源码 UTF-8（无 BOM）；CAD 加载请使用 output/gb2312/ 交付文件
 ;;;
@@ -23,6 +23,18 @@
 ;;; 不修改 FONTALT / FONTMAP / SECURELOAD / LISPSYS；
 ;;; 外部参照及其依赖样式跳过，不打开、不改写外部文件。
 ;;; =====================================================================
+
+;;; 日期：2026-10-17。工具集每次会重新 load；初始化不得覆盖未处理的撤销状态。
+(if (or (and (boundp '*OCS:Running*) *OCS:Running*)
+        (and (boundp '*OCS:UndoMark*) *OCS:UndoMark*))
+  (progn
+    (princ "\n存在未结束操作或未关闭撤销分组。本次未重新加载，请先检查原恢复状态。")
+    (exit)))
+(if (or (and (boundp '*OCS:UndoDiagReactors*) *OCS:UndoDiagReactors*)
+        (and (boundp '*OCS:UndoDiagActive*) *OCS:UndoDiagActive*))
+  (vl-catch-all-apply 'OCS:undoDiagStop (list "script-reload")))
+(if (and (boundp '*OCS:RefreshReactors*) *OCS:RefreshReactors*)
+  (vl-catch-all-apply 'OCS:refreshStop (list "script-reload")))
 
 (vl-load-com)
 
@@ -79,8 +91,8 @@
 ;;   (setq res (OCS:addProblem res "error" "Blocks 集合接口不可用")))
 
 ;;; ------------------------- 全局状态 -------------------------
-(setq *OCS:Version*      "0.2.18")
-(setq *OCS:DiagnosticsVersion* "2026-10-14-field-font-v10")
+(setq *OCS:Version*      "0.2.21")
+(setq *OCS:DiagnosticsVersion* "2026-10-17-undo-refresh-v13")
 (setq *OCS:TableContentCounts* nil)
 (setq *OCS:ScanContext* nil)
 (setq *OCS:CollectReverse* nil)
@@ -102,6 +114,16 @@
 (setq *OCS:LogPath* nil *OCS:LogEncoding* nil *OCS:LogError* nil)
 (setq *OCS:LogTail* nil *OCS:LogSeq* 0 *OCS:TraceActive* nil)
 (setq *OCS:LogPending* nil *OCS:LogPendingCount* 0)
+;;; 日期：2026-10-17。诊断入口才启用；保留独立日志路径，供命令结束后的撤销事件追加。
+(setq *OCS:UndoDiagEnabled* nil *OCS:UndoDiagActive* nil *OCS:UndoDiagBusy* nil)
+(setq *OCS:UndoDiagReactors* nil *OCS:UndoDiagSamples* nil *OCS:UndoDiagDoc* nil)
+(setq *OCS:UndoDiagLog* nil *OCS:UndoDiagEncoding* nil *OCS:UndoDiagError* nil *OCS:UndoDiagTail* nil)
+(setq *OCS:UndoDiagSeq* 0 *OCS:UndoDiagCommands* 0 *OCS:UndoDiagWrites* 0
+      *OCS:UndoDiagDbEvents* 0 *OCS:UndoDiagDbLogged* 0 *OCS:UndoDiagCurrentCommand* "")
+;;; 日期：2026-10-17。字体撤销后数据已恢复但显示滞后，独立监听相关对象再生显示。
+(setq *OCS:RefreshReactors* nil *OCS:RefreshDoc* nil *OCS:RefreshActive* nil)
+(setq *OCS:RefreshBusy* nil *OCS:RefreshDirty* nil *OCS:RefreshCommand* nil)
+(setq *OCS:RefreshLog* nil *OCS:RefreshEncoding* nil *OCS:RefreshError* nil *OCS:RefreshSeq* 0)
 
 (defun OCS:logVar (name / result)
   (setq result (vl-catch-all-apply 'getvar (list name)))
@@ -154,6 +176,7 @@
   (if (or (>= *OCS:LogPendingCount* 64)
           (member event (list "RUN_BEGIN" "RUN_RESULT" "RUN_END" "RUN_TIMING" "PHASE_TIME"
             "CALL_ERROR" "ERROR" "REPORT_ERROR" "ROLLBACK_BEGIN" "ROLLBACK_END" "RECOVERY_RESULT"
+            "UNDO_BEGIN" "UNDO_END" "UNDO_UNSAFE" "UNDO_READBACK"
             "BLOCKREF_DIAG_BEGIN" "BLOCKREF_DIAG_END" "BLOCKREF_DIAG_ERROR"
             "BLOCKREF_DIAG_PROBE_BEGIN" "BLOCKREF_DIAG_PROBE" "BLOCKREF_DIAG_DXF_BEGIN" "BLOCKREF_DIAG_DXF"
             "BLOCKREF_SKIPPED")))
@@ -205,7 +228,8 @@
   (if (not *OCS:LogPath*) (setq *OCS:LogError* "日志目录不可写，仅保留最近 40 条内存记录"))
   (OCS:trace "RUN_BEGIN" (list "version" *OCS:Version* "date" day "cdate" stamp "encoding" *OCS:LogEncoding*
     "diagnostics" *OCS:DiagnosticsVersion*))
-  (foreach name (list "ACADVER" "PRODUCT" "PLATFORM" "LISPSYS" "DWGPREFIX" "DWGNAME" "DWGTITLED" "UNDOCTL")
+  (foreach name (list "ACADVER" "PRODUCT" "PLATFORM" "LISPSYS" "DWGPREFIX" "DWGNAME"
+                     "DWGTITLED" "UNDOCTL" "UNDOMARKS" "DBMOD" "CMDACTIVE" "CMDNAMES")
     (setq value (OCS:logVar name))
     (OCS:trace "ENV" (list name value)))
   (princ (if *OCS:LogPath* (strcat "\n排查日志：" *OCS:LogPath*) "\n排查日志无法落盘，运行后输入 YJSTLOG 查看记录。"))
@@ -224,8 +248,16 @@
 )
 
 (defun c:YJSTLOG ( / line)
+  (if (and *OCS:UndoDiagActive* (not *OCS:Running*))
+    (OCS:undoDiagSafe 'OCS:undoDiagFinish nil))
   (if *OCS:LogPath* (princ (strcat "\n最近一次排查日志：" *OCS:LogPath*))
     (princ "\n最近一次运行没有可用日志文件。"))
+  (if (and *OCS:UndoDiagLog* (not (equal *OCS:UndoDiagLog* *OCS:LogPath*)))
+    (princ (strcat "\n本次撤销诊断日志：" *OCS:UndoDiagLog*)))
+  (if *OCS:UndoDiagError*
+    (progn
+      (princ (strcat "\n撤销诊断提示：" *OCS:UndoDiagError*))
+      (foreach line *OCS:UndoDiagTail* (princ (strcat "\n" line)))))
   (if *OCS:LogError*
     (progn
       (princ (strcat "\n日志写入异常：" *OCS:LogError* "；以下为最近 40 条内存记录："))
@@ -260,6 +292,415 @@
     (OCS:trace "CALL_ERROR" (list (vl-symbol-name fn) (vl-catch-all-error-message result)))
     (OCS:trace "CALL_OK" (vl-symbol-name fn)))
   result
+)
+
+;;; =====================================================================
+;;; 日期：2026-10-17。撤销事件诊断：只读采样、独立追加日志，回调内不执行 CAD 命令。
+;;; 不改变字体、撤销设置、分组或用户历史；最多监听 40 个后续命令。
+;;; =====================================================================
+(defun OCS:undoDiagContext ( / name out)
+  (foreach name '("DWGPREFIX" "DWGNAME" "UNDOCTL" "UNDOMARKS" "DBMOD" "CMDACTIVE" "CMDNAMES")
+    (setq out (append out (list name (OCS:logVar name)))))
+  (append out (list "running" *OCS:Running* "undoMark" *OCS:UndoMark*
+    "wrote" *OCS:Wrote* "command" *OCS:UndoDiagCurrentCommand*))
+)
+
+(defun OCS:undoDiagEmitBody (event data / line *OCS:LogPath* *OCS:LogEncoding*)
+  (setq *OCS:LogPath* *OCS:UndoDiagLog* *OCS:LogEncoding* *OCS:UndoDiagEncoding*
+        *OCS:UndoDiagSeq* (1+ *OCS:UndoDiagSeq*))
+  (setq line (vl-prin1-to-string (list (strcat "D" (itoa *OCS:UndoDiagSeq*))
+    (OCS:logVar "MILLISECS") event "撤销事件诊断" data)))
+  (setq *OCS:UndoDiagTail* (append *OCS:UndoDiagTail* (list line)))
+  (if (> (length *OCS:UndoDiagTail*) 40) (setq *OCS:UndoDiagTail* (cdr *OCS:UndoDiagTail*)))
+  (if *OCS:LogPath* (OCS:logWriteLines (list line)) "撤销诊断没有可写日志路径")
+)
+
+(defun OCS:undoDiagEmit (event data / r)
+  (setq r (vl-catch-all-apply 'OCS:undoDiagEmitBody (list event data)))
+  (cond ((vl-catch-all-error-p r) (setq *OCS:UndoDiagError* (vl-catch-all-error-message r)))
+        ((OCS:stringp r) (setq *OCS:UndoDiagError* r)))
+  nil
+)
+
+(defun OCS:undoDiagSafe (fn args / r)
+  (setq r (vl-catch-all-apply fn args))
+  (if (vl-catch-all-error-p r)
+    (progn
+      (setq *OCS:UndoDiagError* (vl-catch-all-error-message r))
+      (OCS:undoDiagEmit "UNDO_DIAG_ERROR" (list (vl-symbol-name fn) *OCS:UndoDiagError*))))
+  nil
+)
+
+(defun OCS:undoDiagRead (handle / ent data out pair count)
+  (setq ent (handent handle) count 0)
+  (if ent (setq data (entget ent '("ACAD"))))
+  (foreach pair data
+    (if (and (< count 128)
+         (member (car pair) '(-3 0 1 2 3 4 5 7 8 10 11 40 41 50 70 71 90 280 281 300 301 302 303 304 330 344 360)))
+      (setq out (cons pair out) count (1+ count))))
+  (list "readable" (not (null data)) "dxfPairs" (length data)
+        "samplePairs" (reverse out) "sampleLimit" 128)
+)
+
+(defun OCS:undoDiagPreview (state / out pair value)
+  (foreach pair (OCS:assocd "samplePairs" state nil)
+    (setq value (cdr pair))
+    (if (and (OCS:stringp value) (> (strlen value) 240))
+      (setq value (list "length" (strlen value) "prefix" (substr value 1 160)
+                       "suffix" (substr value (- (strlen value) 39)))))
+    (setq out (cons (cons (car pair) value) out)))
+  (list "readable" (OCS:assocd "readable" state nil) "dxfPairs" (OCS:assocd "dxfPairs" state 0)
+        "samplePairs" (reverse out) "sampleLimit" 128)
+)
+
+(defun OCS:undoDiagAddSample (kind ent / data handle)
+  (if ent (setq data (entget ent) handle (OCS:assocd 5 data nil)))
+  (if (and handle (not (OCS:undoDiagFindSample handle)))
+    (setq *OCS:UndoDiagSamples* (cons (list "kind" kind "handle" handle
+      "before" (OCS:undoDiagRead handle)) *OCS:UndoDiagSamples*)))
+)
+
+(defun OCS:undoDiagFindSample (handle / item found)
+  (foreach item *OCS:UndoDiagSamples*
+    (if (equal handle (OCS:assocd "handle" item nil)) (setq found item)))
+  found
+)
+
+(defun OCS:undoDiagSnapshot (phase / item handle current before after beforeOk afterOk)
+  (OCS:undoDiagEmit "UNDO_DIAG_STATE" (list "phase" phase "context" (OCS:undoDiagContext)
+    "writes" *OCS:UndoDiagWrites* "dbEvents" *OCS:UndoDiagDbEvents*))
+  (foreach item *OCS:UndoDiagSamples*
+    (setq handle (OCS:assocd "handle" item "")
+          current (vl-catch-all-apply 'OCS:undoDiagRead (list handle)))
+    (if (vl-catch-all-error-p current)
+      (OCS:undoDiagEmit "UNDO_DIAG_OBJECT_ERROR" (list handle (vl-catch-all-error-message current)))
+      (progn
+        (setq before (OCS:assocd "before" item nil) after (OCS:assocd "converted" item nil)
+              beforeOk (equal before current) afterOk (and after (equal after current)))
+        (OCS:undoDiagEmit "UNDO_DIAG_OBJECT" (list "phase" phase "kind" (OCS:assocd "kind" item "")
+          "handle" handle "matchesBeforeSample" beforeOk "matchesConvertedSample" afterOk
+          "current" (OCS:undoDiagPreview current))))))
+)
+
+(defun OCS:undoDiagReadStyleFont (handle phase / ent)
+  (setq ent (handent handle))
+  (if ent (OCS:fontState (vlax-ename->vla-object ent) phase) (list "missing" T))
+)
+
+(defun OCS:undoDiagStyleFonts (phase / item r)
+  ;; 只在显式命令内读字体及 DXF；事件回调不调用 entget。
+  (foreach item *OCS:UndoDiagSamples*
+    (if (= (OCS:assocd "kind" item "") "style")
+      (progn
+        (setq r (vl-catch-all-apply 'OCS:undoDiagReadStyleFont
+          (list (OCS:assocd "handle" item "") phase)))
+        (OCS:undoDiagEmit "UNDO_DIAG_FONT" (list "phase" phase "handle" (OCS:assocd "handle" item "")
+          "state" (if (vl-catch-all-error-p r) nil r)
+          "error" (if (vl-catch-all-error-p r) (vl-catch-all-error-message r) nil))))))
+)
+
+(defun OCS:undoDiagAttach (fn callbacks / r)
+  (setq r (vl-catch-all-apply fn (list "YJST undo diagnostics" callbacks)))
+  (if (or (vl-catch-all-error-p r) (not r))
+    (OCS:undoDiagEmit "UNDO_DIAG_ATTACH" (list "type" (vl-symbol-name fn) "ok" nil
+      "error" (if (vl-catch-all-error-p r) (vl-catch-all-error-message r) "reactor returned nil")))
+    (progn
+      (setq *OCS:UndoDiagReactors* (cons r *OCS:UndoDiagReactors*))
+      (OCS:undoDiagEmit "UNDO_DIAG_ATTACH" (list "type" (vl-symbol-name fn) "ok" T))))
+)
+
+(defun OCS:undoDiagBegin ( / item n)
+  (setq *OCS:UndoDiagLog* *OCS:LogPath* *OCS:UndoDiagEncoding* *OCS:LogEncoding*
+        *OCS:UndoDiagError* nil *OCS:UndoDiagTail* nil *OCS:UndoDiagSamples* nil *OCS:UndoDiagSeq* 0
+        *OCS:UndoDiagCommands* 0 *OCS:UndoDiagWrites* 0 *OCS:UndoDiagDbEvents* 0
+        *OCS:UndoDiagDbLogged* 0 *OCS:UndoDiagCurrentCommand* ""
+        *OCS:UndoDiagDoc* (list (OCS:logVar "DWGPREFIX") (OCS:logVar "DWGNAME")))
+  (OCS:undoDiagEmit "UNDO_DIAG_BEGIN" (list "version" *OCS:Version* "diagnostics" *OCS:DiagnosticsVersion*
+    "context" (OCS:undoDiagContext)))
+  (OCS:undoDiagSafe 'OCS:undoDiagAddSample (list "previous-last-entity" (entlast)))
+  (setq n 0)
+  (foreach item (OCS:assocd "styles" *OCS:Plan* nil)
+    (if (< n 8) (progn (OCS:undoDiagAddSample "style" (tblobjname "STYLE" (OCS:assocd "name" item ""))) (setq n (1+ n)))))
+  (setq n 0)
+  (foreach item (OCS:assocd "targets" *OCS:Plan* nil)
+    (if (< n 8) (progn (OCS:undoDiagAddSample "text-host" (vlax-vla-object->ename (OCS:assocd "obj" item nil))) (setq n (1+ n)))))
+  (setq n 0)
+  (foreach item (OCS:assocd "fieldEdits" *OCS:Plan* nil)
+    (if (< n 4) (progn (OCS:undoDiagAddSample "field" (OCS:assocd "ent" item nil)) (setq n (1+ n)))))
+  (setq *OCS:UndoDiagSamples* (reverse *OCS:UndoDiagSamples*) *OCS:UndoDiagActive* T)
+  (OCS:undoDiagAttach 'vlr-command-reactor '((:vlr-commandWillStart . OCS:undoDiagCommandStart)
+    (:vlr-commandEnded . OCS:undoDiagCommandEnd) (:vlr-commandCancelled . OCS:undoDiagCommandCancel)
+    (:vlr-commandFailed . OCS:undoDiagCommandFail)))
+  (OCS:undoDiagAttach 'vlr-undo-reactor '((:vlr-undoSubcommandAuto . OCS:undoDiagUndo)
+    (:vlr-undoSubcommandControl . OCS:undoDiagUndo) (:vlr-undoSubcommandBegin . OCS:undoDiagUndo)
+    (:vlr-undoSubcommandEnd . OCS:undoDiagUndo) (:vlr-undoSubcommandMark . OCS:undoDiagUndo)
+    (:vlr-undoSubcommandBack . OCS:undoDiagUndo) (:vlr-undoSubcommandNumber . OCS:undoDiagUndo)))
+  (OCS:undoDiagAttach 'vlr-acdb-reactor '((:vlr-objectModified . OCS:undoDiagDbModified)
+    (:vlr-objectUnAppended . OCS:undoDiagDbUnappended) (:vlr-objectErased . OCS:undoDiagDbErased)
+    (:vlr-objectReAppended . OCS:undoDiagDbReappended)))
+  (OCS:undoDiagAttach 'vlr-dwg-reactor '((:vlr-beginClose . OCS:undoDiagClose)))
+  (OCS:undoDiagSnapshot "BEFORE_CONVERT")
+  (OCS:undoDiagStyleFonts "BEFORE_CONVERT")
+)
+
+(defun OCS:undoDiagConverted (report / item current out)
+  (if *OCS:UndoDiagActive*
+    (progn
+      (foreach item *OCS:UndoDiagSamples*
+        (setq current (vl-catch-all-apply 'OCS:undoDiagRead (list (OCS:assocd "handle" item ""))))
+        (if (not (vl-catch-all-error-p current)) (setq item (OCS:putPair item "converted" current)))
+        (setq out (cons item out)))
+      (setq *OCS:UndoDiagSamples* (reverse out) *OCS:UndoDiagDbLogged* 0)
+      (OCS:undoDiagEmit "UNDO_DIAG_CONVERTED" (list "status" (OCS:assocd "status" report "?")
+        "writes" *OCS:UndoDiagWrites* "logPath" *OCS:UndoDiagLog*))
+      (OCS:undoDiagSnapshot "AFTER_CONVERT")
+      (OCS:undoDiagStyleFonts "AFTER_CONVERT")
+      (princ "\n撤销诊断已记录：请按一次 Ctrl+Z，再输入 YJSTLOG，随后提供该日志。")))
+)
+
+(defun OCS:undoDiagWrite (fn args result / first ent data name)
+  (setq *OCS:UndoDiagWrites* (1+ *OCS:UndoDiagWrites*))
+  (if (<= *OCS:UndoDiagWrites* 32)
+    (progn
+      (setq first (car args))
+      (if (member fn '(entmod entmake))
+        (setq data first name (OCS:assocd 2 first nil))
+        (progn
+          (setq ent (vl-catch-all-apply 'vlax-vla-object->ename (list first)))
+          (if (not (vl-catch-all-error-p ent)) (setq data (vl-catch-all-apply 'entget (list ent))))
+          (if (vl-catch-all-error-p data) (setq data nil))))
+      (OCS:undoDiagEmit "UNDO_DIAG_WRITE" (list "number" *OCS:UndoDiagWrites* "function" (vl-symbol-name fn)
+        "handle" (OCS:assocd 5 data nil) "name" name
+        "error" (if (vl-catch-all-error-p result) (vl-catch-all-error-message result) nil)
+        "returnedNil" (null result) "context" (OCS:undoDiagContext)))))
+)
+
+(defun OCS:undoDiagCommandName (data / name)
+  (setq name (if (OCS:stringp (car data)) (strcase (car data)) ""))
+  (while (and (> (strlen name) 0) (member (substr name 1 1) '("_" "." "'")))
+    (setq name (substr name 2)))
+  name
+)
+
+(defun OCS:undoDiagEventBody (event data / name obj kind handle sample)
+  (cond
+    ((member event '("COMMAND_START" "COMMAND_END" "COMMAND_CANCEL" "COMMAND_FAIL"))
+      (setq name (OCS:undoDiagCommandName data))
+      (if (= event "COMMAND_START")
+        (progn (setq *OCS:UndoDiagCurrentCommand* name)
+          (if (not *OCS:Running*)
+            (progn
+              (setq *OCS:UndoDiagCommands* (1+ *OCS:UndoDiagCommands*))
+              (if (member name '("U" "UNDO" "REDO" "MREDO")) (setq *OCS:UndoDiagDbLogged* 0))))))
+      (OCS:undoDiagEmit "UNDO_DIAG_COMMAND" (list "event" event "name" name "raw" data
+        "context" (OCS:undoDiagContext)))
+      (if (member name '("U" "UNDO" "REDO" "MREDO"))
+        (OCS:undoDiagEmit "UNDO_DIAG_READ_DEFERRED" (list "phase" (strcat event ":" name)
+          "readAt" "YJSTLOG")))
+      (if (and (not *OCS:Running*) (>= *OCS:UndoDiagCommands* 40))
+        (OCS:undoDiagStop "command-limit")))
+    ((= event "UNDO_SUBCOMMAND")
+      (OCS:undoDiagEmit "UNDO_DIAG_SUBCOMMAND" (list "data" data "context" (OCS:undoDiagContext))))
+    (T
+      (setq *OCS:UndoDiagDbEvents* (1+ *OCS:UndoDiagDbEvents*))
+      (if (< *OCS:UndoDiagDbLogged* 64)
+        (progn
+          ;; 原生数据库回调第二参是对象列表；保留直接对象的兼容分支。
+          (setq obj (if (OCS:consp data) (car data) data)
+                handle (vl-catch-all-apply 'vla-get-Handle (list obj))
+                kind (vl-catch-all-apply 'vla-get-ObjectName (list obj)))
+          (if (vl-catch-all-error-p handle) (setq handle nil))
+          (if (vl-catch-all-error-p kind) (setq kind nil))
+          (setq sample (OCS:undoDiagFindSample handle))
+          (setq *OCS:UndoDiagDbLogged* (1+ *OCS:UndoDiagDbLogged*))
+          (OCS:undoDiagEmit "UNDO_DIAG_DB_EVENT" (list "event" event "handle" handle
+            "type" kind "sampleKind" (OCS:assocd "kind" sample nil)
+            "context" (OCS:undoDiagContext)))))))
+)
+
+(defun OCS:undoDiagCallback (event data / r)
+  (if (and *OCS:UndoDiagActive* (not *OCS:UndoDiagBusy*))
+    (progn
+      (setq *OCS:UndoDiagBusy* T)
+      (if (equal *OCS:UndoDiagDoc* (list (OCS:logVar "DWGPREFIX") (OCS:logVar "DWGNAME")))
+        (setq r (vl-catch-all-apply 'OCS:undoDiagEventBody (list event data)))
+        (progn
+          (OCS:undoDiagEmit "UNDO_DIAG_DOCUMENT_CHANGED" (OCS:undoDiagContext))
+          (setq r (vl-catch-all-apply 'OCS:undoDiagStop (list "document-changed")))))
+      (if (vl-catch-all-error-p r)
+        (OCS:undoDiagEmit "UNDO_DIAG_CALLBACK_ERROR" (list event (vl-catch-all-error-message r))))
+      (setq *OCS:UndoDiagBusy* nil)))
+  nil
+)
+
+(defun OCS:undoDiagCommandStart (reactor data) (OCS:undoDiagCallback "COMMAND_START" data))
+(defun OCS:undoDiagCommandEnd (reactor data) (OCS:undoDiagCallback "COMMAND_END" data))
+(defun OCS:undoDiagCommandCancel (reactor data) (OCS:undoDiagCallback "COMMAND_CANCEL" data))
+(defun OCS:undoDiagCommandFail (reactor data) (OCS:undoDiagCallback "COMMAND_FAIL" data))
+(defun OCS:undoDiagDbModified (reactor obj) (OCS:undoDiagCallback "DB_MODIFIED" obj))
+(defun OCS:undoDiagDbUnappended (reactor obj) (OCS:undoDiagCallback "DB_UNAPPENDED" obj))
+(defun OCS:undoDiagDbErased (reactor obj) (OCS:undoDiagCallback "DB_ERASED" obj))
+(defun OCS:undoDiagDbReappended (reactor obj) (OCS:undoDiagCallback "DB_REAPPENDED" obj))
+(defun OCS:undoDiagUndo (reactor data / reaction)
+  (setq reaction (vl-catch-all-apply 'vlr-current-reaction-name nil))
+  (OCS:undoDiagCallback "UNDO_SUBCOMMAND" (list (if (vl-catch-all-error-p reaction) nil reaction) data))
+)
+(defun OCS:undoDiagClose (reactor data) (OCS:undoDiagSafe 'OCS:undoDiagStop (list "drawing-close")))
+
+(defun OCS:undoDiagStop (reason / reactor r pending)
+  (setq *OCS:UndoDiagActive* nil)
+  (foreach reactor *OCS:UndoDiagReactors*
+    (setq r (vl-catch-all-apply 'vlr-remove (list reactor)))
+    (if (vl-catch-all-error-p r) (setq pending (cons reactor pending))))
+  (setq *OCS:UndoDiagReactors* (reverse pending))
+  (OCS:undoDiagEmit "UNDO_DIAG_STOP" (list "reason" reason "pendingReactors" (length pending)
+    "commands" *OCS:UndoDiagCommands* "writes" *OCS:UndoDiagWrites* "dbEvents" *OCS:UndoDiagDbEvents*))
+)
+
+(defun OCS:undoDiagFinish ()
+  (if (equal *OCS:UndoDiagDoc* (list (OCS:logVar "DWGPREFIX") (OCS:logVar "DWGNAME")))
+    (progn
+      (OCS:undoDiagSafe 'OCS:undoDiagSnapshot (list "LOG_REQUEST"))
+      (OCS:undoDiagSafe 'OCS:undoDiagStyleFonts (list "LOG_REQUEST")))
+    (OCS:undoDiagEmit "UNDO_DIAG_DOCUMENT_CHANGED" (OCS:undoDiagContext)))
+  (OCS:undoDiagStop "log-request")
+)
+
+;;; =====================================================================
+;;; 日期：2026-10-17。相关对象撤销/重做后，仅在命令结束通知中再生全部视口。
+;;; 对象回调只置标志；不发 CAD 命令、不改变字体、不创建撤销分组。
+;;; =====================================================================
+(defun OCS:refreshEmitBody (event data / *OCS:LogPath* *OCS:LogEncoding*)
+  (setq *OCS:LogPath* *OCS:RefreshLog* *OCS:LogEncoding* *OCS:RefreshEncoding*
+        *OCS:RefreshSeq* (1+ *OCS:RefreshSeq*))
+  (if *OCS:LogPath*
+    (OCS:logWriteLines (list (vl-prin1-to-string
+      (list (strcat "R" (itoa *OCS:RefreshSeq*)) (OCS:logVar "MILLISECS")
+        event "撤销后显示刷新" data)))))
+)
+
+(defun OCS:refreshEmit (event data)
+  (vl-catch-all-apply 'OCS:refreshEmitBody (list event data))
+  nil
+)
+
+(defun OCS:refreshStop (reason / reactor)
+  (setq *OCS:RefreshActive* nil *OCS:RefreshDirty* nil *OCS:RefreshCommand* nil)
+  (foreach reactor *OCS:RefreshReactors*
+    (vl-catch-all-apply 'vlr-remove (list reactor)))
+  (setq *OCS:RefreshReactors* nil *OCS:RefreshDoc* nil)
+  (OCS:refreshEmit "UNDO_REFRESH_STOP" (list "reason" reason))
+)
+
+(defun OCS:refreshAddOwner (obj owners)
+  (if (and obj (not (member obj owners))) (cons obj owners) owners)
+)
+
+(defun OCS:refreshOwners ( / owners item ent obj)
+  ;; 在显式转换命令内取得对象，回调阶段不再调用实体读取接口。
+  (foreach item (OCS:assocd "styles" *OCS:Plan* nil)
+    (setq ent (tblobjname "STYLE" (OCS:assocd "name" item "")))
+    (if ent (setq owners (OCS:refreshAddOwner (vlax-ename->vla-object ent) owners))))
+  (foreach item (OCS:assocd "targets" *OCS:Plan* nil)
+    (setq owners (OCS:refreshAddOwner (OCS:assocd "obj" item nil) owners)))
+  (foreach item (OCS:assocd "fieldEdits" *OCS:Plan* nil)
+    (setq ent (OCS:assocd "ent" item nil))
+    (if ent
+      (progn
+        (setq obj (vl-catch-all-apply 'vlax-ename->vla-object (list ent)))
+        (if (not (vl-catch-all-error-p obj)) (setq owners (OCS:refreshAddOwner obj owners)))))
+    (setq owners (OCS:refreshAddOwner (OCS:assocd "table" item nil) owners)))
+  owners
+)
+
+(defun OCS:refreshAttach (fn args / reactor)
+  (setq reactor (vl-catch-all-apply fn args))
+  (if (vl-catch-all-error-p reactor)
+    (OCS:fail (vl-catch-all-error-message reactor)))
+  (if (not reactor) (OCS:fail "显示刷新反应器创建返回空值"))
+  (setq *OCS:RefreshReactors* (cons reactor *OCS:RefreshReactors*))
+)
+
+(defun OCS:refreshInstall ( / owners)
+  (if (or *OCS:RefreshActive* *OCS:RefreshReactors*) (OCS:refreshStop "replace-watch"))
+  (setq *OCS:RefreshLog* *OCS:LogPath* *OCS:RefreshEncoding* *OCS:LogEncoding*
+        *OCS:RefreshSeq* 0 *OCS:RefreshError* nil *OCS:RefreshDoc* (OCS:activeDoc)
+        owners (OCS:refreshOwners))
+  (if owners
+    (progn
+      (OCS:refreshAttach 'vlr-object-reactor (list owners "YJST undo display refresh"
+        '((:vlr-modifyUndone . OCS:refreshObjectChanged) (:vlr-modified . OCS:refreshObjectChanged)
+          (:vlr-modifiedXData . OCS:refreshObjectChanged) (:vlr-erased . OCS:refreshObjectChanged)
+          (:vlr-unerased . OCS:refreshObjectChanged) (:vlr-unappended . OCS:refreshObjectChanged)
+          (:vlr-reappended . OCS:refreshObjectChanged))))
+      (OCS:refreshAttach 'vlr-command-reactor (list "YJST undo display refresh"
+        '((:vlr-commandWillStart . OCS:refreshCommandStart) (:vlr-commandEnded . OCS:refreshCommandEnd)
+          (:vlr-commandCancelled . OCS:refreshCommandEnd) (:vlr-commandFailed . OCS:refreshCommandEnd))))
+      (OCS:refreshAttach 'vlr-dwg-reactor (list "YJST undo display refresh"
+        '((:vlr-beginClose . OCS:refreshClose))))
+      (setq *OCS:RefreshActive* T)
+      (OCS:refreshEmit "UNDO_REFRESH_WATCH" (list "objects" (length owners) "viewports" "all"))))
+)
+
+(defun OCS:refreshWatch (report / r *OCS:FailureMessage*)
+  (if (and (member (OCS:assocd "status" report "") '("已完成" "部分完成" "无需修改"))
+           (= (OCS:assocd "errors" report 0) 0))
+    (progn
+      ;; 无需修改的再次运行保留已有监视；重载后可从当前计划重新建立。
+      (if (or (not *OCS:RefreshActive*)
+              (> (+ (OCS:assocd "stylesModified" report 0) (OCS:assocd "fontRunsChanged" report 0)) 0))
+        (progn
+          (setq r (vl-catch-all-apply 'OCS:refreshInstall nil))
+          (if (vl-catch-all-error-p r)
+            (progn
+              (setq *OCS:RefreshError* (vl-catch-all-error-message r))
+              (OCS:refreshStop "attach-failed")
+              (OCS:refreshEmit "UNDO_REFRESH_ERROR" (list "phase" "attach" "error" *OCS:RefreshError*))
+              (princ "\n撤销后自动显示刷新不可用；若画面滞后，请输入 REGENALL。")))))))
+)
+
+(defun OCS:refreshObjectChanged (owner reactor data)
+  (if (and *OCS:RefreshActive* *OCS:RefreshCommand* (not *OCS:RefreshBusy*) (not *OCS:Running*))
+    (setq *OCS:RefreshDirty* T))
+  (princ)
+)
+
+(defun OCS:refreshCommandStart (reactor data / name doc)
+  (if (and *OCS:RefreshActive* (not *OCS:RefreshBusy*) (not *OCS:Running*))
+    (progn
+      (setq name (OCS:undoDiagCommandName data)
+            doc (vl-catch-all-apply 'OCS:activeDoc nil))
+      (if (and (not (vl-catch-all-error-p doc)) (equal doc *OCS:RefreshDoc*)
+               (member name '("U" "UNDO" "REDO" "MREDO")))
+        (setq *OCS:RefreshCommand* name *OCS:RefreshDirty* nil))))
+  (princ)
+)
+
+(defun OCS:refreshCommandEnd (reactor data / name dirty doc r)
+  (if (and *OCS:RefreshActive* *OCS:RefreshCommand* (not *OCS:RefreshBusy*) (not *OCS:Running*))
+    (progn
+      (setq name (OCS:undoDiagCommandName data))
+      (if (= name *OCS:RefreshCommand*)
+        (progn
+          (setq dirty *OCS:RefreshDirty* *OCS:RefreshDirty* nil *OCS:RefreshCommand* nil
+                doc (vl-catch-all-apply 'OCS:activeDoc nil))
+          (if (and dirty (not (vl-catch-all-error-p doc)) (equal doc *OCS:RefreshDoc*))
+            (progn
+              (setq *OCS:RefreshBusy* T)
+              (setq r (vl-catch-all-apply 'vla-Regen (list doc 1))) ; acAllViewports
+              (OCS:refreshEmit "UNDO_REFRESH" (list "command" name "ok" (not (vl-catch-all-error-p r))
+                "error" (if (vl-catch-all-error-p r) (vl-catch-all-error-message r) nil)))
+              (if (vl-catch-all-error-p r)
+                (progn
+                  (setq *OCS:RefreshError* (vl-catch-all-error-message r))
+                  (princ "\n撤销后自动显示刷新失败，请输入 REGENALL，并提供 YJSTLOG 日志。")))
+              (setq *OCS:RefreshBusy* nil)))))))
+  (princ)
+)
+
+(defun OCS:refreshClose (reactor data)
+  (OCS:refreshStop "drawing-close")
+  (princ)
 )
 
 ;;; ------------------------- 小工具 -------------------------
@@ -1036,7 +1477,7 @@
 (defun OCS:deleteStyleIfExists (name / ent)
   (setq ent (tblobjname "STYLE" name))
   (if ent
-    (vla-Delete (vlax-ename->vla-object ent))
+    (OCS:writeCall 'vla-Delete (list (vlax-ename->vla-object ent)))
   )
 )
 
@@ -1055,7 +1496,7 @@
   (setq r (OCS:writeCall 'vla-put-BigFontFile (list o val)))
   (if (vl-catch-all-error-p r)
     ;; 文档不允许空字符串，但允许非空；写入失败则用 entmod 补组码 4
-    (vl-catch-all-apply 'entmod (list (OCS:substDxf4 val e)))
+    (OCS:writeCall 'entmod (list (OCS:substDxf4 val e)))
   )
   T
 )
@@ -1086,6 +1527,16 @@
 ;;; 环境预检 OCS:Preflight
 ;;; =====================================================================
 
+;;; 日期：2026-10-17。必须读回完整撤销与活动分组，不能只凭接口未抛错。
+(defun OCS:undoAllP (ctl)
+  (and (equal (type ctl) 'INT)
+       (/= 0 (logand ctl 1)) (= 0 (logand ctl 2)))
+)
+
+(defun OCS:undoGroupActiveP (ctl)
+  (and (OCS:undoAllP ctl) (/= 0 (logand ctl 8)))
+)
+
 (defun OCS:Preflight ( / res acadObj undoctl)
   (setq res (list "ok" nil))
   ;; 1. AutoLISP/Visual LISP/ActiveX（只探测，不执行任何命令）
@@ -1097,13 +1548,14 @@
   (if (vl-catch-all-error-p acadObj)
     (setq res (OCS:addProblem res "error" "Visual LISP/ActiveX 不可用"))
   )
-  ;; 2. 撤销可用性（UNDOCTL 位 0 = UNDO 开启）
-  (setq undoctl (getvar "UNDOCTL"))
+  ;; 2. 排除关闭、单步限制及外部撤销分组；不改用户的撤销设置。
+  (setq undoctl (OCS:logVar "UNDOCTL"))
   (setq res (OCS:putPair res "undoctl" undoctl))
-  (if (= 0 (logand undoctl 1))
-    (setq res (OCS:addProblem res "error" "图纸撤销（UNDO）不可用，不能保证一次 U 恢复"))
+  (if (not (OCS:undoAllP undoctl))
+    (setq res (OCS:addProblem res "error"
+      "图纸撤销关闭、受单步限制或状态不可读，不能保证一次 U 恢复；请先检查 UNDO 设置"))
   )
-  (if (/= 0 (logand undoctl 8))
+  (if (and (equal (type undoctl) 'INT) (/= 0 (logand undoctl 8)))
     (setq res (OCS:addProblem res "error" "已有外部撤销分组，不能保证只撤销本次操作")))
   ;; 3. 文档可写（锁定/只读）
   (setq res (OCS:checkDocWritable res))
@@ -1733,9 +2185,15 @@
 )
 
 (defun OCS:writeCall (fn args / r)
+  (if (and *OCS:UndoMark* (not (OCS:undoGroupActiveP (OCS:logVar "UNDOCTL"))))
+    (progn
+      (OCS:trace "UNDO_UNSAFE" (list "stage" *OCS:Stage* "undoctl" (OCS:logVar "UNDOCTL")))
+      (OCS:fail "本次撤销分组已失效，已停止继续写入；不会自动撤销之前的操作")))
   (setq r (OCS:tracedCall fn args))
-  (if (and *OCS:UndoMark* (not (vl-catch-all-error-p r)))
+  (if (and *OCS:UndoMark* (not (vl-catch-all-error-p r))
+           (or (not (member fn '(entmod entmake))) r))
     (setq *OCS:Wrote* T))
+  (if *OCS:UndoDiagActive* (OCS:undoDiagSafe 'OCS:undoDiagWrite (list fn args r)))
   r
 )
 
@@ -2363,12 +2821,23 @@
   ok
 )
 
-(defun OCS:endUndoGroup ( / r)
+(defun OCS:endUndoGroup ( / r before after ok)
   (if (not *OCS:UndoMark*) T
     (progn
-      (setq r (vl-catch-all-apply 'vla-EndUndoMark (list (OCS:activeDoc))))
-      (if (vl-catch-all-error-p r) nil
-        (progn (setq *OCS:UndoMark* nil) T))))
+      (setq before (OCS:logVar "UNDOCTL"))
+      (if (not (OCS:undoGroupActiveP before))
+        (progn
+          (OCS:trace "UNDO_UNSAFE" (list "stage" "end" "undoctl" before))
+          nil)
+        (progn
+          (setq r (vl-catch-all-apply 'command-s (list "_.UNDO" "_End"))
+                after (OCS:logVar "UNDOCTL")
+                ok (and (not (vl-catch-all-error-p r)) (OCS:undoAllP after)
+                        (= 0 (logand after 8))))
+          (OCS:trace "UNDO_END" (list "before" before "after" after "ok" ok
+            "error" (if (vl-catch-all-error-p r) (vl-catch-all-error-message r) nil)))
+          (if ok (setq *OCS:UndoMark* nil))
+          ok))))
 )
 
 (defun OCS:restoreTempState ( / ok item obj r pending prop value)
@@ -2595,10 +3064,46 @@
 
 (defun c:YJSTFIX ()
   ;; 日期：2026-10-14。独立命令避开工具集同名 .NET YJST 入口；被旧版覆盖时拒绝执行。
-  (if (and (equal *OCS:Version* "0.2.18")
-           (equal *OCS:DiagnosticsVersion* "2026-10-14-field-font-v10"))
+  (if (and (equal *OCS:Version* "0.2.21")
+           (equal *OCS:DiagnosticsVersion* "2026-10-17-undo-refresh-v13"))
     (c:YJST)
-    (princ "\n当前宋体脚本已被旧版覆盖。请重新 APPLOAD v0.2.18 修复文件，然后输入 YJSTFIX。"))
+    (princ "\n当前宋体脚本已被旧版覆盖。请重新 APPLOAD v0.2.21 修复文件，然后输入 YJSTFIX。"))
+  (princ)
+)
+
+(defun c:YJSTDIAG ( / *OCS:UndoDiagEnabled*)
+  (if (and (equal *OCS:Version* "0.2.21")
+           (equal *OCS:DiagnosticsVersion* "2026-10-17-undo-refresh-v13"))
+    (progn (setq *OCS:UndoDiagEnabled* T) (c:YJSTFIX))
+    (princ "\n诊断代码已被其他版本覆盖，请重新 APPLOAD v0.2.21 诊断文件。"))
+  (princ)
+)
+
+;;; 日期：2026-10-17。用户按 Ctrl+Z 后只读核对转换前快照，不再发送撤销命令。
+(defun c:YJSTUNDOCHK ( / r st ent *OCS:Stage* *OCS:TraceActive*)
+  (cond
+    ((or *OCS:Running* *OCS:UndoMark*)
+      (princ "\n仍有未结束操作或异常撤销分组，请先查看 YJSTLOG。"))
+    ((not (and *OCS:Plan* *OCS:Wrote*
+       (member (OCS:assocd "status" *OCS:LastReport* "") '("已完成" "部分完成"))))
+      (princ "\n没有可核对的成功转换记录。请先执行本修复版，再按一次 Ctrl+Z 后核查。"))
+    (T
+      (setq *OCS:Stage* "撤销后只读核查" *OCS:TraceActive* T)
+      (setq r (vl-catch-all-apply 'OCS:rollbackReadbackOk nil))
+      (foreach st (OCS:assocd "styles" *OCS:Plan* nil)
+        (setq ent (tblobjname "STYLE" (OCS:assocd "name" st "")))
+        (OCS:trace "UNDO_STYLE_READBACK" (list "name" (OCS:assocd "name" st "")
+          "fontFileBefore" (OCS:assocd "fontFileBefore" st "")
+          "bigFontBefore" (OCS:assocd "bigFontBefore" st "")
+          "fontBefore" (OCS:assocd "fontBefore" st nil)
+          "current" (if ent (OCS:fontState (vlax-ename->vla-object ent) "undo-check") nil))))
+      (OCS:trace "UNDO_READBACK" (list "restored" (and (not (vl-catch-all-error-p r)) r)
+        "undoctl" (OCS:logVar "UNDOCTL")
+        "error" (if (vl-catch-all-error-p r) (vl-catch-all-error-message r) nil)))
+      (if (and (not (vl-catch-all-error-p r)) r)
+        (princ "\n核对通过：本次记录的字体、文字及字段数据已恢复到转换前。若画面未刷新，请执行 REGENALL。")
+        (princ "\n核对未通过：本次记录的数据尚未完整恢复，请提供 YJSTLOG 日志以定位。"))
+      (c:YJSTLOG)))
   (princ)
 )
 
@@ -2607,6 +3112,7 @@
     (*OCS:Running* (princ "\nYJST 执行失败：上一次运行尚未结束，本次未启动。"))
     (*OCS:UndoMark* (princ "\nYJST 执行失败：上次撤销分组未能关闭，本次未启动，请先检查恢复失败明细。"))
     (T
+      (if *OCS:UndoDiagActive* (OCS:undoDiagSafe 'OCS:undoDiagStop (list "next-conversion")))
       (OCS:timerStart)
       (setq *OCS:Running* T *OCS:Plan* nil *OCS:TempState* nil *OCS:Wrote* nil
             *OCS:UndoAttempted* nil *OCS:FailureMessage* nil *OCS:ProbeStyle* nil)
@@ -2629,7 +3135,10 @@
       (c:YJSTLOG)
       (princ (OCS:finishMessage report))
       (setq report (OCS:timerFinish report) *OCS:LastReport* report *OCS:Report* report)
+      (OCS:refreshWatch report)
       (OCS:trace "RUN_END" (OCS:assocd "status" report "?"))
+      (if *OCS:UndoDiagActive*
+        (progn (OCS:undoDiagSafe 'OCS:undoDiagConverted (list report)) (OCS:logFlush)))
       (setq *OCS:TraceActive* nil *OCS:Running* nil)))
   (princ)
 )
@@ -2650,6 +3159,7 @@
       (OCS:trace "PLAN_READY" (list "styles" (length (OCS:assocd "styles" plan nil))
         "hosts" (length (OCS:assocd "hosts" plan nil)) "targets" (length (OCS:assocd "targets" plan nil))
         "uncovered" (OCS:assocd "unknown" (OCS:assocd "stats" plan nil) 0)))
+      (if *OCS:UndoDiagEnabled* (OCS:undoDiagSafe 'OCS:undoDiagBegin nil))
       (if (and (OCS:hasPlannedWrites) (not (OCS:beginUndoGroup)))
         (OCS:appendError (OCS:makeReport "预检失败") "UNDO" "无法建立撤销分组，未写入业务数据")
         (progn
@@ -2659,16 +3169,22 @@
           (OCS:executeWrites)))))
 )
 
-(defun OCS:beginUndoGroup ( / doc r)
-  (setq doc (OCS:activeDoc))
-  (if (not doc) nil
+(defun OCS:beginUndoGroup ( / before after r ok)
+  ;; 扫描可能触发第三方反应器，开始写入前再次检查，绝不接管外部分组。
+  (setq before (OCS:logVar "UNDOCTL"))
+  (if (or (not (OCS:activeDoc)) *OCS:UndoMark*
+          (not (OCS:undoAllP before)) (/= 0 (logand before 8)))
+    nil
     (progn
-      (setq r (vl-catch-all-apply 'vla-StartUndoMark (list doc)))
-      (if (vl-catch-all-error-p r) nil
-        (progn (setq *OCS:UndoMark* T *OCS:Wrote* nil) T)
-      )
-    )
-  )
+      (setq r (vl-catch-all-apply 'command-s (list "_.UNDO" "_BEgin"))
+            after (OCS:logVar "UNDOCTL"))
+      (if (OCS:undoGroupActiveP after) (setq *OCS:UndoMark* T *OCS:Wrote* nil))
+      (setq ok (and (not (vl-catch-all-error-p r)) *OCS:UndoMark*))
+      (OCS:trace "UNDO_BEGIN" (list "before" before "after" after "ok" ok
+        "error" (if (vl-catch-all-error-p r) (vl-catch-all-error-message r) nil)))
+      ;; 命令报错但已建立空分组时，只关闭该分组，绝不执行 U。
+      (if (and (not ok) *OCS:UndoMark*) (OCS:endUndoGroup))
+      ok))
 )
 
 ;; 执行写入与检查（含回滚路径）
@@ -3363,7 +3879,7 @@
         " 的公式、关联或显示值在写入前变化，停止修改")))
     (setq after (OCS:fieldReplaceCode current (OCS:assocd "afterCode" edit "")))
     (if (not (assoc -1 after)) (setq after (cons (cons -1 ent) after)))
-    (setq r (OCS:tracedCall 'entmod (list after)))
+    (setq r (OCS:writeCall 'entmod (list after)))
     (if (or (vl-catch-all-error-p r) (null r))
       (OCS:fail (strcat "FIELD " (OCS:assocd "handle" edit "?") " 字体代码写入失败")))
     (setq *OCS:Wrote* T current (entget ent))
@@ -3381,7 +3897,7 @@
       (if (= (OCS:assocd "tableHandle" edit nil) handle)
         (setq table (OCS:assocd "table" edit nil))))
     ;; 日期：2026-10-14。ActiveX 必须显式传入 bForceUpdate；字段写入后强制更新显示块。
-    (setq r (OCS:tracedCall 'vla-RecomputeTableBlock (list table :vlax-true)))
+    (setq r (OCS:writeCall 'vla-RecomputeTableBlock (list table :vlax-true)))
     (if (vl-catch-all-error-p r)
       (OCS:fail (strcat "表格 " handle " 重建显示块失败：" (vl-catch-all-error-message r)))))
   (list "changed" count)
