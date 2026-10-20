@@ -1,5 +1,5 @@
 ; 文字复制命令 maa
-; 日期：2026-10-14
+; 日期：2026-10-20
 ; 回路标注与天正多行目标禁写；可作为来源。
 (vl-load-com)
 
@@ -228,7 +228,8 @@
 (defun MAA:SourceText (data pick / kind part text)
   (setq kind (cdr (assoc 0 data)))
   (cond
-    ((member kind '("TEXT" "ATTRIB" "TCH_TEXT" "TCH_MTEXT"))
+    ; 天正图名只读取左侧图名（组码 1），不读取右侧比例（组码 2）。
+    ((member kind '("TEXT" "ATTRIB" "TCH_TEXT" "TCH_MTEXT" "TCH_DRAWINGNAME"))
       (cdr (assoc 1 data)))
     ((equal kind "TCH_WIREDIM2")
       (MAA:WireText data))
