@@ -1,5 +1,5 @@
 ; 文字复制命令 maa
-; 日期：2026-10-20
+; 日期：2026-10-26
 ; 回路标注与天正多行目标禁写；可作为来源。
 (vl-load-com)
 
@@ -247,16 +247,38 @@
   )
 )
 
-; redraw 3/4 只改变屏幕亮显，退出时必须恢复。
+; redraw 3/4 只作用于当前视口，必须在源视口配对清理。
 (defun MAA:Highlight (entity mode)
   (if entity (vl-catch-all-apply 'redraw (list entity mode)))
 )
 
-(defun c:maa (/ *error* source-pick source-entity source-data source-kind source-text
+; 清理源视口后恢复退出时的视口；redraw 失败也不能跳过视口恢复。
+(defun MAA:ClearHighlight (entity viewport / current switched)
+  (if entity
+    (progn
+      (setq current (getvar "CVPORT"))
+      (MAA:Highlight entity 4)
+      (if (and viewport (/= viewport current))
+        (progn
+          (setq switched
+            (vl-catch-all-apply 'setvar (list "CVPORT" viewport)))
+          (if (not (vl-catch-all-error-p switched))
+            (progn
+              (MAA:Highlight entity 4)
+              (vl-catch-all-apply 'setvar (list "CVPORT" current))
+            )
+          )
+        )
+      )
+    )
+  )
+)
+
+(defun c:maa (/ *error* source-pick source-entity source-viewport source-data source-kind source-text
                  target-pick target target-data target-kind target-code old-text
                  result readback write-text lines)
   (defun *error* (msg)
-    (MAA:Highlight source-entity 4)
+    (MAA:ClearHighlight source-entity source-viewport)
     (if (and msg
              (not (member (strcase msg) '("FUNCTION CANCELLED" "QUIT / EXIT ABORT"))))
       (princ (strcat "\n文字复制中断: " msg))
@@ -272,7 +294,8 @@
       (if (not (eq (type source-text) 'STR))
         (princ "\n源对象的文字字段尚未确认，未修改图纸。")
         (progn
-          (setq source-entity (car source-pick))
+          (setq source-entity (car source-pick)
+                source-viewport (getvar "CVPORT"))
           (MAA:Highlight source-entity 3)
           (setq target-pick nil)
           (while (not target-pick)
@@ -361,7 +384,7 @@
     )
     (princ "\n已取消源文字选择。")
   )
-  (MAA:Highlight source-entity 4)
+  (MAA:ClearHighlight source-entity source-viewport)
   (princ)
 )
 
