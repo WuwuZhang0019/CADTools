@@ -1,7 +1,5 @@
 using System;
-using System.Diagnostics;
 using System.Drawing;
-using System.IO;
 using System.Reflection;
 using System.Windows.Forms;
 using ZYF.autoCAD.Services;
@@ -72,7 +70,10 @@ namespace ZYF.autoCAD.UI
                 Size = new Size(90, 32),
                 Text = "卸载软件"
             };
-            uninstallButton.Click += (sender, args) => LaunchUninstaller();
+            uninstallButton.Click += (sender, args) =>
+            {
+                if (UninstallService.LaunchUninstaller(this)) Close();
+            };
 
             var closeButton = new Button
             {
@@ -144,33 +145,6 @@ namespace ZYF.autoCAD.UI
             catch
             {
                 return "未知";
-            }
-        }
-
-        private static void LaunchUninstaller()
-        {
-            try
-            {
-                string processName = Path.GetFileNameWithoutExtension("09 CAD开图自动选字体.exe");
-                foreach (Process process in Process.GetProcessesByName(processName))
-                {
-                    process.Kill();
-                    process.WaitForExit(1000);
-                }
-
-                string uninstallPath = @"C:\ProgramData\Autodesk\ApplicationPlugins\ZYF.bundle\unins000.exe";
-                if (!File.Exists(uninstallPath))
-                {
-                    MessageBox.Show("找不到卸载程序。", "卸载软件", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return;
-                }
-
-                Process.Start(uninstallPath);
-                MessageBox.Show("软件卸载程序已启动，请按照提示完成卸载。", "卸载软件", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"启动卸载程序失败：{ex.Message}", "卸载软件", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
     }

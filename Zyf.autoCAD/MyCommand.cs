@@ -287,35 +287,7 @@ public class MyCommand
     [CommandMethod(nameof(UninstallSoftware), CommandFlags.Modal)]
     public void UninstallSoftware()
     {
-        try
-        {
-            // 1. 关闭后台运行的字体程序
-            string processName = Path.GetFileNameWithoutExtension("09 CAD开图自动选字体.exe");
-            Process[] processes = Process.GetProcessesByName(processName);
-            foreach (Process process in processes)
-            {
-                process.Kill();
-                process.WaitForExit(1000); // 等待进程退出，最多1秒
-            }
-            
-            // 2. 启动卸载程序
-            string uninstallPath = "C:\\ProgramData\\Autodesk\\ApplicationPlugins\\ZYF.bundle\\unins000.exe";
-            
-            if (File.Exists(uninstallPath))
-            {
-                Process.Start(uninstallPath);
-                Application.DocumentManager.MdiActiveDocument.Editor.WriteMessage("\n软件卸载程序已启动，请按照提示完成卸载。");
-            }
-            else
-            {
-                Application.DocumentManager.MdiActiveDocument.Editor.WriteMessage("\n错误: 找不到卸载程序。");
-            }
-        }
-        catch(System.Exception ex)
-        {
-            Application.DocumentManager.MdiActiveDocument.Editor.WriteMessage(
-                $"\n错误: {ex.Message}");
-        }
+        UninstallService.LaunchUninstaller();
     }
 
     //10 消防回路统计
