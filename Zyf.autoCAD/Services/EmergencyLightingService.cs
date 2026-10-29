@@ -27,56 +27,58 @@ namespace ZYF.autoCAD.Services
             if (document == null || CadApplication.DocumentManager.MdiActiveDocument != document)
                 return;
 
-            string moduleRoot = Path.Combine(
-                Path.GetDirectoryName(typeof(EmergencyLightingService).Assembly.Location),
-                "Tools", "Emergency-Lighting");
-            foreach (string relative in new[] { "src/load.lsp", EmergencyLightingScript.Version + ".marker" })
+            try
             {
-                string path = Path.Combine(moduleRoot, relative);
-                if (!File.Exists(path))
-                {
-                    document.Editor.WriteMessage($"\n应急照明运行文件缺失：{path}。请恢复完整模块目录。");
-                    return;
-                }
+                string moduleRoot = Path.Combine(
+                    Path.GetDirectoryName(typeof(EmergencyLightingService).Assembly.Location),
+                    "Tools", "Emergency-Lighting");
+                string dataRoot = EmergencyLightingRuntime.Prepare(moduleRoot);
+                string entry = Path.Combine(moduleRoot, EmergencyLightingRuntime.EntryName);
+                document.SendStringToExecute(EmergencyLightingScript.Build(dataRoot, entry), false, false, false);
             }
-
-            document.SendStringToExecute(EmergencyLightingScript.Build(moduleRoot), false, false, false);
+            catch (Exception ex)
+            {
+                document.Editor.WriteMessage("\n应急照明准备失败：" + ex.Message);
+            }
         }
     }
 
     internal static class EmergencyLightingScript
     {
-        public const string Version = "lite-v0.1.61";
+        public const string Version = "full-v0.1.84";
 
-        public static string Build(string moduleRoot)
+        private static string QuotePath(string path)
         {
-            string root = moduleRoot.Replace('\\', '/').TrimEnd('/') + "/";
-            string quotedRoot = "\"" + root.Replace("\"", "\\\"") + "\"";
+            return "\"" + path.Replace('\\', '/').Replace("\"", "\\\"") + "\"";
+        }
 
-            // 加载状态保存在当前图纸的 LISP 环境；不注册与业务命令重名的 .NET 包装。
+        public static string Build(string dataRoot, string entryPath)
+        {
+            string root = dataRoot.Replace('\\', '/').TrimEnd('/') + "/";
+            // State is held by the current drawing's LISP environment, not by the process.
             return $@"(progn
                 (vl-load-com)
-                ((lambda (zyfRoot zyfLoadResult)
+                ((lambda (zyfRoot zyfEntry zyfLoadResult)
                     (setq *EL:CADToolsRoot* zyfRoot)
                     (if (not (and *EL:MonitorLoadReady*
-                                  (equal *EL:LiteVersion* ""{Version}"")
+                                  (equal *EL:CADToolsVersion* ""{Version}"")
+                                  (equal *EL:PackageMarker* ""{EmergencyLightingRuntime.PackageMarker}"")
                                   (equal *EL:Root* zyfRoot) C:ELSTAT))
                         (progn
                             (setq *EL:MonitorLoadReady* nil)
-                            (setq zyfLoadResult (vl-catch-all-apply 'load
-                                (list (strcat zyfRoot ""src/load.lsp""))))))
+                            (setq zyfLoadResult (vl-catch-all-apply 'load (list zyfEntry)))))
                     (cond
                         ((vl-catch-all-error-p zyfLoadResult)
                             (princ (strcat ""\n应急照明加载失败：""
                                 (vl-catch-all-error-message zyfLoadResult))))
                         ((and *EL:MonitorLoadReady*
-                              (equal *EL:LiteVersion* ""{Version}"")
+                              (equal *EL:CADToolsVersion* ""{Version}"")
+                              (equal *EL:PackageMarker* ""{EmergencyLightingRuntime.PackageMarker}"")
                               (equal *EL:Root* zyfRoot) C:ELSTAT)
                             (C:ELSTAT))
-                        (T (princ (strcat ""\n应急照明未就绪：""
-                            (if *EL:StartupError* *EL:StartupError*
-                                ""请检查模块版本和运行文件。""))))))
-                    {quotedRoot} nil)
+                        (C:ELFULL84 (C:ELFULL84))
+                        (T (princ ""\n应急照明未就绪：请检查运行文件和可信路径。""))))
+                    {QuotePath(root)} {QuotePath(entryPath)} nil)
                 (princ))".Replace("\r", string.Empty).Replace("\n", " ") + "\n";
         }
     }
