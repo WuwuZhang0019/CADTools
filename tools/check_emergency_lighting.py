@@ -9,11 +9,13 @@ from pathlib import Path
 import re
 import zipfile
 
+from emergency_lighting_v84_overlay import END, OVERLAY, START
+
 ROOT = Path(__file__).resolve().parents[1]
 MODULE = ROOT / "Zyf.autoCAD" / "Tools" / "Emergency-Lighting"
 FILES = {
     "full-v0.1.84.zip": "a3525a0e73ec174d6f6caba413edf5f54e00ff5a91fe8290287dbf6970ea8931",
-    "ELFULL84-CADTools.lsp": "e711bbe08052f586dadb41d04efcff760c8e4f701742e84949267d0a58721035",
+    "ELFULL84-CADTools.lsp": "bd617371b7a44af6db98376d8b5867193fed577c8874c910b420ab9db342572b",
 }
 PREFIX = "应急照明-v0.1.84/"
 
@@ -61,6 +63,8 @@ def verify(output: Path | None = None) -> None:
             raise ValueError("The CADTools entry does not contain the embedded diagnostic helper")
         if batch not in entry or "'EL:CADToolsStartupRoot" not in entry:
             raise ValueError("The full entry is missing the CADTools root or batch commands")
+        if entry.count(START + OVERLAY + END) != 1:
+            raise ValueError("The CADTools overlay differs from its reviewed source")
         if "(defun ELFULL84:Initialize ()" not in original or "(defun ELFULL84:Initialize ()" not in entry:
             raise ValueError("Full entry is missing")
     print(f"PASS: v0.1.84 archive: {len(members)} files; source and adapted-entry hashes match")

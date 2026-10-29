@@ -14,7 +14,7 @@ namespace ZYF.autoCAD.Services
         internal const string PackageMarker = "package-183.marker";
         private const string Prefix = "应急照明-v0.1.84/";
         private const string ArchiveSha256 = "a3525a0e73ec174d6f6caba413edf5f54e00ff5a91fe8290287dbf6970ea8931";
-        private const string EntrySha256 = "e711bbe08052f586dadb41d04efcff760c8e4f701742e84949267d0a58721035";
+        private const string EntrySha256 = "bd617371b7a44af6db98376d8b5867193fed577c8874c910b420ab9db342572b";
 
         internal static string Prepare(string moduleRoot)
         {
