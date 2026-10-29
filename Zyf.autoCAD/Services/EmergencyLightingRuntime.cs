@@ -30,35 +30,61 @@ namespace ZYF.autoCAD.Services
         {
             string archivePath = Path.Combine(moduleRoot, ArchiveName);
             string entryPath = Path.Combine(moduleRoot, EntryName);
-            VerifyHash(archivePath, ArchiveSha256);
-            VerifyHash(entryPath, EntrySha256);
-
-            string root = Path.GetFullPath(dataRoot).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
-                + Path.DirectorySeparatorChar;
-            Directory.CreateDirectory(Path.Combine(root, "config"));
-            Directory.CreateDirectory(Path.Combine(root, "output"));
-            using (ZipArchive archive = ZipFile.OpenRead(archivePath))
+            string phase = "校验交付包";
+            string target = archivePath;
+            try
             {
-                // Commit the marker last so an incomplete extraction is never ready.
-                ZipArchiveEntry marker = null;
-                foreach (ZipArchiveEntry entry in archive.Entries)
+                VerifyHash(archivePath, ArchiveSha256);
+                phase = "校验加载入口";
+                target = entryPath;
+                VerifyHash(entryPath, EntrySha256);
+
+                string root = Path.GetFullPath(dataRoot).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+                    + Path.DirectorySeparatorChar;
+                phase = "创建配置目录";
+                target = Path.Combine(root, "config");
+                Directory.CreateDirectory(target);
+                phase = "创建输出目录";
+                target = Path.Combine(root, "output");
+                Directory.CreateDirectory(target);
+                phase = "读取交付包";
+                target = archivePath;
+                using (ZipArchive archive = ZipFile.OpenRead(archivePath))
                 {
-                    if (!entry.FullName.StartsWith(Prefix, StringComparison.Ordinal))
-                        throw new InvalidDataException("应急照明包目录不符合预期。");
-                    string name = entry.FullName.Substring(Prefix.Length);
-                    if (string.IsNullOrEmpty(name) || name.EndsWith("/", StringComparison.Ordinal)) continue;
-                    if (name == PackageMarker) { marker = entry; continue; }
-                    if (!IsRuntimeFile(name)) continue;
-                    CopyVerified(entry, root, name);
+                    // Commit the marker last so an incomplete extraction is never ready.
+                    ZipArchiveEntry marker = null;
+                    foreach (ZipArchiveEntry entry in archive.Entries)
+                    {
+                        if (!entry.FullName.StartsWith(Prefix, StringComparison.Ordinal))
+                            throw new InvalidDataException("应急照明包目录不符合预期。");
+                        string name = entry.FullName.Substring(Prefix.Length);
+                        if (string.IsNullOrEmpty(name) || name.EndsWith("/", StringComparison.Ordinal)) continue;
+                        if (name == PackageMarker) { marker = entry; continue; }
+                        if (!IsRuntimeFile(name)) continue;
+                        phase = "准备运行文件";
+                        target = Path.Combine(root, name.Replace('/', Path.DirectorySeparatorChar));
+                        CopyVerified(entry, root, name);
+                    }
+                    if (marker == null) throw new InvalidDataException("应急照明包缺少版本标记。");
+                    phase = "写入版本标记";
+                    target = Path.Combine(root, PackageMarker);
+                    CopyVerified(marker, root, PackageMarker);
                 }
-                if (marker == null) throw new InvalidDataException("应急照明包缺少版本标记。");
-                CopyVerified(marker, root, PackageMarker);
+                return root;
             }
-            return root;
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is System.Security.SecurityException)
+            {
+                throw new IOException($"阶段：{phase}；路径：{target}；{ex.GetType().Name}：{ex.Message}", ex);
+            }
         }
 
         private static bool IsRuntimeFile(string name)
         {
+            // v0.1.84 embeds the diagnostic helper in diagram-commands.lsp.
+            // Do not write the redundant .ps1 into the user's profile: some
+            // environments prohibit creating PowerShell scripts there.
+            if (string.Equals(name, "src/diagnostic-bundle.ps1", StringComparison.Ordinal))
+                return false;
             return name.StartsWith("src/", StringComparison.Ordinal)
                 || name.StartsWith("ui/", StringComparison.Ordinal)
                 || name.StartsWith("native/", StringComparison.Ordinal)

@@ -43,7 +43,8 @@ def main():
     fixture = base / "fixture.iss"
     fixture.write_text(script, encoding="utf-8-sig")
     run([options.compiler, "/Q", "/Ffixture", str(fixture)])
-    run([str(base / "fixture.exe"), "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", f"/DIR={install}"])
+    setup = [str(base / "fixture.exe"), "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", f"/DIR={install}"]
+    run(setup)
     expected = ROOT / "Zyf.autoCAD/bin/Release/net47"
     actual = install / "ZYF.bundle/Contents"
     source = {p.relative_to(expected).as_posix(): p.read_bytes() for p in expected.rglob("*") if p.is_file()}
@@ -52,6 +53,19 @@ def main():
     assert (install / "ZYF.bundle/PackageContents.xml").read_bytes() == (ROOT / "Zyf.autoCAD/PackageContents.xml").read_bytes()
     assert (plugins / "ZYF.bundle").is_junction()
     print(f"PASS: {len(source)} output files and plugin manifest match the isolated installed bundle; {base}")
+
+    # Exercise the same AppId and install directory as an in-place upgrade.
+    stale = actual / "stale-previous-version.txt"
+    stale.write_bytes(b"old install output")
+    profile = base / "profile/Emergency-Lighting/CADTools/config"
+    profile.mkdir(parents=True)
+    (profile / "drawing.eld").write_bytes(b"existing drawing configuration")
+    run(setup)
+    upgraded = {p.relative_to(actual).as_posix(): p.read_bytes() for p in actual.rglob("*") if p.is_file()}
+    assert upgraded == source and not stale.exists()
+    assert (profile / "drawing.eld").read_bytes() == b"existing drawing configuration"
+    assert (plugins / "ZYF.bundle").is_junction()
+    print("PASS: in-place upgrade replaces old output while retaining the isolated user configuration")
 
 
 if __name__ == "__main__":

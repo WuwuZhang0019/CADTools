@@ -62,14 +62,41 @@ try {
             if member.is_dir():
                 continue
             name = member.filename.removeprefix(PREFIX)
-            if name == "package-183.marker" or name.startswith(("src/", "ui/", "native/", "templates/", "assets/default-device-library/")):
+            if name == "package-183.marker" or (name != "src/diagnostic-bundle.ps1" and name.startswith(("src/", "ui/", "native/", "templates/", "assets/default-device-library/"))):
                 assert (runtime / name).read_bytes() == archive.read(member), name
                 extracted.append(name)
-        assert len(extracted) == 150
+        assert len(extracted) == 149
+        assert not (runtime / "src/diagnostic-bundle.ps1").exists()
     run("prepare", MODULE, runtime)
     assert (runtime / "config/drawing-existing.eld").read_bytes() == b"existing config"
     assert (runtime / "output/result-existing.eld").read_bytes() == b"existing output"
-    print("PASS: 150 runtime files match the full ZIP; repeated preparation preserves user data")
+    print("PASS: 149 runtime files match the full ZIP; repeated preparation preserves user data")
+
+    # Reproduce an interrupted v1.3.6 preparation without touching a real profile.
+    interrupted = base / "interrupted 1.3.6"
+    (interrupted / "config").mkdir(parents=True)
+    (interrupted / "output").mkdir()
+    (interrupted / "config/drawing-existing.eld").write_bytes(b"existing config")
+    with zipfile.ZipFile(MODULE / "full-v0.1.84.zip") as archive:
+        for member in archive.infolist():
+            if member.is_dir():
+                continue
+            name = member.filename.removeprefix(PREFIX)
+            if name == "src/diagnostic-bundle.ps1":
+                break
+            if name.startswith(("src/", "ui/", "native/", "templates/", "assets/default-device-library/")):
+                path = interrupted / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(archive.read(member))
+    blocked = interrupted / "src/diagnostic-bundle.ps1"
+    blocked.mkdir()
+    (blocked / "keep.txt").write_bytes(b"do not touch")
+    run("prepare", MODULE, interrupted)
+    assert (interrupted / "src/load.lsp").is_file()
+    assert (interrupted / "package-183.marker").is_file()
+    assert (interrupted / "config/drawing-existing.eld").read_bytes() == b"existing config"
+    assert (blocked / "keep.txt").read_bytes() == b"do not touch"
+    print("PASS: interrupted v1.3.6 preparation resumes without writing the blocked PS1 or altering user data")
 
     conflict = runtime / "src/common.lsp"
     conflict.write_bytes(b"user-modified-runtime")
@@ -77,6 +104,22 @@ try {
     assert "不一致" in failed.stderr and conflict.read_bytes() == b"user-modified-runtime"
     assert (runtime / "config/drawing-existing.eld").read_bytes() == b"existing config"
     print("PASS: conflicting runtime file is retained and preparation fails")
+
+    collision_root = base / "directory collision"
+    collision = collision_root / "assets/default-device-library/assets/ELDEV1/1/block.dwg"
+    collision.mkdir(parents=True)
+    failed = run("prepare", MODULE, collision_root, expected=2)
+    assert "准备运行文件" in failed.stderr and str(collision) in failed.stderr
+    assert collision.is_dir()
+    print("PASS: a file/directory collision reports the failing phase and target without removing the directory")
+
+    config_root = base / "config collision"
+    config_root.mkdir()
+    (config_root / "config").write_bytes(b"existing user file")
+    failed = run("prepare", MODULE, config_root, expected=2)
+    assert "创建配置目录" in failed.stderr and str(config_root / "config") in failed.stderr
+    assert (config_root / "config").read_bytes() == b"existing user file"
+    print("PASS: a configuration-path conflict is reported without overwriting the existing file")
 
     bad = base / "bad package"
     shutil.copytree(MODULE, bad)

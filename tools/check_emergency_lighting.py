@@ -4,7 +4,9 @@ Date: 2026-10-29
 """
 import argparse
 import hashlib
+import json
 from pathlib import Path
+import re
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -46,12 +48,24 @@ def verify(output: Path | None = None) -> None:
         entry = files["ELFULL84-CADTools.lsp"].decode("gb2312", errors="strict")
         original = archive.read(PREFIX + "ELFULL84.lsp").decode("gb2312", errors="strict")
         batch = archive.read(PREFIX + "src/batch-number.lsp").decode("gb2312", errors="strict")
+        diagram = archive.read(PREFIX + "src/diagram-commands.lsp").decode("gb2312", errors="strict")
+        diagnostic = archive.read(PREFIX + "src/diagnostic-bundle.ps1").decode("utf-8")
+        embedded_start = diagram.rfind("(defun EL:DiagnosticScriptText () (EL:MonitorJoin '(")
+        if embedded_start < 0:
+            raise ValueError("The embedded diagnostic helper is missing")
+        embedded_definition = diagram[embedded_start:]
+        chunks = re.findall(r'"(?:\\.|[^"\\])*"', embedded_definition, flags=re.S)
+        if not chunks or "".join(json.loads(chunk, strict=False) for chunk in chunks) != diagnostic:
+            raise ValueError("The embedded diagnostic helper differs from the full-package script")
+        if embedded_definition not in entry:
+            raise ValueError("The CADTools entry does not contain the embedded diagnostic helper")
         if batch not in entry or "'EL:CADToolsStartupRoot" not in entry:
             raise ValueError("The full entry is missing the CADTools root or batch commands")
         if "(defun ELFULL84:Initialize ()" not in original or "(defun ELFULL84:Initialize ()" not in entry:
             raise ValueError("Full entry is missing")
     print(f"PASS: v0.1.84 archive: {len(members)} files; source and adapted-entry hashes match")
     print(f"PASS: {count} archive LISP/DCL files round-trip as strict GB2312 without BOM")
+    print("PASS: the CADTools entry embeds the complete diagnostic helper without needing the .ps1 file")
     if output is not None:
         actual = {p.relative_to(output).as_posix(): p.read_bytes() for p in output.rglob("*") if p.is_file()}
         if files != actual:
