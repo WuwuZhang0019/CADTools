@@ -22,9 +22,7 @@ namespace ZYF.autoCAD.Services
             try
             {
                 string assemblyPath = ResolveFilePath(typeof(UninstallService).Assembly.Location);
-                string bundlePath = Directory.GetParent(Path.GetDirectoryName(assemblyPath)).FullName;
-                if (!string.Equals(Path.GetFileName(bundlePath), "ZYF.bundle", StringComparison.OrdinalIgnoreCase))
-                    throw new FileNotFoundException("当前插件未从安装目录加载。请先使用安装包完成安装。");
+                string bundlePath = FindBundlePath(assemblyPath);
 
                 string uninstallPath = FindUninstaller(bundlePath);
                 using (Process process = Process.Start(new ProcessStartInfo
@@ -51,6 +49,22 @@ namespace ZYF.autoCAD.Services
                     "卸载软件", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return false;
             }
+        }
+
+        internal static string FindBundlePath(string assemblyPath)
+        {
+            // Older installations load from Contents; newer installations may
+            // have a version-specific folder below Contents.
+            DirectoryInfo directory = new FileInfo(assemblyPath).Directory;
+            while (directory != null)
+            {
+                if (string.Equals(directory.Name, "Contents", StringComparison.OrdinalIgnoreCase)
+                    && directory.Parent != null
+                    && string.Equals(directory.Parent.Name, "ZYF.bundle", StringComparison.OrdinalIgnoreCase))
+                    return directory.Parent.FullName;
+                directory = directory.Parent;
+            }
+            throw new FileNotFoundException("当前插件未从安装目录加载。请先使用安装包完成安装。");
         }
 
         internal static string FindUninstaller(string bundlePath)

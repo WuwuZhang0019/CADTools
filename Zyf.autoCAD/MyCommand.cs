@@ -87,7 +87,7 @@ public class MyCommand
         UpdateService.CheckAndNotifyUpdateOnCommandRun();
         Document document = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
 
-        string lispPath = "C:/ProgramData/Autodesk/ApplicationPlugins/ZYF.bundle/Contents/Tools/01 CAD急速瘦身(jsss).lsp";
+        string lispPath = ToolPaths.LispFile("01 CAD急速瘦身(jsss).lsp");
 
         string loadStr = String.Format("(load \"{0}\")\n", lispPath);
 
@@ -101,7 +101,7 @@ public class MyCommand
         UpdateService.CheckAndNotifyUpdateOnCommandRun();
         Document document = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
 
-        string lispPath = "C:/ProgramData/Autodesk/ApplicationPlugins/ZYF.bundle/Contents/Tools/02 布置地面疏散指示(mee).lsp";
+        string lispPath = ToolPaths.LispFile("02 布置地面疏散指示(mee).lsp");
 
         string loadStr = String.Format("(load \"{0}\") mee\n", lispPath);
 
@@ -115,7 +115,7 @@ public class MyCommand
         UpdateService.CheckAndNotifyUpdateOnCommandRun();
         Document document = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
 
-        string lispPath = "C:/ProgramData/Autodesk/ApplicationPlugins/ZYF.bundle/Contents/Tools/03 底图处理(DTCL).lsp";
+        string lispPath = ToolPaths.LispFile("03 底图处理(DTCL).lsp");
 
         string loadStr = String.Format("(load \"{0}\")\n", lispPath);
 
@@ -129,7 +129,7 @@ public class MyCommand
         UpdateService.CheckAndNotifyUpdateOnCommandRun();
         Document document = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
 
-        string lispPath = "C:/ProgramData/Autodesk/ApplicationPlugins/ZYF.bundle/Contents/Tools/04 图号文字递增V2.0(thdz).lsp";
+        string lispPath = ToolPaths.LispFile("04 图号文字递增V2.0(thdz).lsp");
 
         string loadStr = String.Format("(load \"{0}\") thdz\n", lispPath);
 
@@ -143,7 +143,7 @@ public class MyCommand
         UpdateService.CheckAndNotifyUpdateOnCommandRun();
         Document document = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
 
-        string lispPath = "C:/ProgramData/Autodesk/ApplicationPlugins/ZYF.bundle/Contents/Tools/05 图片去黑框(QHK).lsp";
+        string lispPath = ToolPaths.LispFile("05 图片去黑框(QHK).lsp");
 
         string loadStr = String.Format("(load \"{0}\")\n", lispPath);
 
@@ -157,7 +157,7 @@ public class MyCommand
         UpdateService.CheckAndNotifyUpdateOnCommandRun();
         Document document = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
 
-        string lispPath = "C:/ProgramData/Autodesk/ApplicationPlugins/ZYF.bundle/Contents/Tools/06 文字复制(maa).lsp";
+        string lispPath = ToolPaths.LispFile("06 文字复制(maa).lsp");
 
         string loadStr = String.Format("(load \"{0}\")\n", lispPath);
 
@@ -203,7 +203,7 @@ public class MyCommand
         UpdateService.CheckAndNotifyUpdateOnCommandRun();
         Document document = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
 
-        string lispPath = "C:/ProgramData/Autodesk/ApplicationPlugins/ZYF.bundle/Contents/Tools/08 0层置为当前图层(P0).lsp";
+        string lispPath = ToolPaths.LispFile("08 0层置为当前图层(P0).lsp");
 
         string loadStr = String.Format("(load \"{0}\")\n", lispPath);
 
@@ -215,9 +215,7 @@ public class MyCommand
 {
     try
     {
-        string exeDir = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
-            @"Autodesk\ApplicationPlugins\ZYF.bundle\Contents\Tools");
+        string exeDir = ToolPaths.Directory();
             
         string exePath = Path.Combine(exeDir, "09 CAD开图自动选字体.exe");
         string processName = Path.GetFileNameWithoutExtension("09 CAD开图自动选字体.exe");
@@ -247,9 +245,7 @@ public class MyCommand
 {
     try
     {
-        string exeDir = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
-            @"Autodesk\ApplicationPlugins\ZYF.bundle\Contents\Tools");
+        string exeDir = ToolPaths.Directory();
             
         string exePath = Path.Combine(exeDir, "09 CAD开图自动选字体.exe");
         string txtPath = Path.Combine(exeDir, "cad开图自动选字体.txt");
@@ -297,7 +293,7 @@ public class MyCommand
         UpdateService.CheckAndNotifyUpdateOnCommandRun();
         Document document = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
 
-        string lispPath = "C:/ProgramData/Autodesk/ApplicationPlugins/ZYF.bundle/Contents/Tools/10 消防回路统计(FAS).lsp";
+        string lispPath = ToolPaths.LispFile("10 消防回路统计(FAS).lsp");
 
         string loadStr = String.Format("(load \"{0}\") FAS\n", lispPath);
 
@@ -311,7 +307,7 @@ public class MyCommand
         UpdateService.CheckAndNotifyUpdateOnCommandRun();
         Document document = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
 
-        string lispPath = "C:/ProgramData/Autodesk/ApplicationPlugins/ZYF.bundle/Contents/Tools/11 PL线转桥架.lsp";
+        string lispPath = ToolPaths.LispFile("11 PL线转桥架.lsp");
 
         string loadStr = String.Format("(load \"{0}\") PTB\n", lispPath);
 

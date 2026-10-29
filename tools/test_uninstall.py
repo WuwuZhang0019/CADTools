@@ -12,6 +12,7 @@ import subprocess
 import tempfile
 import time
 import uuid
+import xml.etree.ElementTree as ET
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -56,8 +57,10 @@ def make_script(case: Path, cancel: bool = False) -> Path:
     text = text.replace('OutputDir={#ProjectRoot}\\dist', f"OutputDir={case}")
     start = text.index("[Files]\n")
     end = text.index("[UninstallDelete]\n", start)
-    text = text[:start] + (f'[Files]\nSource: "{case / "probe.txt"}"; '
-                            'DestDir: "{app}\\ZYF.bundle\\Contents"; Flags: ignoreversion\n\n') + text[end:]
+    text = text[:start] + ('[Files]\n'
+                            'Source: "{#ProjectRoot}\\Zyf.autoCAD\\PackageContents.xml"; Flags: dontcopy\n'
+                            f'Source: "{case / "probe.txt"}"; '
+                            'DestDir: "{app}\\ZYF.bundle\\Contents\\{code:GetInstallSlot}"; Flags: ignoreversion\n\n') + text[end:]
     text = text.replace("ExpandConstant('{commonappdata}\\Autodesk\\ApplicationPlugins')", f"'{plugins}'")
     if cancel:
         text = text.replace("  Result := WaitForAutoCadClosed();\nend;",
@@ -88,12 +91,19 @@ $type = [Reflection.Assembly]::LoadFrom($Assembly).GetType('ZYF.autoCAD.Services
 $flags = [Reflection.BindingFlags]'Static,NonPublic'
 $resolved = $type.GetMethod('ResolveFilePath', $flags).Invoke($null, @($AliasFile))
 if ($resolved -ne $RealFile) { throw "Incorrect real path: $resolved" }
+$versionedBundle = $type.GetMethod('FindBundlePath', $flags).Invoke($null, @($RealFile))
+$legacyFile = [string](Join-Path $Bundle 'Contents\\legacy.dll')
+$legacyBundle = $type.GetMethod('FindBundlePath', $flags).Invoke($null, @($legacyFile))
+if ($versionedBundle -ne $Bundle -or $legacyBundle -ne $Bundle) { throw 'Incorrect bundle root' }
 $selected = $type.GetMethod('FindUninstaller', $flags).Invoke($null, @($Bundle))
 if ($selected -ne $ExpectedExe) { throw "Incorrect uninstaller: $selected" }
 """, encoding="utf-8-sig")
+    manifest = ET.parse(bundle / "PackageContents.xml").getroot()
+    module = manifest.find("./Components/ComponentEntry").attrib["ModuleName"].replace("\\", "/")
+    relative_probe = Path(module).parent / "probe.txt"
     run(str(shell), "-NoProfile", "-NonInteractive", "-File", str(probe), str(assembly),
-        str(case / "Plugins" / "ZYF.bundle" / "Contents" / "probe.txt"),
-        str(bundle / "Contents" / "probe.txt"), str(bundle), str(executable))
+        str(case / "Plugins" / "ZYF.bundle" / relative_probe),
+        str(bundle / relative_probe), str(bundle), str(executable))
 
 
 def check_running_cad(compiler: str, case: Path) -> None:
