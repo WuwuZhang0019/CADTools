@@ -1,5 +1,5 @@
-; 天正图名左侧文字复制测试命令 MAANAMETEST
-; 日期：2026-10-20
+; 天正图名双向文字复制测试命令 MAANAMETEST
+; 日期：2026-11-03
 ; 回路标注与天正多行目标禁写；可作为来源。
 (vl-load-com)
 
@@ -172,6 +172,39 @@
   (if success T nil)
 )
 
+; 图名恢复旧版组码 1 写入；只开放已确认的图名对象，组码 2 比例必须不变。
+(defun MAANAMETEST:WriteDrawingName (entity data value / old-text old-scale result readback success)
+  (setq old-text (assoc 1 data)
+        old-scale (assoc 2 data))
+  (if (and (equal (cdr (assoc 0 data)) "TCH_DRAWINGNAME")
+           (eq (type (cdr old-text)) 'STR)
+           (eq (type (cdr old-scale)) 'STR)
+           (eq (type value) 'STR)
+           (= (length (MAANAMETEST:Lines value)) 1))
+    (progn
+      (setq result
+        (vl-catch-all-apply 'entmod
+          (list (subst (cons 1 value) old-text data))))
+      (if (and (not (vl-catch-all-error-p result)) result)
+        (progn
+          (setq readback (vl-catch-all-apply 'entget (list entity)))
+          (if (and (not (vl-catch-all-error-p readback))
+                   (equal (cdr (assoc 0 readback)) "TCH_DRAWINGNAME")
+                   (equal (cdr (assoc 1 readback)) value)
+                   (equal (assoc 2 readback) old-scale))
+            (setq success T)
+          )
+        )
+      )
+      (if (not success)
+        (vl-catch-all-apply 'entmod (list data))
+      )
+      (vl-catch-all-apply 'entupd (list entity))
+    )
+  )
+  (if success T nil)
+)
+
 ; 只写拾取到的引线文字字段，另一字段必须保持不变。
 (defun MAANAMETEST:WriteLeader (entity data code value / prop other-code obj writable
                         before result after readback success old-other)
@@ -247,16 +280,38 @@
   )
 )
 
-; redraw 3/4 只改变屏幕亮显，退出时必须恢复。
+; redraw 3/4 只作用于当前视口，必须在源视口配对清理。
 (defun MAANAMETEST:Highlight (entity mode)
   (if entity (vl-catch-all-apply 'redraw (list entity mode)))
 )
 
-(defun c:MAANAMETEST (/ *error* source-pick source-entity source-data source-kind source-text
+; 清理源视口后恢复退出时的视口；redraw 失败也不能跳过视口恢复。
+(defun MAANAMETEST:ClearHighlight (entity viewport / current switched)
+  (if entity
+    (progn
+      (setq current (getvar "CVPORT"))
+      (MAANAMETEST:Highlight entity 4)
+      (if (and viewport (/= viewport current))
+        (progn
+          (setq switched
+            (vl-catch-all-apply 'setvar (list "CVPORT" viewport)))
+          (if (not (vl-catch-all-error-p switched))
+            (progn
+              (MAANAMETEST:Highlight entity 4)
+              (vl-catch-all-apply 'setvar (list "CVPORT" current))
+            )
+          )
+        )
+      )
+    )
+  )
+)
+
+(defun c:MAANAMETEST (/ *error* source-pick source-entity source-viewport source-data source-kind source-text
                  target-pick target target-data target-kind target-code old-text
                  result readback write-text lines)
   (defun *error* (msg)
-    (MAANAMETEST:Highlight source-entity 4)
+    (MAANAMETEST:ClearHighlight source-entity source-viewport)
     (if (and msg
              (not (member (strcase msg) '("FUNCTION CANCELLED" "QUIT / EXIT ABORT"))))
       (princ (strcat "\n文字复制中断: " msg))
@@ -272,7 +327,8 @@
       (if (not (eq (type source-text) 'STR))
         (princ "\n源对象的文字字段尚未确认，未修改图纸。")
         (progn
-          (setq source-entity (car source-pick))
+          (setq source-entity (car source-pick)
+                source-viewport (getvar "CVPORT"))
           (MAANAMETEST:Highlight source-entity 3)
           (setq target-pick nil)
           (while (not target-pick)
@@ -282,7 +338,7 @@
                 (princ "\n未选中目标文字，请继续选择。"))
               ((not (member (cdr (assoc 0 (entget (car target-pick))))
                             '("TEXT" "MTEXT" "ATTRIB" "TCH_TEXT" "TCH_MTEXT"
-                              "TCH_MULTILEADER" "TCH_WIREDIM2")))
+                              "TCH_MULTILEADER" "TCH_WIREDIM2" "TCH_DRAWINGNAME")))
                 (princ "\n目标不是可处理的文字，请重新选择。")
                 (setq target-pick nil))
             )
@@ -295,7 +351,7 @@
                     old-text (assoc 1 target-data)
                     lines (MAANAMETEST:Lines source-text))
               (cond
-                ((not (member target-kind '("TEXT" "MTEXT" "ATTRIB" "TCH_TEXT" "TCH_MTEXT" "TCH_MULTILEADER" "TCH_WIREDIM2")))
+                ((not (member target-kind '("TEXT" "MTEXT" "ATTRIB" "TCH_TEXT" "TCH_MTEXT" "TCH_MULTILEADER" "TCH_WIREDIM2" "TCH_DRAWINGNAME")))
                   (princ "\n天正或其他自定义目标尚无已验证的安全写入接口，未修改图纸。"))
                 ((equal target-kind "TCH_MTEXT")
                   (princ "\n不支持此种操作"))
@@ -311,9 +367,15 @@
                   (princ "\n引线目标缺少下方文字字段，未修改图纸。"))
                 ((and (equal target-kind "MTEXT") (assoc 3 target-data))
                   (princ "\n目标多行文字含分段组码 3，暂不写入以免残留旧内容。"))
-                ((and (member target-kind '("TEXT" "ATTRIB" "TCH_TEXT"))
+                ((and (member target-kind '("TEXT" "ATTRIB" "TCH_TEXT" "TCH_DRAWINGNAME"))
                       (> (length lines) 1))
                   (princ "\n多行内容不能写入单行目标，未修改图纸。"))
+                ((equal target-kind "TCH_DRAWINGNAME")
+                  (if (MAANAMETEST:WriteDrawingName target target-data source-text)
+                    (princ "\n文字复制完成。")
+                    (princ "\n天正图名写入或读回校验失败，请检查图名和比例。")
+                  )
+                )
                 ((equal target-kind "TCH_TEXT")
                   (if (MAANAMETEST:WriteComText target 'Text source-text (cdr old-text))
                     (princ "\n文字复制完成。")
@@ -361,9 +423,9 @@
     )
     (princ "\n已取消源文字选择。")
   )
-  (MAANAMETEST:Highlight source-entity 4)
+  (MAANAMETEST:ClearHighlight source-entity source-viewport)
   (princ)
 )
 
-(princ "\n已加载图名文字复制测试，输入 MAANAMETEST 开始。")
+(princ "\n已加载图名双向复制测试 2026-11-03，输入 MAANAMETEST 开始。")
 (princ)
