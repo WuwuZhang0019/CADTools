@@ -122,18 +122,31 @@ public class MyCommand
         document.SendStringToExecute(loadStr, false, false, false);
     }
 
+    // 日期：2026-11-03。加载只注册图号命令，再执行指定方向。
+    private static void RunDrawingNumberLispCommand(string commandName)
+    {
+        UpdateService.CheckAndNotifyUpdateOnCommandRun();
+        Document document = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
+        if (document == null) return;
+
+        string lispPath = ToolPaths.LispFile("04 图号文字递增V2.0(thdz).lsp");
+
+        string loadStr = String.Format("(progn (load \"{0}\") (c:{1}))\n", lispPath, commandName);
+
+        document.SendStringToExecute(loadStr, false, false, false);
+    }
+
     //04图号文字递增
     [CommandMethod(nameof(THDZ), CommandFlags.Modal)]
     public void THDZ()
     {
-        UpdateService.CheckAndNotifyUpdateOnCommandRun();
-        Document document = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
+        RunDrawingNumberLispCommand(nameof(THDZ));
+    }
 
-        string lispPath = ToolPaths.LispFile("04 图号文字递增V2.0(thdz).lsp");
-
-        string loadStr = String.Format("(load \"{0}\") thdz\n", lispPath);
-
-        document.SendStringToExecute(loadStr, false, false, false);
+    [CommandMethod(nameof(THDJ), CommandFlags.Modal)]
+    public void THDJ()
+    {
+        RunDrawingNumberLispCommand(nameof(THDJ));
     }
 
     //05图片去黑框
