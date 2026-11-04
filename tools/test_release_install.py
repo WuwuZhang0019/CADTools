@@ -59,7 +59,7 @@ def active_slot(bundle):
     manifest = ET.parse(bundle / "PackageContents.xml").getroot()
     assert manifest.attrib["NameChs"] == "张裕锋工具集"
     component = manifest.find("./Components/ComponentEntry")
-    assert manifest.attrib["AppVersion"] == "1.3.7.0" and component.attrib["Version"] == "1.3.7"
+    assert manifest.attrib["AppVersion"] == "1.3.8.0" and component.attrib["Version"] == "1.3.8"
     relative = component.attrib["ModuleName"].replace("\\", "/")
     module = (bundle / relative).resolve()
     assert module.is_relative_to((bundle / "Contents").resolve())
@@ -108,7 +108,7 @@ def main():
     (old_root / "Tools/old-tool.lsp").write_bytes(b"old tool")
     (old_root / "Tools/FSNDataBase").write_bytes(b"custom frame database")
     (old_root / "Tools/cad开图自动选字体.txt").write_bytes(b"custom font setting")
-    old_manifest = (ROOT / "Zyf.autoCAD/PackageContents.xml").read_text(encoding="utf-8").replace("1.3.7", "1.3.6")
+    old_manifest = (ROOT / "Zyf.autoCAD/PackageContents.xml").read_text(encoding="utf-8").replace("1.3.8", "1.3.7")
     (bundle / "PackageContents.xml").write_text(old_manifest, encoding="utf-8")
     run(["cmd.exe", "/D", "/C", "mklink", "/J", str(plugins / "ZYF.bundle"), str(bundle)])
     original = files(old_root)
@@ -200,7 +200,7 @@ if ($directory -ne $ExpectedTools -or -not [IO.File]::Exists($maa)) { throw "Inc
 
 def files_for_slots(contents):
     """Only the test's newly installed version folders may be added to Contents."""
-    return {name: data for name, data in files(contents).items() if name.startswith("1.3.7-")}
+    return {name: data for name, data in files(contents).items() if name.startswith("1.3.8-")}
 
 
 if __name__ == "__main__":
