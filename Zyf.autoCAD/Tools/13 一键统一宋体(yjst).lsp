@@ -1,20 +1,13 @@
-;;; 修复版独立命令：加载仅注册，输入 YJSTFIX 执行。
-;;; 日期：2026-10-17
-(if (or (and (boundp '*OCS:Running*) *OCS:Running*)
-            (and (boundp '*OCS:UndoMark*) *OCS:UndoMark*))
-  (progn
-    (princ "\n存在未结束操作或未关闭撤销分组。本次未加载修复代码，请先处理原恢复状态。")
-    (exit)))
 ;;; =====================================================================
 ;;; one-click-simsun.lsp
 ;;; 一键统一宋体（YJST）：将当前图纸文字字体统一为宋体（SimSun）
 ;;;
-;;; 日期：2026-10-17
-;;; 状态：实现完成，待原生 AutoCAD 验收（见 docs/AutoCAD验收记录.md）
+;;; 日期：2026-11-04
+;;; 状态：大图转换通过现场日志核验，正式命令入口待现场复测
 ;;; 编码：开发源码 UTF-8（无 BOM）；CAD 加载请使用 output/gb2312/ 交付文件
 ;;;
 ;;; 依据：docs/AutoLISP一键统一宋体实施方案.md
-;;; 命令：APPLOAD 加载本文件后执行 YJSTFIX
+;;; 命令：APPLOAD 加载本文件后执行 YJST；YJSTFIX 为兼容入口
 ;;; 约定：所有函数使用 OCS: 前缀（用户命令为 c:YJST）
 ;;;
 ;;; 只改变字体定义与文字内容中的有效字体切换指令；
@@ -91,15 +84,18 @@
 ;;   (setq res (OCS:addProblem res "error" "Blocks 集合接口不可用")))
 
 ;;; ------------------------- 全局状态 -------------------------
-(setq *OCS:Version*      "0.2.21")
-(setq *OCS:DiagnosticsVersion* "2026-10-17-undo-refresh-v13")
+(setq *OCS:Version*      "0.2.26")
+(setq *OCS:DiagnosticsVersion* "2026-11-04-formal-fast-v5")
 (setq *OCS:TableContentCounts* nil)
 (setq *OCS:ScanContext* nil)
 (setq *OCS:CollectReverse* nil)
 (setq *OCS:ClockStart* nil *OCS:PhaseStart* nil *OCS:PhaseName* nil *OCS:PhaseTimes* nil)
 (setq *OCS:CheckOnly* nil *OCS:LastCheckReport* nil)
+(setq *OCS:ConversionMode* nil)
+(setq *OCS:CompactScan* nil)
 (setq *OCS:Stage* "初始化")
 (setq *OCS:FailureMessage* nil *OCS:ProbeStyle* nil *OCS:UndoAttempted* nil)
+(setq *OCS:ProbeRegenPending* nil)
 (setq *OCS:Plan*         nil)   ; 修改计划
 (setq *OCS:Report*       nil)   ; 结构化报告
 (setq *OCS:LastReport*   nil)   ; 最近一次运行（供调试/自动验收读取）
@@ -195,7 +191,7 @@
 
 (defun OCS:setStage (stage)
   (setq *OCS:Stage* stage)
-  (OCS:trace "STAGE" stage)
+  (if (not *OCS:CompactScan*) (OCS:trace "STAGE" stage))
   stage
 )
 
@@ -277,20 +273,32 @@
   (reverse out)
 )
 
-(defun OCS:tracedCall (fn args / result detail)
-  (if *OCS:TraceActive*
+(defun OCS:tracedCall (fn args / result detail quiet name)
+  (setq name (strcase (vl-symbol-name fn)))
+  (setq quiet (and *OCS:CompactScan*
+    (or (= (substr name 1 8) "VLA-GET-")
+        (member name '("VLA-ITEM" "VLA-GETFONT" "HANDENT" "ENTGET" "VLA-FIELDCODE"
+          "VLA-GETATTRIBUTES" "VLA-GETCONSTANTATTRIBUTES" "VLAX-VARIANT-VALUE"
+          "VLAX-SAFEARRAY-GET-DIM" "VLAX-SAFEARRAY-GET-L-BOUND"
+          "VLAX-SAFEARRAY-GET-U-BOUND" "VLAX-SAFEARRAY->LIST")))))
+  (if quiet (setq *OCS:CompactReadCount* (1+ *OCS:CompactReadCount*)))
+  (if (and *OCS:TraceActive* (not quiet))
     (progn
       (setq detail (vl-catch-all-apply 'OCS:logArgs (list args)))
       (if (vl-catch-all-error-p detail) (setq detail "<参数摘要不可用>"))
       (OCS:trace "CALL_BEGIN" (list (vl-symbol-name fn) detail))
       ;; 写入接口前保存调用上下文；普通读取批量落盘。
       (if (not (or (= (substr (strcase (vl-symbol-name fn)) 1 8) "VLA-GET-")
-                   (member (strcase (vl-symbol-name fn)) (list "VLA-ITEM" "VLA-GETFONT"))))
+                   (member (strcase (vl-symbol-name fn)) (list "VLA-ITEM" "VLA-GETFONT"))
+                   (and (equal *OCS:ConversionMode* 'fast)
+                        (member (strcase (vl-symbol-name fn)) '("HANDENT" "ENTGET")))))
         (OCS:logFlush))))
   (setq result (vl-catch-all-apply fn args))
   (if (vl-catch-all-error-p result)
-    (OCS:trace "CALL_ERROR" (list (vl-symbol-name fn) (vl-catch-all-error-message result)))
-    (OCS:trace "CALL_OK" (vl-symbol-name fn)))
+    (progn
+      (if quiet (OCS:trace "READ_ERROR_CONTEXT" (list name (OCS:logArgs args))))
+      (OCS:trace "CALL_ERROR" (list (vl-symbol-name fn) (vl-catch-all-error-message result))))
+    (if (not quiet) (OCS:trace "CALL_OK" (vl-symbol-name fn))))
   result
 )
 
@@ -1283,20 +1291,20 @@
     (setq item (car res))
     (cond
       ((OCS:consp item)
-       (setq out (append out (list item)) res (cdr res)))
+       (setq out (cons item out) res (cdr res)))
       ((and (not done) (equal item key))
-       (setq out (append out (list key val)))
+       (setq out (cons val (cons key out)))
        (setq done T)
        (setq res (cdr (cdr res)))
       )
       (T
-       (setq out (append out (list item (cadr res))))
+       (setq out (cons (cadr res) (cons item out)))
        (setq res (cdr (cdr res)))
       )
     )
   )
-  (if (not done) (setq out (append out (list key val))))
-  out
+  (if (not done) (setq out (cons val (cons key out))))
+  (reverse out)
 )
 (defun OCS:getVal (res key default / i n)
   ;; 固定三个参数：所有调用显式传入缺省值。
@@ -1435,11 +1443,17 @@
           (if (not (OCS:fontStateStable expected (OCS:fontState obj "probe-after-check")))
             (setq res (OCS:addProblem res "error" "临时样式只读复核后宋体绑定不匹配")))
           (if (not (OCS:hasError res))
-            (progn
-              (OCS:mustCall 'vla-Regen (list (OCS:activeDoc) 1))
-              (if (not (OCS:fontStateStable expected (OCS:fontState obj "probe-after-regen")))
-                (setq res (OCS:addProblem res "error" "临时样式再生后宋体绑定读回不匹配")))))))
-      ;; 清理由 verifyFontWrite 的统一出口执行。
+            (if (equal *OCS:ConversionMode* 'fast)
+              (progn
+                (setq res (OCS:putPair res "probeExpected" expected))
+                (OCS:trace "PROBE_REGEN_DEFERRED" (list "style" name "regen" "final")))
+              (progn
+                (if *OCS:ConversionMode* (OCS:timerPhase "试写全视口再生"))
+                (OCS:mustCall 'vla-Regen (list (OCS:activeDoc) 1))
+                (if *OCS:ConversionMode* (OCS:timerPhase "试写读回与清理"))
+                (if (not (OCS:fontStateStable expected (OCS:fontState obj "probe-after-regen")))
+                  (setq res (OCS:addProblem res "error" "临时样式再生后宋体绑定读回不匹配"))))))))
+      ;; 临时样式由 verifyFontWrite 或最终再生读回出口清理。
       res))
 )
 
@@ -1591,7 +1605,8 @@
   (if (not doc)
     (OCS:addProblem res "error" "ActiveX 文档不可用")
     (progn
-      (if (not (OCS:methodOk doc 'vla-get-Blocks))
+      (if (and (not (equal *OCS:ConversionMode* 'styles))
+               (not (OCS:methodOk doc 'vla-get-Blocks)))
         (setq res (OCS:addProblem res "error" "Blocks 集合接口不可用")))
       res
     )
@@ -1677,8 +1692,12 @@
 ;;; 标注/表格等生成的匿名显示块按来源分类处理。
 ;;; =====================================================================
 
-(defun OCS:CollectHosts ( / res doc blocks count i blk key *OCS:CollectReverse*)
+(defun OCS:CollectHosts ( / res doc blocks count i blk key *OCS:CollectReverse* *OCS:SeenTrie*
+                          *OCS:FastGeometry* *OCS:FastTexts* *OCS:FastEmptyRefs*
+                          *OCS:BlockCache* *OCS:ConstantBlocks* *OCS:ScanBlocksCollection*
+                          *OCS:EmptyBlockDefs* *OCS:EmptyRefCacheHits*)
   (setq *OCS:CollectReverse* T)
+  (setq *OCS:FastGeometry* 0 *OCS:FastTexts* 0 *OCS:FastEmptyRefs* 0 *OCS:EmptyRefCacheHits* 0)
   (setq res (list "blocks" 0 "xrefBlocks" 0 "displayBlocks" 0
                   "entities" 0 "attribs" 0 "unknown" 0 "nonTextExcluded" 0
                   "blockList" nil "skipped" nil))
@@ -1689,6 +1708,7 @@
       (OCS:setStage "读取图块集合 Blocks")
       (setq blocks (OCS:requireProp doc 'Blocks)
             count (OCS:requireProp blocks 'Count))
+      (setq *OCS:ScanBlocksCollection* blocks)
       (setq i 1)
       (while (<= i count)
         (OCS:setStage (strcat "读取图块集合 Blocks，索引 " (itoa (1- i))))
@@ -1700,6 +1720,12 @@
       )
       (foreach key (list "hosts" "skipped" "blockList" "tchCandidates")
         (setq res (OCS:putPair res key (reverse (OCS:getVal res key nil)))))
+      (if (equal *OCS:ConversionMode* 'fast)
+        (progn
+          (setq res (OCS:putPair res "geometrySkipped" (+ (OCS:getVal res "geometrySkipped" 0) *OCS:FastGeometry*)))
+          (setq res (OCS:putPair res "styleText" (+ (OCS:getVal res "styleText" 0) *OCS:FastTexts*)))
+          (setq res (OCS:putPair res "emptyBlockRefs" *OCS:FastEmptyRefs*))
+          (setq res (OCS:putPair res "emptyRefCacheHits" *OCS:EmptyRefCacheHits*))))
       res
     )
   )
@@ -1717,6 +1743,8 @@
     (progn
       (OCS:setStage (strcat "扫描图块 " name " [" handle "]"))
       (setq isXref (OCS:boolProp blk 'IsXRef))
+      (if (equal *OCS:ConversionMode* 'fast)
+        (setq *OCS:BlockCache* (cons (cons (strcase name) (or isXref (OCS:strContains name "|"))) *OCS:BlockCache*)))
       ;; 匿名块分类：动态块表示(*U...)、标注/表格显示缓存(*D.../*T...)、其他
       (setq btype (OCS:classifyBlockName name))
       (cond
@@ -1752,16 +1780,158 @@
   )
 )
 
-(defun OCS:scanBlockContents (res doc blk bname bhandle / ents count i e label *OCS:ScanContext*)
+(defun OCS:scanBlockContents (res doc blk bname bhandle / count scan ent data i nextProgress spaceP started *OCS:ScanContext*)
+  (if (equal *OCS:ConversionMode* 'fast) (setq started (OCS:logVar "MILLISECS")))
+  (setq res (if (equal *OCS:ConversionMode* 'fast)
+    (progn
+      (setq count (OCS:requireProp blk 'Count))
+      (setq spaceP (or (= (strcase bname) "*MODEL_SPACE") (= (substr (strcase bname) 1 12) "*PAPER_SPACE")))
+      (setq scan (vl-catch-all-apply
+        (if spaceP 'OCS:spaceCandidates 'OCS:dxfCandidates)
+        (if spaceP (list blk count) (list bname count))))
+      (if (vl-catch-all-error-p scan) (OCS:fail (vl-catch-all-error-message scan)))
+      (if (not scan)
+        (progn
+          (OCS:trace "SCAN_FALLBACK" (list bname bhandle count "实体数量或类型无法核对"))
+          (setq res (OCS:putPair res "scanFallbacks" (1+ (OCS:getVal res "scanFallbacks" 0))))
+          (OCS:scanBlockItems res doc blk bname bhandle))
+        (progn
+          (setq i 0 nextProgress 1000)
+          (foreach ent (car scan)
+            (setq *OCS:ScanContext* (list "block" bname "blockHandle" bhandle "count" count))
+            (setq data (entget ent))
+            (if (OCS:knownEmptyBlockRefP data)
+              (setq *OCS:FastEmptyRefs* (1+ *OCS:FastEmptyRefs*)
+                    *OCS:EmptyRefCacheHits* (1+ *OCS:EmptyRefCacheHits*))
+              (setq res (OCS:visitEntity res doc (vlax-ename->vla-object ent) (list "block" bname bhandle))))
+            (setq i (1+ i))
+            (if (>= i nextProgress)
+              (progn
+                (princ (strcat "\n读取候选 " bname "，已处理 " (itoa i) " 个。"))
+                (OCS:trace "CANDIDATE_PROGRESS" (list bname i))
+                (OCS:logFlush)
+                (setq nextProgress (+ nextProgress 1000)))))
+          (setq res (OCS:putPair res "geometrySkipped" (+ (OCS:getVal res "geometrySkipped" 0) (cadr scan))))
+          (setq res (OCS:putPair res "styleText" (+ (OCS:getVal res "styleText" 0) (caddr scan))))
+          (if (nth 3 scan)
+            (setq res (OCS:putPair res "nativeFiltered" (+ (OCS:getVal res "nativeFiltered" 0) (nth 3 scan)))))
+          (if (and (nth 4 scan) (> (nth 4 scan) 0))
+            (progn
+              (setq res (OCS:putPair res "unknown" (+ (OCS:getVal res "unknown" 0) (nth 4 scan))))
+              (setq res (OCS:lstAppend res "skipped" (list "SPACE_SELECTION_GAP" bhandle (nth 4 scan))))))
+          res)))
+    (OCS:scanBlockItems res doc blk bname bhandle)))
+  (if (equal *OCS:ConversionMode* 'fast)
+    (OCS:trace "BLOCK_SCAN_DONE" (list "block" bname "entities" count
+      "seconds" (OCS:elapsedSeconds started (OCS:logVar "MILLISECS"))
+      "candidates" (if scan (length (car scan)) nil))))
+  res
+)
+
+;; 日期：2026-11-04。空间实体由 CAD 原生筛选，避免模型空间缺少 BLOCK -2 时逐对象回退。
+(defun OCS:spaceCandidates (blk expected / layout scope all selected total count i ent candidates valid)
+  (setq layout (OCS:requireProp (OCS:requireProp blk 'Layout) 'Name)
+        scope (list (cons 410 layout)))
+  (princ (strcat "\nCAD 原生筛选 " layout "，数据库实体 " (itoa expected) " 个..."))
+  (OCS:trace "SSGET_BEGIN" (list layout expected))
+  (OCS:logFlush)
+  (setq all (ssget "_X" scope) total (if all (sslength all) 0) all nil)
+  (setq selected (ssget "_X" (append scope
+    (list (cons -4 "<NOT")
+      (cons 0 "TEXT,LINE,ARC,CIRCLE,ELLIPSE,SPLINE,LWPOLYLINE,POLYLINE,POINT,HATCH,SOLID,3DSOLID,3DFACE,TRACE,RAY,XLINE,REGION,VIEWPORT,MLINE,IMAGE,WIPEOUT,OLE2FRAME,PDFUNDERLAY")
+      (cons -4 "NOT>")))))
+  (setq count (if selected (sslength selected) 0) i 0 valid T)
+  (OCS:trace "SSGET_READY" (list "layout" layout "database" expected "selectable" total "candidates" count))
+  (OCS:logFlush)
+  (princ (strcat "\nCAD 原生筛选完成 " layout "，候选 " (itoa count) " 个。"))
+  (while (and valid (< i count))
+    ;; ssname 对大于 32767 的索引要求实数。
+    (setq ent (ssname selected (+ 0.0 i)))
+    (if ent (setq candidates (cons ent candidates)) (setq valid nil))
+    (setq i (1+ i)))
+  (setq selected nil)
+  (if (and valid (<= count total) (<= total expected) (or (= expected 0) (> total 0)))
+    (list (reverse candidates) 0 0 (- total count) (- expected total)))
+)
+
+(defun OCS:knownEmptyBlockRefP (data / name)
+  (setq name (OCS:assocd 2 data nil))
+  (and (= (OCS:assocd 0 data "") "INSERT") (= (OCS:assocd 66 data 0) 0)
+       (OCS:stringp name) (/= name "") (member (strcase name) *OCS:EmptyBlockDefs*))
+)
+
+(defun OCS:emptyBlockRefP (obj / data has name)
+  (setq data (entget (vlax-vla-object->ename obj)))
+  (if data
+    (if (OCS:knownEmptyBlockRefP data)
+      (progn (setq *OCS:EmptyRefCacheHits* (1+ *OCS:EmptyRefCacheHits*)) T)
+      (progn
+      (setq has (vl-catch-all-apply 'vla-get-HasAttributes (list obj)))
+      (if (vl-catch-all-error-p has) (OCS:fail (vl-catch-all-error-message has)))
+      (cond
+        ((equal has :vlax-false)
+         (setq name (OCS:assocd 2 data nil))
+         (if (and (= (OCS:assocd 0 data "") "INSERT") (= (OCS:assocd 66 data 0) 0)
+                  (OCS:stringp name) (/= name ""))
+           (setq *OCS:EmptyBlockDefs* (cons (strcase name) *OCS:EmptyBlockDefs*)))
+         T)
+        ((equal has :vlax-true) nil)
+        (T (OCS:fail "无效的 HasAttributes 属性")))))
+    nil)
+)
+
+;; 日期：2026-11-04。先收集候选，再交给原有处理器。属性实例仍由 INSERT 读取。
+(defun OCS:dxfCandidates (bname expected / ent data typ count geometry texts candidates invalid nextProgress canonical)
+  (setq ent (cdr (assoc -2 (tblsearch "BLOCK" bname)))
+        count 0 geometry 0 texts 0 nextProgress 5000)
+  (while (and ent (not invalid))
+    (setq data (entget ent) typ (cdr (assoc 0 data)))
+    (cond
+      ((not typ) (setq invalid T))
+      ((= typ "ENDBLK") (setq ent nil))
+      ((member typ '("ATTRIB" "VERTEX" "SEQEND")))
+      (T
+       (setq count (1+ count))
+       (cond
+         ((> count expected) (setq invalid T))
+         ((= typ "TEXT") (setq texts (1+ texts)))
+         ((member typ '("LINE" "ARC" "CIRCLE" "ELLIPSE" "SPLINE" "LWPOLYLINE" "POLYLINE"
+                        "POINT" "HATCH" "SOLID" "3DSOLID" "3DFACE" "TRACE" "RAY" "XLINE"
+                        "REGION" "VIEWPORT" "MLINE" "IMAGE" "WIPEOUT" "OLE2FRAME" "PDFUNDERLAY"))
+          (setq geometry (1+ geometry)))
+         (T
+          ;; BLOCK 表 -2 引用仅供 entget/entnext，按句柄取得可用于 ActiveX 的实体名。
+          (setq canonical (cdr (assoc 5 data)))
+          (if canonical (setq canonical (handent canonical)))
+          (if canonical (setq candidates (cons canonical candidates)) (setq invalid T))))))
+    (if (>= count nextProgress)
+      (progn
+        (princ (strcat "\n候选过滤 " bname "，已检查 " (itoa count) " / " (itoa expected) " 个实体。"))
+        (OCS:trace "SCAN_PROGRESS" (list bname count expected))
+        (OCS:logFlush)
+        (setq nextProgress (+ nextProgress 5000))))
+    (if (and ent (not invalid)) (setq ent (entnext ent))))
+  (if (and (not invalid) (= count expected)) (list (reverse candidates) geometry texts))
+)
+
+(defun OCS:scanBlockItems (res doc blk bname bhandle / ents count i e label nextProgress *OCS:ScanContext*)
   (setq ents blk) ; Block 本身就是实体集合
   (setq label (strcat "扫描图块 " bname " [" bhandle "]"))
   (OCS:setStage label)
-  (setq count (OCS:requireProp ents 'Count) i 1)
-  (while (<= i count)
+  (setq count (OCS:requireProp ents 'Count) i 1 nextProgress 5000)
+  (vlax-for e ents
     (setq *OCS:ScanContext* (list "block" bname "blockHandle" bhandle "index" (1- i) "count" count))
-    (OCS:setStage (strcat label "，实体索引 " (itoa (1- i))))
-    (setq e (OCS:safeItem ents i))
+    (if (equal *OCS:ConversionMode* 'fast)
+      (progn
+        (setq *OCS:Stage* (strcat label "，实体索引 " (itoa (1- i)))))
+      (OCS:setStage (strcat label "，实体索引 " (itoa (1- i)))))
     (if e (setq res (OCS:visitEntity res doc e (list "block" bname bhandle))))
+    (if (and (equal *OCS:ConversionMode* 'fast) (>= i nextProgress))
+      (progn
+        (princ (strcat "\n兼容扫描 " bname "，已检查 " (itoa i) " / " (itoa count) " 个实体。"))
+        (OCS:trace "SCAN_PROGRESS" (list "fallback" bname i count))
+        (OCS:logFlush)
+        (setq nextProgress (+ nextProgress 5000))))
     (setq i (1+ i))
   )
   res
@@ -1770,24 +1940,26 @@
 ;; 实体访问（去重按句柄）
 (defun OCS:visitEntity (res doc e ctx / typ handle seen)
   (setq typ (OCS:safeProp e 'ObjectName))
-  (if (not typ)
-    (progn
-      (setq res (OCS:putPair res "unknown" (1+ (OCS:getVal res "unknown" 0))))
-      (setq res (OCS:lstAppend res "skipped" (list "UNKNOWN_OBJECT" "?" (OCS:ctxStr ctx))))
-    )
-    (progn
-      (setq handle (OCS:requireProp e 'Handle))
-      (setq seen (OCS:seenP res handle))
-      (if (not seen)
-        (progn
-          (setq res (OCS:markSeen res handle))
-          (OCS:setStage (strcat "扫描实体 " typ " [" handle "] " (OCS:ctxStr ctx)))
-          (setq res (OCS:handleEntity res doc e typ ctx handle))
-        )
-      )
-      res
-    )
-  )
+  (cond
+    ((and (equal *OCS:ConversionMode* 'fast) typ
+          (equal (OCS:mapClass typ) "text"))
+     (setq *OCS:FastTexts* (1+ *OCS:FastTexts*)) res)
+    ((and (equal *OCS:ConversionMode* 'fast) typ (OCS:geometryClassP typ))
+     (setq *OCS:FastGeometry* (1+ *OCS:FastGeometry*)) res)
+    ((and (equal *OCS:ConversionMode* 'fast) typ (equal (OCS:mapClass typ) "blockref") (OCS:emptyBlockRefP e))
+     (setq *OCS:FastEmptyRefs* (1+ *OCS:FastEmptyRefs*)) res)
+    ((not typ)
+     (setq res (OCS:putPair res "unknown" (1+ (OCS:getVal res "unknown" 0))))
+     (OCS:lstAppend res "skipped" (list "UNKNOWN_OBJECT" "?" (OCS:ctxStr ctx))))
+    (T
+     (setq handle (OCS:requireProp e 'Handle))
+     (setq seen (OCS:seenP res handle))
+     (if (not seen)
+       (progn
+         (setq res (OCS:markSeen res handle))
+         (OCS:setStage (strcat "扫描实体 " typ " [" handle "] " (OCS:ctxStr ctx)))
+         (setq res (OCS:handleEntity res doc e typ ctx handle))))
+     res))
 )
 
 (defun OCS:ctxStr (ctx)
@@ -1801,19 +1973,40 @@
 
 ;; 记录处理
 (defun OCS:seenP (res h)
-  (and h (vl-position h (OCS:getVal res "seen" nil)))
+  (and h (if (equal *OCS:ConversionMode* 'fast)
+    (OCS:trieSeen *OCS:SeenTrie* h)
+    (vl-position h (OCS:getVal res "seen" nil))))
 )
 (defun OCS:markSeen (res h)
   (if h
-    (OCS:putPair res "seen" (cons h (OCS:getVal res "seen" nil)))
+    (if (equal *OCS:ConversionMode* 'fast)
+      (progn (setq *OCS:SeenTrie* (OCS:trieAdd *OCS:SeenTrie* h 1)) res)
+      (OCS:putPair res "seen" (cons h (OCS:getVal res "seen" nil))))
     res
   )
+)
+
+;; 日期：2026-11-04。句柄前缀树按字符查找，避免随实体总数增长的列表查重。
+(defun OCS:trieSeen (node handle / i)
+  (setq i 1)
+  (while (and node (<= i (strlen handle)))
+    (setq node (OCS:assocd (substr handle i 1) node nil) i (1+ i)))
+  (OCS:assocd "" node nil)
+)
+
+(defun OCS:trieAdd (node handle i / key)
+  (if (> i (strlen handle))
+    (OCS:putPair node "" T)
+    (progn
+      (setq key (substr handle i 1))
+      (OCS:putPair node key (OCS:trieAdd (OCS:assocd key node nil) handle (1+ i)))))
 )
 
 ;; 按对象类型分发
 (defun OCS:handleEntity (res doc e typ ctx handle / cls)
   (setq cls (if *OCS:CheckOnly* "other" (OCS:mapClass typ)))
-  (OCS:trace "ENTITY" (list "handle" handle "type" typ "class" cls "context" ctx "layer" (OCS:safeProp e 'Layer)))
+  (if (not *OCS:CompactScan*)
+    (OCS:trace "ENTITY" (list "handle" handle "type" typ "class" cls "context" ctx "layer" (OCS:safeProp e 'Layer))))
   (cond
     ((OCS:fontlessProClassP typ)
      (OCS:trace "NON_TEXT_EXCLUDED" (list "handle" handle "type" typ "reason" "用户确认桥架及配件无文字"))
@@ -1858,12 +2051,16 @@
 
 (defun OCS:knownClass (typ)
   (or (OCS:fontlessProClassP typ) (/= (OCS:mapClass typ) "other")
-      (member (strcase typ)
+      (OCS:geometryClassP typ))
+)
+
+(defun OCS:geometryClassP (typ)
+  (member (strcase typ)
         (list "ACDBLINE" "ACDBARC" "ACDBCIRCLE" "ACDBELLIPSE" "ACDBSPLINE"
               "ACDBPOLYLINE" "ACDB2DPOLYLINE" "ACDB3DPOLYLINE" "ACDBPOINT"
               "ACDBHATCH" "ACDBSOLID" "ACDB3DSOLID" "ACDBFACE" "ACDBTRACE"
               "ACDBRAY" "ACDBXLINE" "ACDBREGION" "ACDBVIEWPORT" "ACDBMLINE"
-              "ACDBRASTERIMAGE" "ACDBWIPEOUT" "ACDBOLE2FRAME" "ACDBPDFREFERENCE")))
+              "ACDBRASTERIMAGE" "ACDBWIPEOUT" "ACDBOLE2FRAME" "ACDBPDFREFERENCE"))
 )
 
 ;; 类型 → 分类（DXF/ObjectName 映射）
@@ -1951,19 +2148,33 @@
         (strcat typ "@" (OCS:ctxStr ctx) ":" reason)))))
 )
 
-(defun OCS:collectReadableBlockRef (res doc e ctx handle typ / blk name has attrs a meth label)
+(defun OCS:collectReadableBlockRef (res doc e ctx handle typ / blk name has attrs a meth label key cached isXref)
   (setq name (OCS:blockRefName e ctx handle typ))
   (setq label (strcat "读取块引用 " name " [" handle "]"))
   (OCS:setStage label)
-  (setq blk (OCS:mustCall 'vla-Item (list (OCS:requireProp doc 'Blocks) name)))
-  (if (not (or (OCS:boolProp blk 'IsXRef) (OCS:strContains name "|")))
+  (setq key (strcase name))
+  (setq cached (if (equal *OCS:ConversionMode* 'fast) (assoc key *OCS:BlockCache*)))
+  (if cached
+    (setq isXref (cdr cached))
     (progn
-      (setq has (OCS:boolProp e 'HasAttributes))
+      (setq blk (OCS:mustCall 'vla-Item (list
+        (if (and (equal *OCS:ConversionMode* 'fast) *OCS:ScanBlocksCollection*)
+          *OCS:ScanBlocksCollection* (OCS:requireProp doc 'Blocks)) name)))
+      (setq isXref (or (OCS:boolProp blk 'IsXRef) (OCS:strContains name "|")))
+      (if (equal *OCS:ConversionMode* 'fast)
+        (setq *OCS:BlockCache* (cons (cons key isXref) *OCS:BlockCache*)))))
+  (if (not isXref)
+    (progn
+      ;; fast 的 visitEntity 已确认本实例 HasAttributes，普通属性仍逐实例读取。
+      (setq has (if (equal *OCS:ConversionMode* 'fast) T (OCS:boolProp e 'HasAttributes)))
       (if has
-        (foreach meth (list 'vla-GetAttributes 'vla-GetConstantAttributes)
+        (foreach meth (if (and (equal *OCS:ConversionMode* 'fast) (member key *OCS:ConstantBlocks*))
+                        (list 'vla-GetAttributes) (list 'vla-GetAttributes 'vla-GetConstantAttributes))
           (OCS:setStage (strcat label " / " (vl-symbol-name meth)))
           (setq attrs (OCS:variantToList (OCS:mustCall meth (list e))))
-          (foreach a attrs (setq res (OCS:visitEntity res doc a ctx)))))
+          (foreach a attrs (setq res (OCS:visitEntity res doc a ctx)))
+          (if (and (equal *OCS:ConversionMode* 'fast) (equal meth 'vla-GetConstantAttributes))
+            (setq *OCS:ConstantBlocks* (cons key *OCS:ConstantBlocks*)))))
     )
   )
   res
@@ -2101,8 +2312,16 @@
 ;;; 修改计划 OCS:BuildPlan
 ;;; =====================================================================
 
-(defun OCS:BuildPlan ( / plan styles hosts targets host data new scan partial item protectedCells fieldEdits)
-  (setq styles (OCS:CollectStyles) hosts (OCS:CollectHosts) targets nil protectedCells nil)
+(defun OCS:BuildPlan ( / plan styles hosts targets host data new scan partial item protectedCells fieldEdits
+                        *OCS:CompactScan* *OCS:CompactReadCount*)
+  ;; 日期：2026-11-04。紧凑日志仅在只读计划阶段生效，写入及写后读回仍记录接口明细。
+  (setq *OCS:CompactScan* (equal *OCS:ConversionMode* 'fast) *OCS:CompactReadCount* 0)
+  (if *OCS:ConversionMode* (OCS:timerPhase "读取文字样式"))
+  (setq styles (OCS:CollectStyles))
+  (if (equal *OCS:ConversionMode* 'fast) (OCS:timerPhase "过滤局部字体候选"))
+  (setq hosts (if (not (equal *OCS:ConversionMode* 'styles)) (OCS:CollectHosts))
+        targets nil protectedCells nil)
+  (if (equal *OCS:ConversionMode* 'fast) (OCS:timerPhase "读取候选并生成计划"))
   (if (OCS:hasError hosts) (OCS:fail (OCS:fmt (OCS:problemsOf hosts))))
   (foreach host (OCS:assocd "hosts" hosts nil)
     (OCS:setStage (strcat "读取宿主 " (OCS:assocd "type" host "?") " ["
@@ -2134,6 +2353,11 @@
       (setq hosts (OCS:putPair hosts "unknown" (1+ (OCS:assocd "unknown" hosts 0))))
       (setq hosts (OCS:lstAppend hosts "skipped" (list "PROTECTED_CONTENT" (OCS:assocd "handle" host "?") item)))))
   (setq fieldEdits (OCS:planFieldFontEdits (reverse protectedCells)))
+  (if *OCS:CompactScan*
+    (progn
+      (setq hosts (OCS:putPair hosts "compactReads" *OCS:CompactReadCount*))
+      (OCS:trace "SCAN_SUMMARY" (list "compactReads" *OCS:CompactReadCount*
+        "hosts" (length (OCS:assocd "hosts" hosts nil)) "targets" (length targets)))))
   (list "styles" (OCS:assocd "normal" styles nil) "shape" (OCS:assocd "shape" styles nil)
         "xrefStyle" (OCS:assocd "xref" styles nil) "hosts" (OCS:assocd "hosts" hosts nil)
         "stats" hosts "targets" (reverse targets) "protectedCells" (reverse protectedCells)
@@ -2712,15 +2936,38 @@
   (if (not doc)
     (list "ok" nil "error" "无法获取活动文档")
     (progn
+      (if *OCS:ConversionMode* (OCS:timerPhase "最终全视口再生"))
+      (OCS:trace "REGEN_BEGIN" "final")
+      (OCS:logFlush)
       (setq r (vl-catch-all-apply 'vla-Regen (list doc 1))) ; acAllViewports
+      (OCS:trace "REGEN_END" (list "final" (if (vl-catch-all-error-p r) (vl-catch-all-error-message r) "ok")))
+      (OCS:logFlush)
+      (if *OCS:ConversionMode* (OCS:timerPhase "再生后读回校验"))
       (if (vl-catch-all-error-p r)
         (list "ok" nil "error" (strcat "再生失败：" (vl-catch-all-error-message r)))
         (progn
-          (setq r (OCS:readbackStyles))
+          (setq r (OCS:readbackProbe))
+          (if (OCS:assocd "ok" r nil) (setq r (OCS:readbackStyles)))
           (if (OCS:assocd "ok" r nil) (OCS:readbackHosts) r))
       )
     )
   )
+)
+
+;; 日期：2026-11-04。试写与正式样式共用最终再生，清理临时样式后继续正式读回。
+(defun OCS:readbackProbe ( / expected ent ok)
+  (if *OCS:ProbeRegenPending*
+    (progn
+      (setq expected (OCS:assocd "probeExpected" (OCS:assocd "font" *OCS:Plan* nil) nil)
+            ent (if *OCS:ProbeStyle* (tblobjname "STYLE" *OCS:ProbeStyle*)))
+      (setq ok (and expected ent
+        (OCS:fontStateStable expected (OCS:fontState (vlax-ename->vla-object ent) "probe-after-regen"))))
+      (setq *OCS:ProbeRegenPending* nil)
+      (cond
+        ((not (OCS:restoreTempState)) (list "ok" nil "error" "临时字体样式清理失败"))
+        ((not ok) (list "ok" nil "error" "临时样式再生后宋体绑定读回不匹配"))
+        (T (list "ok" T))))
+    (list "ok" T))
 )
 
 ;; 样式读回：字体族为宋体、大字体为空、原参数一致
@@ -2767,6 +3014,7 @@
 
 (defun OCS:Rollback ( / r ok changed)
   (OCS:trace "ROLLBACK_BEGIN" (list "undoMark" *OCS:UndoMark* "wrote" *OCS:Wrote*))
+  (setq *OCS:ProbeRegenPending* nil)
   (setq changed (and *OCS:UndoMark* *OCS:Wrote*))
   (setq ok (OCS:restoreTempState))
   (if (not (OCS:endUndoGroup))
@@ -2850,7 +3098,7 @@
     (if (or (vl-catch-all-error-p r) (not (equal (OCS:safeProp obj prop) value)))
       (setq ok nil pending (cons item pending))))
   (setq *OCS:TempState* (reverse pending))
-  (if *OCS:ProbeStyle*
+  (if (and *OCS:ProbeStyle* (not *OCS:ProbeRegenPending*))
     (progn
       (setq r (vl-catch-all-apply 'OCS:deleteStyleIfExists (list *OCS:ProbeStyle*)))
       (if (or (vl-catch-all-error-p r) (tblobjname "STYLE" *OCS:ProbeStyle*))
@@ -2872,6 +3120,15 @@
   (princ (strcat "\n图纸：" (OCS:assocd "dwg" report "?")))
   (princ (strcat "\nCAD 版本：" (OCS:assocd "cadver" report "?")))
   (princ (strcat "\n目标字体族：" (OCS:assocd "family" report "SimSun")))
+  (if (equal *OCS:ConversionMode* 'styles)
+    (princ "\n本次仅处理本图文字样式，局部字体覆盖未检查。"))
+  (if (equal *OCS:ConversionMode* 'fast)
+    (princ (strcat "\n类型过滤跳过几何 " (itoa (OCS:assocd "geometrySkipped" report 0))
+      " 个，单行文字按样式覆盖 " (itoa (OCS:assocd "styleText" report 0))
+      " 个，兼容扫描回退 " (itoa (OCS:assocd "scanFallbacks" report 0)) " 个块。")))
+  (if (equal *OCS:ConversionMode* 'fast)
+    (princ (strcat "\nCAD 原生排除几何及单行文字 " (itoa (OCS:assocd "nativeFiltered" report 0))
+      " 个，无属性块引用跳过 " (itoa (OCS:assocd "emptyBlockRefs" report 0)) " 个。")))
   (princ (strcat "\n扫描文字样式：" (itoa (OCS:assocd "stylesScanned" report 0))
                  "　修改：" (itoa (OCS:assocd "stylesModified" report 0))
                  "　外参依赖跳过：" (itoa (OCS:assocd "stylesXref" report 0))
@@ -3027,8 +3284,11 @@
   (if *OCS:PhaseName*
     (progn
       (setq *OCS:PhaseTimes* (cons (list *OCS:PhaseName* seconds) *OCS:PhaseTimes*))
-      (OCS:trace "PHASE_TIME" (list "phase" *OCS:PhaseName* "seconds" seconds))))
+      (OCS:trace "PHASE_TIME" (list "phase" *OCS:PhaseName* "seconds" seconds))
+      (if (and *OCS:ConversionMode* (numberp seconds))
+        (princ (strcat "\n阶段完成 " *OCS:PhaseName* "，耗时 " (rtos seconds 2 2) " 秒。")))))
   (setq *OCS:PhaseStart* now *OCS:PhaseName* name)
+  (if (and *OCS:ConversionMode* name) (princ (strcat "\n正在执行 " name "...")))
 )
 
 (defun OCS:timerFinish (report / seconds)
@@ -3064,18 +3324,18 @@
 
 (defun c:YJSTFIX ()
   ;; 日期：2026-10-14。独立命令避开工具集同名 .NET YJST 入口；被旧版覆盖时拒绝执行。
-  (if (and (equal *OCS:Version* "0.2.21")
-           (equal *OCS:DiagnosticsVersion* "2026-10-17-undo-refresh-v13"))
+  (if (and (equal *OCS:Version* "0.2.26")
+           (equal *OCS:DiagnosticsVersion* "2026-11-04-formal-fast-v5"))
     (c:YJST)
-    (princ "\n当前宋体脚本已被旧版覆盖。请重新 APPLOAD v0.2.21 修复文件，然后输入 YJSTFIX。"))
+    (princ "\n当前宋体脚本已被旧版覆盖。请重新 APPLOAD v0.2.26 修复文件，然后输入 YJSTFIX。"))
   (princ)
 )
 
 (defun c:YJSTDIAG ( / *OCS:UndoDiagEnabled*)
-  (if (and (equal *OCS:Version* "0.2.21")
-           (equal *OCS:DiagnosticsVersion* "2026-10-17-undo-refresh-v13"))
+  (if (and (equal *OCS:Version* "0.2.26")
+           (equal *OCS:DiagnosticsVersion* "2026-11-04-formal-fast-v5"))
     (progn (setq *OCS:UndoDiagEnabled* T) (c:YJSTFIX))
-    (princ "\n诊断代码已被其他版本覆盖，请重新 APPLOAD v0.2.21 诊断文件。"))
+    (princ "\n诊断代码已被其他版本覆盖，请重新 APPLOAD v0.2.26 诊断文件。"))
   (princ)
 )
 
@@ -3107,7 +3367,7 @@
   (princ)
 )
 
-(defun c:YJST ( / r report)
+(defun OCS:runConversion ( / r report)
   (cond
     (*OCS:Running* (princ "\nYJST 执行失败：上一次运行尚未结束，本次未启动。"))
     (*OCS:UndoMark* (princ "\nYJST 执行失败：上次撤销分组未能关闭，本次未启动，请先检查恢复失败明细。"))
@@ -3115,7 +3375,7 @@
       (if *OCS:UndoDiagActive* (OCS:undoDiagSafe 'OCS:undoDiagStop (list "next-conversion")))
       (OCS:timerStart)
       (setq *OCS:Running* T *OCS:Plan* nil *OCS:TempState* nil *OCS:Wrote* nil
-            *OCS:UndoAttempted* nil *OCS:FailureMessage* nil *OCS:ProbeStyle* nil)
+            *OCS:UndoAttempted* nil *OCS:FailureMessage* nil *OCS:ProbeStyle* nil *OCS:ProbeRegenPending* nil)
       (princ (strcat "\nYJST v" *OCS:Version* " 开始执行。"))
       (OCS:logStart)
       (setq r (vl-catch-all-apply 'OCS:mainFlow nil))
@@ -3192,17 +3452,20 @@
   (setq report (OCS:makeReport "进行中"))
   (if (OCS:hasPlannedWrites)
     (progn
+      (if *OCS:ConversionMode* (OCS:timerPhase "字体试写与检查"))
       (OCS:setStage "分组内字体试写")
       (setq probe (OCS:verifyFontWrite (OCS:assocd "font" *OCS:Plan* nil)))
       (if (OCS:hasError probe) (OCS:fail (OCS:fmt (OCS:problemsOf probe))))
       (setq *OCS:Plan* (OCS:putPair *OCS:Plan* "font" probe))))
   (OCS:lockLayersNeeded)
   (OCS:unlockTempLayers)
+  (if *OCS:ConversionMode* (OCS:timerPhase "写入共享文字样式"))
   (OCS:setStage "写入样式")
   (setq stylesRes (OCS:applyAllStyles))
   (if (OCS:assocd "error" stylesRes nil)
     (setq report (OCS:appendError report "STYLE" (OCS:assocd "error" stylesRes "")))
     (progn
+      (if *OCS:ConversionMode* (OCS:timerPhase "写入局部字体覆盖"))
       (OCS:setStage "写入字段包装字体")
       (setq fieldRes (OCS:applyFieldFontEdits))
       (setq hostsRes (OCS:applyAllHosts))))
@@ -3212,6 +3475,7 @@
   (setq report (OCS:putPair report "fieldFontsChanged" (OCS:assocd "changed" fieldRes 0)))
   (setq report (OCS:putPair report "fontRunsChanged"
     (+ (OCS:assocd "fontRunsChanged" report 0) (OCS:assocd "changed" fieldRes 0))))
+  (if *OCS:ConversionMode* (OCS:timerPhase "恢复临时状态"))
   (OCS:setStage "恢复临时状态")
   (if (not (OCS:restoreTempState))
     (setq report (OCS:appendError report "RESTORE" "临时状态恢复失败")))
@@ -3251,6 +3515,42 @@
     (OCS:putPair report "status" "核查完成，存在不一致或无法核验项")
     report)
 )
+
+;; 日期：2026-11-04。正式命令使用已通过大图现场验证的候选扫描和单次再生。
+(defun c:YJST ()
+  (OCS:performanceCommand 'fast))
+
+;; 日期：2026-11-04。样式对照仅供内部诊断，不再注册用户命令。
+(defun OCS:styleCommand ()
+  (OCS:performanceCommand 'styles))
+
+;; 同一 CAD 会话可能加载过测试版，解除其遗留的命令注册。
+(vl-catch-all-apply 'vl-acad-undefun (list 'c:YJSTSTYLE))
+
+;; 日期：2026-11-04。独立测试命令避开工具集 YJST 的重新加载入口。
+(defun c:YJSTFAST ()
+  (c:YJST))
+
+(defun OCS:performanceCommand (mode / *OCS:ConversionMode* result report recovered)
+  (if (and (equal *OCS:Version* "0.2.26")
+           (equal *OCS:DiagnosticsVersion* "2026-11-04-formal-fast-v5"))
+    (progn
+      (setq *OCS:ConversionMode* mode)
+      (if (equal mode 'styles) (princ "\n内部样式对照：仅处理共享文字样式。"))
+      (setq result (vl-catch-all-apply 'OCS:runConversion nil))
+      (if (vl-catch-all-error-p result)
+        (progn
+          (if *OCS:UndoMark*
+            (progn
+              (setq report (OCS:appendError (OCS:makeReport "进行中") *OCS:Stage* (vl-catch-all-error-message result)))
+              (setq recovered (vl-catch-all-apply 'OCS:recoverReport (list report)))
+              (if (not (vl-catch-all-error-p recovered)) (setq *OCS:LastReport* recovered))))
+          (OCS:trace "COMMAND_INTERRUPTED" (vl-catch-all-error-message result))
+          (vl-catch-all-apply 'OCS:logFlush nil)
+          (setq *OCS:TraceActive* nil *OCS:Running* nil)
+          (princ (strcat "\nYJST 命令已中断，原因 " (vl-catch-all-error-message result) "。输入 YJSTLOG 查看记录。")))))
+    (princ "\n宋体脚本已被其他版本覆盖，请重新 APPLOAD v0.2.26 文件。"))
+  (princ))
 
 (defun c:YJSTCHECK ( / r report *OCS:CheckOnly* *OCS:Plan* *OCS:FailureMessage*)
   (cond
@@ -4113,11 +4413,14 @@
 (defun OCS:verifyFontWrite (res / name r cleanup)
   (setq name (OCS:tempStyleName) *OCS:ProbeStyle* name)
   (setq r (vl-catch-all-apply 'OCS:probeFontBody (list res name)))
-  (setq cleanup (vl-catch-all-apply 'OCS:deleteStyleIfExists (list name)))
   (if (vl-catch-all-error-p r) (setq r (OCS:addProblem res "error" (OCS:errorText r))))
-  (if (or (vl-catch-all-error-p cleanup) (tblobjname "STYLE" name))
-    (setq r (OCS:addProblem r "error" "临时字体样式清理失败"))
-    (setq *OCS:ProbeStyle* nil))
+  (if (and (equal *OCS:ConversionMode* 'fast) (not (OCS:hasError r)))
+    (setq *OCS:ProbeRegenPending* T)
+    (progn
+      (setq cleanup (vl-catch-all-apply 'OCS:deleteStyleIfExists (list name)))
+      (if (or (vl-catch-all-error-p cleanup) (tblobjname "STYLE" name))
+        (setq r (OCS:addProblem r "error" "临时字体样式清理失败"))
+        (setq *OCS:ProbeStyle* nil))))
   r
 )
 (defun OCS:hasPlannedWrites ( / needed st ent)
@@ -4142,6 +4445,11 @@
   (setq stats (OCS:assocd "stats" *OCS:Plan* nil))
   (foreach key (list "attribs" "blocks" "xrefBlocks" "displayBlocks" "nonTextExcluded")
     (setq report (OCS:putPair report key (OCS:assocd key stats 0))))
+  (if (equal *OCS:ConversionMode* 'fast)
+    (foreach key '("geometrySkipped" "styleText" "scanFallbacks" "nativeFiltered" "emptyBlockRefs" "compactReads" "emptyRefCacheHits")
+      (setq report (OCS:putPair report key (OCS:assocd key stats 0)))))
+  (if *OCS:ConversionMode*
+    (setq report (OCS:putPair report "conversionMode" (if (equal *OCS:ConversionMode* 'styles) "styles" "fast"))))
   (OCS:reportSet report
     (list (cons "stylesScanned" (length (OCS:assocd "styles" *OCS:Plan* nil)))
           (cons "stylesModified" (OCS:assocd "modified" styles 0))
@@ -4200,13 +4508,9 @@
 )
 
 (if (and (boundp '*OCS:Version*) *OCS:Version*)
-(princ (strcat "\n一键统一宋体修复版 v" *OCS:Version*
-                 " 已加载。输入 YJSTFIX 转换，YJSTCHECK 核查，YJSTLOG 查看日志路径。"
+(princ (strcat "\n一键统一宋体 v" *OCS:Version*
+                 " 已加载。输入 YJST 转换，YJSTCHECK 核查，YJSTLOG 查看日志路径。"
                  "\n诊断标识：" *OCS:DiagnosticsVersion*))
-  (princ "\n一键统一宋体修复版已加载。输入 YJSTFIX 执行。")
+  (princ "\n一键统一宋体已加载。输入 YJST 执行。")
 )
-(princ)
-
-;;; 本文件由 build_gb2312.py 生成；加载完成后手动输入 YJSTFIX 转换当前图纸。
-(princ "\n修复版独立命令已就绪：YJSTFIX。")
 (princ)
